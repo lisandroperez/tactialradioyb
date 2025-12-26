@@ -3,11 +3,12 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { MapDisplay } from './components/MapDisplay';
 import { RadioControl } from './components/RadioControl';
 import { TeamList } from './components/TeamList';
+import { HistoryPanel } from './components/HistoryPanel';
 import { EmergencyModal } from './components/EmergencyModal';
-import { TeamMember, ConnectionState } from './types';
+import { TeamMember, ConnectionState, RadioHistory } from './types';
 import { RadioService } from './services/radioService';
 import { supabase, getDeviceId } from './services/supabase';
-import { User, ShieldCheck, List, X } from 'lucide-react';
+import { User, ShieldCheck, List, X, Clock } from 'lucide-react';
 
 const DEVICE_ID = getDeviceId();
 
@@ -28,14 +29,21 @@ function App() {
   const [connectionState, setConnectionState] = useState<ConnectionState>(ConnectionState.DISCONNECTED);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [teamMembersRaw, setTeamMembersRaw] = useState<TeamMember[]>([]);
+  const [radioHistory, setRadioHistory] = useState<RadioHistory[]>([]);
   const [isTalking, setIsTalking] = useState(false);
   const [remoteTalker, setRemoteTalker] = useState<string | null>(null);
   const [audioLevel, setAudioLevel] = useState(0);
   const [systemLog, setSystemLog] = useState<string>("BUSCANDO_GPS...");
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
-  const [showTeamList, setShowTeamList] = useState(false); 
+  const [activeTab, setActiveTab] = useState<'team' | 'history'>('team');
+  const [showMobileOverlay, setShowMobileOverlay] = useState(false);
 
   const radioRef = useRef<RadioService | null>(null);
+  const userLocationRef = useRef<{ lat: number; lng: number } | null>(null);
+
+  useEffect(() => {
+    userLocationRef.current = userLocation;
+  }, [userLocation]);
 
   useEffect(() => {
     const handleGlobalMouseUp = () => { if (isTalking) handleTalkEnd(); };
@@ -58,21 +66,28 @@ function App() {
   useEffect(() => {
     if (!isProfileSet) return;
 
-    // CARGA INICIAL: Soluciona que el móvil vea a los que ya están conectados
-    const fetchInitialData = async () => {
-      const { data, error } = await supabase
+    const fetchData = async () => {
+      const yesterday = new Date(Date.now() - 86400000).toISOString();
+      
+      // Cargar Miembros
+      const { data: members } = await supabase
         .from('locations')
         .select('*')
         .gt('last_seen', new Date(Date.now() - 3600000).toISOString()); 
-      
-      if (data) {
-        setTeamMembersRaw(data.filter(m => m.id !== DEVICE_ID));
-      }
-      if (error) setSystemLog("DB_SYNC_ERROR");
+      if (members) setTeamMembersRaw(members.filter(m => m.id !== DEVICE_ID));
+
+      // Cargar Historial
+      const { data: history } = await supabase
+        .from('radio_history')
+        .select('*')
+        .gt('created_at', yesterday)
+        .order('created_at', { ascending: false });
+      if (history) setRadioHistory(history);
     };
 
-    fetchInitialData();
+    fetchData();
 
+    // Suscripción Realtime para Cambios de Ubicación e Historial
     const channel = supabase.channel('tactical-realtime')
       .on('postgres_changes', { event: '*', table: 'locations', schema: 'public' }, (payload: any) => {
         if (payload.new && payload.new.id !== DEVICE_ID) {
@@ -84,16 +99,17 @@ function App() {
             return next;
           });
         }
-      }).subscribe();
+      })
+      .on('postgres_changes', { event: 'INSERT', table: 'radio_history', schema: 'public' }, (payload: any) => {
+        setRadioHistory(prev => [payload.new, ...prev]);
+      })
+      .subscribe();
     
     return () => { supabase.removeChannel(channel); };
   }, [isProfileSet]);
 
   useEffect(() => {
-    if (!isProfileSet || !navigator.geolocation) {
-      if (!navigator.geolocation) setSystemLog("SIN_SOPORTE_GPS");
-      return;
-    }
+    if (!isProfileSet || !navigator.geolocation) return;
     
     const watchId = navigator.geolocation.watchPosition(async (pos) => {
       const { latitude, longitude, accuracy } = pos.coords;
@@ -101,17 +117,10 @@ function App() {
       setSystemLog(`GPS_FIX (${accuracy.toFixed(0)}m)`);
       
       await supabase.from('locations').upsert({
-        id: DEVICE_ID, 
-        name: userName, 
-        lat: latitude, 
-        lng: longitude, 
-        role: 'Unidad Móvil', 
-        status: isTalking ? 'talking' : 'online', 
-        last_seen: new Date().toISOString()
+        id: DEVICE_ID, name: userName, lat: latitude, lng: longitude, role: 'Móvil', 
+        status: isTalking ? 'talking' : 'online', last_seen: new Date().toISOString()
       });
-    }, (err) => {
-      setSystemLog(`GPS_ERROR: ${err.code}`);
-    }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+    }, (err) => setSystemLog(`GPS_ERROR: ${err.code}`), { enableHighAccuracy: true });
 
     return () => navigator.geolocation.clearWatch(watchId);
   }, [isTalking, isProfileSet, userName]);
@@ -122,6 +131,7 @@ function App() {
       radioRef.current = new RadioService({
         userId: DEVICE_ID,
         userName: userName,
+        getUserLocation: () => userLocationRef.current,
         onAudioBuffer: () => {
           setAudioLevel(prev => Math.min(100, prev + 25));
           setTimeout(() => setAudioLevel(0), 100);
@@ -176,20 +186,14 @@ function App() {
             </div>
             <h1 className="text-orange-500 font-black tracking-widest text-xl">CALLSIGN_AUTH</h1>
           </div>
-          <div className="space-y-4">
-            <input 
-              autoFocus
-              type="text" 
-              value={tempName}
-              onChange={(e) => setTempName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && saveProfile()}
-              placeholder="IDENTIFICACION"
-              className="w-full bg-black border border-gray-800 p-4 text-orange-500 focus:border-orange-500 outline-none text-center font-bold tracking-widest uppercase"
-            />
-            <button onClick={saveProfile} className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black py-4 transition-colors flex items-center justify-center gap-2">
-              <ShieldCheck size={20} /> ENTRAR EN SERVICIO
-            </button>
-          </div>
+          <input 
+            autoFocus type="text" value={tempName} onChange={(e) => setTempName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && saveProfile()} placeholder="IDENTIFICACION"
+            className="w-full bg-black border border-gray-800 p-4 text-orange-500 focus:border-orange-500 outline-none text-center font-bold tracking-widest uppercase"
+          />
+          <button onClick={saveProfile} className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black py-4 flex items-center justify-center gap-2">
+            <ShieldCheck size={20} /> ENTRAR EN SERVICIO
+          </button>
         </div>
       </div>
     );
@@ -214,29 +218,47 @@ function App() {
             </div>
          </div>
 
-         {/* BOTÓN LISTA MÓVIL (Corrige el Objetivo 2 en Celulares) */}
+         {/* BOTÓN MÓVIL OVERLAY */}
          <button 
-           onClick={() => setShowTeamList(!showTeamList)}
+           onClick={() => setShowMobileOverlay(!showMobileOverlay)}
            className="md:hidden absolute top-4 right-4 z-[1000] w-10 h-10 bg-black/80 border border-white/20 rounded flex items-center justify-center text-white"
          >
-           {showTeamList ? <X size={20} /> : <List size={20} />}
+           {showMobileOverlay ? <X size={20} /> : <List size={20} />}
          </button>
 
-         {/* LISTA DE EQUIPO (DESKTOP) */}
-         <div className="hidden md:block absolute bottom-6 left-6 w-64 bg-black/90 backdrop-blur rounded border border-white/10 shadow-2xl h-64 overflow-hidden z-[500]">
-            <div className="p-2 bg-white/5 border-b border-white/10 text-[10px] font-bold text-gray-400 text-center tracking-widest uppercase">Personal en Zona</div>
-            <TeamList members={teamMembers} />
+         {/* PANEL LATERAL DESKTOP */}
+         <div className="hidden md:flex flex-col absolute bottom-6 left-6 w-80 bg-black/90 backdrop-blur rounded border border-white/10 shadow-2xl h-[450px] overflow-hidden z-[500]">
+            <div className="flex border-b border-white/10 bg-white/5">
+              <button 
+                onClick={() => setActiveTab('team')}
+                className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest transition-colors ${activeTab === 'team' ? 'text-orange-500 border-b-2 border-orange-500 bg-orange-500/5' : 'text-gray-500'}`}
+              >
+                Personal
+              </button>
+              <button 
+                onClick={() => setActiveTab('history')}
+                className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest transition-colors ${activeTab === 'history' ? 'text-orange-500 border-b-2 border-orange-500 bg-orange-500/5' : 'text-gray-500'}`}
+              >
+                Historial
+              </button>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              {activeTab === 'team' ? <TeamList members={teamMembers} /> : <HistoryPanel history={radioHistory} />}
+            </div>
          </div>
 
-         {/* LISTA DE EQUIPO (MÓVIL OVERLAY) */}
-         {showTeamList && (
+         {/* OVERLAY MÓVIL */}
+         {showMobileOverlay && (
            <div className="md:hidden absolute inset-0 z-[1001] bg-gray-950 flex flex-col">
               <div className="flex justify-between items-center p-4 border-b border-white/10">
-                <h2 className="font-bold text-orange-500 tracking-tighter uppercase">Unidades Activas</h2>
-                <button onClick={() => setShowTeamList(false)}><X size={24} /></button>
+                <div className="flex gap-4">
+                  <button onClick={() => setActiveTab('team')} className={`font-bold uppercase text-xs ${activeTab === 'team' ? 'text-orange-500' : 'text-gray-500'}`}>Unidades</button>
+                  <button onClick={() => setActiveTab('history')} className={`font-bold uppercase text-xs ${activeTab === 'history' ? 'text-orange-500' : 'text-gray-500'}`}>Historial</button>
+                </div>
+                <button onClick={() => setShowMobileOverlay(false)}><X size={24} /></button>
               </div>
-              <div className="flex-1 overflow-y-auto">
-                <TeamList members={teamMembers} />
+              <div className="flex-1 overflow-hidden">
+                {activeTab === 'team' ? <TeamList members={teamMembers} /> : <HistoryPanel history={radioHistory} />}
               </div>
            </div>
          )}
@@ -245,15 +267,9 @@ function App() {
       {/* CONTROL DE RADIO SIMPLEX */}
       <div className="flex-none md:w-[400px] h-auto md:h-full bg-gray-950 z-20">
         <RadioControl 
-           connectionState={connectionState}
-           isTalking={isTalking}
-           onTalkStart={handleTalkStart}
-           onTalkEnd={handleTalkEnd}
-           lastTranscript={remoteTalker}
-           onConnect={handleConnect}
-           onDisconnect={handleDisconnect}
-           audioLevel={audioLevel}
-           onEmergencyClick={() => setShowEmergencyModal(true)}
+           connectionState={connectionState} isTalking={isTalking} onTalkStart={handleTalkStart} onTalkEnd={handleTalkEnd}
+           lastTranscript={remoteTalker} onConnect={handleConnect} onDisconnect={handleDisconnect}
+           audioLevel={audioLevel} onEmergencyClick={() => setShowEmergencyModal(true)}
         />
       </div>
 
