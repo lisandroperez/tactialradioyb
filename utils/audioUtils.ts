@@ -1,6 +1,4 @@
 
-import { Modality } from "@google/genai";
-
 // Decode base64 string to byte array
 export function decode(base64: string): Uint8Array {
   const binaryString = atob(base64);
@@ -22,12 +20,10 @@ export function encode(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
-// Create a Blob for sending
 export function createPcmBlob(data: Float32Array): { data: string; mimeType: string } {
   const l = data.length;
   const int16 = new Int16Array(l);
   for (let i = 0; i < l; i++) {
-    // Normalización con limitador para evitar distorsión
     const s = Math.max(-1, Math.min(1, data[i]));
     int16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
   }
@@ -37,7 +33,6 @@ export function createPcmBlob(data: Float32Array): { data: string; mimeType: str
   };
 }
 
-// Convert raw PCM bytes to an AudioBuffer for playback
 export async function decodeAudioData(
   data: Uint8Array,
   ctx: AudioContext,
@@ -56,4 +51,38 @@ export async function decodeAudioData(
     }
   }
   return buffer;
+}
+
+// Convierte un array de Float32 a un archivo WAV Base64
+export function bufferToWavBase64(buffer: Float32Array, sampleRate: number): string {
+  const length = buffer.length * 2;
+  const view = new DataView(new ArrayBuffer(44 + length));
+
+  const writeString = (offset: number, string: string) => {
+    for (let i = 0; i < string.length; i++) {
+      view.setUint8(offset + i, string.charCodeAt(i));
+    }
+  };
+
+  writeString(0, 'RIFF');
+  view.setUint32(4, 36 + length, true);
+  writeString(8, 'WAVE');
+  writeString(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeString(36, 'data');
+  view.setUint32(40, length, true);
+
+  let offset = 44;
+  for (let i = 0; i < buffer.length; i++, offset += 2) {
+    const s = Math.max(-1, Math.min(1, buffer[i]));
+    view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+  }
+
+  return encode(new Uint8Array(view.buffer));
 }
