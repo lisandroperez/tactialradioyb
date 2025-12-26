@@ -7,6 +7,7 @@ export interface TeamMember {
   lat: number;
   lng: number;
   distance?: string;
+  channel_id: string;
 }
 
 export interface RadioHistory {
@@ -15,6 +16,14 @@ export interface RadioHistory {
   lat: number;
   lng: number;
   audio_data: string;
+  created_at: string;
+  channel_id: string;
+}
+
+export interface Channel {
+  id: string;
+  name: string;
+  password?: string | null;
   created_at: string;
 }
 
