@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
 const supabaseUrl = 'https://egohzqqondgbuijrybhy.supabase.co';
@@ -13,10 +14,3 @@ export const getDeviceId = () => {
   }
   return id;
 };
-
-// Verificar conexión inicial
-supabase.from('locations').select('count', { count: 'exact', head: true })
-  .then(({ error }) => {
-    if (error) console.error("SUPABASE_OFFLINE:", error.message);
-    else console.log("SUPABASE_ONLINE: Ready for tactical sync.");
-  });
