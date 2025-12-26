@@ -32,7 +32,6 @@ export class RadioService {
 
   constructor(options: RadioOptions) {
     this.options = options;
-    // Canal dinámico basado en el ID de Supabase
     this.channel = supabase.channel(`radio-ch-${options.channelId}`, {
       config: { broadcast: { ack: false, self: false } }
     });
