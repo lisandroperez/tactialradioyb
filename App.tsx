@@ -70,24 +70,31 @@ function App() {
       const yesterday = new Date(Date.now() - 86400000).toISOString();
       
       // Cargar Miembros
-      const { data: members } = await supabase
+      const { data: members, error: mError } = await supabase
         .from('locations')
         .select('*')
         .gt('last_seen', new Date(Date.now() - 3600000).toISOString()); 
+      if (mError) console.error("FETCH_UNITS_ERROR:", mError.message);
       if (members) setTeamMembersRaw(members.filter(m => m.id !== DEVICE_ID));
 
       // Cargar Historial
-      const { data: history } = await supabase
+      console.log("FETCHING_HISTORY...");
+      const { data: history, error: hError } = await supabase
         .from('radio_history')
         .select('*')
         .gt('created_at', yesterday)
         .order('created_at', { ascending: false });
-      if (history) setRadioHistory(history);
+      
+      if (hError) console.error("FETCH_HISTORY_ERROR:", hError.message);
+      if (history) {
+        console.log(`HISTORY_LOADED: ${history.length} items.`);
+        setRadioHistory(history);
+      }
     };
 
     fetchData();
 
-    // Suscripción Realtime para Cambios de Ubicación e Historial
+    // Suscripción Realtime
     const channel = supabase.channel('tactical-realtime')
       .on('postgres_changes', { event: '*', table: 'locations', schema: 'public' }, (payload: any) => {
         if (payload.new && payload.new.id !== DEVICE_ID) {
@@ -101,9 +108,12 @@ function App() {
         }
       })
       .on('postgres_changes', { event: 'INSERT', table: 'radio_history', schema: 'public' }, (payload: any) => {
+        console.log("NEW_INCOMING_HISTORY_RECORD:", payload.new.sender_name);
         setRadioHistory(prev => [payload.new, ...prev]);
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log("REALTIME_SUBSCRIPTION_STATUS:", status);
+      });
     
     return () => { supabase.removeChannel(channel); };
   }, [isProfileSet]);
