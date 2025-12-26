@@ -71,8 +71,6 @@ export class RadioService {
         if (!this.isTransmitting) return;
 
         const inputData = e.inputBuffer.getChannelData(0);
-        
-        // Clonamos los datos para el historial
         this.currentTransmissionBuffer.push(new Float32Array(inputData));
 
         let maxVal = 0;
@@ -146,12 +144,12 @@ export class RadioService {
     this.isTransmitting = true;
     this.currentTransmissionBuffer = [];
     this.lastActiveTime = Date.now();
+    console.log("TX_START: Gravando buffer local...");
   }
 
   public async stopTransmission() {
     this.isTransmitting = false;
     
-    // Si hay datos grabados, guardamos en el historial de Supabase
     if (this.currentTransmissionBuffer.length > 0) {
       const totalLength = this.currentTransmissionBuffer.reduce((acc, b) => acc + b.length, 0);
       const fullBuffer = new Float32Array(totalLength);
@@ -161,17 +159,26 @@ export class RadioService {
         offset += b.length;
       }
 
-      // Solo guardamos si hay más de medio segundo de audio real
       if (totalLength > this.sampleRate * 0.5) {
+        console.log("TX_STOP: Procesando audio para historial...");
         const wavBase64 = bufferToWavBase64(fullBuffer, this.sampleRate);
         const loc = this.options.getUserLocation();
         
-        await supabase.from('radio_history').insert({
+        const { error } = await supabase.from('radio_history').insert({
           sender_name: this.options.userName,
           lat: loc?.lat || 0,
           lng: loc?.lng || 0,
           audio_data: wavBase64
         });
+
+        if (error) {
+          console.error("HISTORY_SAVE_ERROR:", error.message);
+          console.error("TIP: Verifica que RLS esté desactivado en la tabla radio_history.");
+        } else {
+          console.log("HISTORY_SAVE_SUCCESS: Registro guardado en Supabase.");
+        }
+      } else {
+        console.log("TX_STOP: Audio demasiado corto, descartado.");
       }
     }
     this.currentTransmissionBuffer = [];
