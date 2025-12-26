@@ -9,6 +9,15 @@ export interface TeamMember {
   distance?: string;
 }
 
+export interface RadioHistory {
+  id: string;
+  sender_name: string;
+  lat: number;
+  lng: number;
+  audio_data: string;
+  created_at: string;
+}
+
 export enum ConnectionState {
   DISCONNECTED = 'disconnected',
   CONNECTING = 'connecting',
