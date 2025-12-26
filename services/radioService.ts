@@ -1,11 +1,12 @@
 
 import { RealtimeChannel } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 import { supabase } from './supabase';
-import { decode, decodeAudioData, createPcmBlob } from '../utils/audioUtils';
+import { decode, decodeAudioData, createPcmBlob, bufferToWavBase64 } from '../utils/audioUtils';
 
 interface RadioOptions {
   userId: string;
   userName: string;
+  getUserLocation: () => { lat: number; lng: number } | null;
   onAudioBuffer: (buffer: AudioBuffer, senderId: string) => void;
   onIncomingStreamStart: (senderName: string) => void;
   onIncomingStreamEnd: () => void;
@@ -23,7 +24,7 @@ export class RadioService {
   private isTransmitting: boolean = false;
   private sampleRate: number = 24000;
   
-  // Umbral de ruido más agresivo para PC
+  private currentTransmissionBuffer: Float32Array[] = [];
   private noiseThreshold: number = 0.045; 
   private holdTime: number = 300; 
   private lastActiveTime: number = 0;
@@ -60,12 +61,7 @@ export class RadioService {
     try {
       await this.initAudioContexts();
       this.stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-          channelCount: 1
-        } 
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } 
       });
       
       this.source = this.inputAudioContext!.createMediaStreamSource(this.stream);
@@ -75,6 +71,10 @@ export class RadioService {
         if (!this.isTransmitting) return;
 
         const inputData = e.inputBuffer.getChannelData(0);
+        
+        // Clonamos los datos para el historial
+        this.currentTransmissionBuffer.push(new Float32Array(inputData));
+
         let maxVal = 0;
         for (let i = 0; i < inputData.length; i++) {
           const abs = Math.abs(inputData[i]);
@@ -144,11 +144,37 @@ export class RadioService {
 
   public startTransmission() {
     this.isTransmitting = true;
+    this.currentTransmissionBuffer = [];
     this.lastActiveTime = Date.now();
   }
 
-  public stopTransmission() {
+  public async stopTransmission() {
     this.isTransmitting = false;
+    
+    // Si hay datos grabados, guardamos en el historial de Supabase
+    if (this.currentTransmissionBuffer.length > 0) {
+      const totalLength = this.currentTransmissionBuffer.reduce((acc, b) => acc + b.length, 0);
+      const fullBuffer = new Float32Array(totalLength);
+      let offset = 0;
+      for (const b of this.currentTransmissionBuffer) {
+        fullBuffer.set(b, offset);
+        offset += b.length;
+      }
+
+      // Solo guardamos si hay más de medio segundo de audio real
+      if (totalLength > this.sampleRate * 0.5) {
+        const wavBase64 = bufferToWavBase64(fullBuffer, this.sampleRate);
+        const loc = this.options.getUserLocation();
+        
+        await supabase.from('radio_history').insert({
+          sender_name: this.options.userName,
+          lat: loc?.lat || 0,
+          lng: loc?.lng || 0,
+          audio_data: wavBase64
+        });
+      }
+    }
+    this.currentTransmissionBuffer = [];
   }
 
   public async disconnect() {
