@@ -6,6 +6,7 @@ import { decode, decodeAudioData, createPcmBlob, bufferToWavBase64 } from '../ut
 interface RadioOptions {
   userId: string;
   userName: string;
+  channelId: string;
   getUserLocation: () => { lat: number; lng: number } | null;
   onAudioBuffer: (buffer: AudioBuffer, senderId: string) => void;
   onIncomingStreamStart: (senderName: string) => void;
@@ -31,7 +32,8 @@ export class RadioService {
 
   constructor(options: RadioOptions) {
     this.options = options;
-    this.channel = supabase.channel('tactical-freq-1', {
+    // Canal dinámico basado en el ID de Supabase
+    this.channel = supabase.channel(`radio-ch-${options.channelId}`, {
       config: { broadcast: { ack: false, self: false } }
     });
     
@@ -144,7 +146,6 @@ export class RadioService {
     this.isTransmitting = true;
     this.currentTransmissionBuffer = [];
     this.lastActiveTime = Date.now();
-    console.log("TX_START: Gravando buffer local...");
   }
 
   public async stopTransmission() {
@@ -160,25 +161,16 @@ export class RadioService {
       }
 
       if (totalLength > this.sampleRate * 0.5) {
-        console.log("TX_STOP: Procesando audio para historial...");
         const wavBase64 = bufferToWavBase64(fullBuffer, this.sampleRate);
         const loc = this.options.getUserLocation();
         
-        const { error } = await supabase.from('radio_history').insert({
+        await supabase.from('radio_history').insert({
           sender_name: this.options.userName,
           lat: loc?.lat || 0,
           lng: loc?.lng || 0,
-          audio_data: wavBase64
+          audio_data: wavBase64,
+          channel_id: this.options.channelId
         });
-
-        if (error) {
-          console.error("HISTORY_SAVE_ERROR:", error.message);
-          console.error("TIP: Verifica que RLS esté desactivado en la tabla radio_history.");
-        } else {
-          console.log("HISTORY_SAVE_SUCCESS: Registro guardado en Supabase.");
-        }
-      } else {
-        console.log("TX_STOP: Audio demasiado corto, descartado.");
       }
     }
     this.currentTransmissionBuffer = [];
@@ -191,5 +183,6 @@ export class RadioService {
     if (this.stream) this.stream.getTracks().forEach(t => t.stop());
     if (this.inputAudioContext) await this.inputAudioContext.close();
     if (this.outputAudioContext) await this.outputAudioContext.close();
+    supabase.removeChannel(this.channel);
   }
 }
