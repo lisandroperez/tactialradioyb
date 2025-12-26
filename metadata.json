@@ -1,0 +1,9 @@
+
+{
+  "name": "Tactical Simplex Radio",
+  "description": "Walkie-talkie PTT y seguimiento táctico en tiempo real para equipos operativos.",
+  "requestFramePermissions": [
+    "microphone",
+    "geolocation"
+  ]
+}
