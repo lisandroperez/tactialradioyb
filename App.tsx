@@ -9,7 +9,7 @@ import { ChannelSelector } from './components/ChannelSelector';
 import { TeamMember, ConnectionState, RadioHistory, Channel } from './types';
 import { RadioService } from './services/radioService';
 import { supabase, getDeviceId } from './services/supabase';
-import { User, ShieldCheck, List, X, Clock, Hash } from 'lucide-react';
+import { User, ShieldCheck, List, X, Hash } from 'lucide-react';
 
 const DEVICE_ID = getDeviceId();
 
@@ -65,14 +65,12 @@ function App() {
     }));
   }, [teamMembersRaw, userLocation]);
 
-  // Sincronización de Datos (Filtrados por Canal)
   useEffect(() => {
     if (!activeChannel || !isNameSet) return;
 
     const fetchData = async () => {
       const yesterday = new Date(Date.now() - 86400000).toISOString();
       
-      // Cargar Miembros del Canal
       const { data: members } = await supabase
         .from('locations')
         .select('*')
@@ -80,7 +78,6 @@ function App() {
         .gt('last_seen', new Date(Date.now() - 3600000).toISOString()); 
       if (members) setTeamMembersRaw(members.filter(m => m.id !== DEVICE_ID));
 
-      // Cargar Historial del Canal
       const { data: history } = await supabase
         .from('radio_history')
         .select('*')
@@ -112,7 +109,6 @@ function App() {
     return () => { supabase.removeChannel(channel); };
   }, [activeChannel, isNameSet]);
 
-  // Seguimiento GPS
   useEffect(() => {
     if (!activeChannel || !isNameSet || !navigator.geolocation) return;
     
@@ -149,7 +145,7 @@ function App() {
         onIncomingStreamEnd: () => setRemoteTalker(null)
       });
       setConnectionState(ConnectionState.CONNECTED);
-      setSystemLog("LINK_CH_ESTABLISHED");
+      setSystemLog("LINK_ESTABLISHED");
     } catch (e) {
       setConnectionState(ConnectionState.ERROR);
       setSystemLog("LINK_FAILED");
@@ -177,14 +173,6 @@ function App() {
     }
   };
 
-  const saveName = () => {
-    if (tempName.trim().length < 3) return;
-    const finalName = tempName.trim().toUpperCase();
-    localStorage.setItem('user_callsign', finalName);
-    setUserName(finalName);
-    setIsNameSet(true);
-  };
-
   const handleQSY = () => {
     handleDisconnect();
     setActiveChannel(null);
@@ -192,11 +180,10 @@ function App() {
     setRadioHistory([]);
   };
 
-  // PANTALLA 1: IDENTIFICACIÓN
   if (!isNameSet) {
     return (
       <div className="h-[100dvh] w-screen bg-black flex items-center justify-center p-6 font-mono">
-        <div className="w-full max-w-sm space-y-6 bg-gray-950 border border-orange-500/20 p-8 rounded shadow-2xl">
+        <div className="w-full max-sm space-y-6 bg-gray-950 border border-orange-500/20 p-8 rounded shadow-2xl">
           <div className="text-center space-y-2">
             <div className="w-16 h-16 bg-orange-500/10 rounded-full flex items-center justify-center mx-auto border border-orange-500/30">
               <User className="text-orange-500" size={32} />
@@ -205,10 +192,14 @@ function App() {
           </div>
           <input 
             autoFocus type="text" value={tempName} onChange={(e) => setTempName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && saveName()} placeholder="CALLSIGN"
+            onKeyDown={(e) => e.key === 'Enter' && (tempName.trim().length >= 3 && (localStorage.setItem('user_callsign', tempName.trim().toUpperCase()), setUserName(tempName.trim().toUpperCase()), setIsNameSet(true)))} 
+            placeholder="CALLSIGN"
             className="w-full bg-black border border-gray-800 p-4 text-orange-500 focus:border-orange-500 outline-none text-center font-bold tracking-widest uppercase"
           />
-          <button onClick={saveName} className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black py-4 flex items-center justify-center gap-2">
+          <button 
+            onClick={() => { if(tempName.trim().length >= 3) { localStorage.setItem('user_callsign', tempName.trim().toUpperCase()); setUserName(tempName.trim().toUpperCase()); setIsNameSet(true); }}}
+            className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black py-4 flex items-center justify-center gap-2"
+          >
             <ShieldCheck size={20} /> IDENTIFICARSE
           </button>
         </div>
@@ -216,7 +207,6 @@ function App() {
     );
   }
 
-  // PANTALLA 2: SELECCIÓN DE CANAL
   if (!activeChannel) {
     return (
       <div className="h-[100dvh] w-screen bg-black flex items-center justify-center p-6 font-mono">
@@ -234,15 +224,10 @@ function App() {
     );
   }
 
-  // PANTALLA 3: RADIO PRINCIPAL
   return (
     <div className="flex flex-col md:flex-row h-[100dvh] w-screen bg-black overflow-hidden relative text-white font-sans">
-      
-      {/* SECCIÓN MAPA TÁCTICO */}
       <div className="flex-1 relative border-b md:border-b-0 md:border-r border-white/10 overflow-hidden">
          <MapDisplay userLocation={userLocation} teamMembers={teamMembers} />
-         
-         {/* OVERLAY DE DATOS */}
          <div className="absolute top-4 left-4 z-[1000] flex flex-col gap-2 pointer-events-none">
             <div className="bg-black/80 backdrop-blur px-3 py-1 border border-orange-500/30 rounded shadow-lg">
               <span className="text-[9px] text-orange-500/50 block font-mono">CANAL_ACTIVO</span>
@@ -255,37 +240,18 @@ function App() {
               <span className="text-[10px] font-bold text-emerald-500 font-mono uppercase">{systemLog}</span>
             </div>
          </div>
-
-         {/* BOTONES MÓVIL */}
-         <button 
-           onClick={() => setShowMobileOverlay(!showMobileOverlay)}
-           className="md:hidden absolute top-4 right-4 z-[1000] w-10 h-10 bg-black/80 border border-white/20 rounded flex items-center justify-center text-white"
-         >
+         <button onClick={() => setShowMobileOverlay(!showMobileOverlay)} className="md:hidden absolute top-4 right-4 z-[1000] w-10 h-10 bg-black/80 border border-white/20 rounded flex items-center justify-center text-white">
            {showMobileOverlay ? <X size={20} /> : <List size={20} />}
          </button>
-
-         {/* PANEL LATERAL DESKTOP */}
          <div className="hidden md:flex flex-col absolute bottom-6 left-6 w-80 bg-black/90 backdrop-blur rounded border border-white/10 shadow-2xl h-[450px] overflow-hidden z-[500]">
             <div className="flex border-b border-white/10 bg-white/5">
-              <button 
-                onClick={() => setActiveTab('team')}
-                className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest transition-colors ${activeTab === 'team' ? 'text-orange-500 border-b-2 border-orange-500 bg-orange-500/5' : 'text-gray-500'}`}
-              >
-                Personal
-              </button>
-              <button 
-                onClick={() => setActiveTab('history')}
-                className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest transition-colors ${activeTab === 'history' ? 'text-orange-500 border-b-2 border-orange-500 bg-orange-500/5' : 'text-gray-500'}`}
-              >
-                Historial
-              </button>
+              <button onClick={() => setActiveTab('team')} className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest transition-colors ${activeTab === 'team' ? 'text-orange-500 border-b-2 border-orange-500 bg-orange-500/5' : 'text-gray-500'}`}>Personal</button>
+              <button onClick={() => setActiveTab('history')} className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest transition-colors ${activeTab === 'history' ? 'text-orange-500 border-b-2 border-orange-500 bg-orange-500/5' : 'text-gray-500'}`}>Historial</button>
             </div>
             <div className="flex-1 overflow-hidden">
               {activeTab === 'team' ? <TeamList members={teamMembers} /> : <HistoryPanel history={radioHistory} />}
             </div>
          </div>
-
-         {/* OVERLAY MÓVIL */}
          {showMobileOverlay && (
            <div className="md:hidden absolute inset-0 z-[1001] bg-gray-950 flex flex-col">
               <div className="flex justify-between items-center p-4 border-b border-white/10">
@@ -301,24 +267,14 @@ function App() {
            </div>
          )}
       </div>
-
-      {/* CONTROL DE RADIO */}
       <div className="flex-none md:w-[400px] h-auto md:h-full bg-gray-950 z-20">
         <RadioControl 
-           connectionState={connectionState} 
-           isTalking={isTalking} 
-           activeChannelName={activeChannel.name}
-           onTalkStart={handleTalkStart} 
-           onTalkEnd={handleTalkEnd}
-           lastTranscript={remoteTalker} 
-           onConnect={handleConnect} 
-           onDisconnect={handleDisconnect}
-           onQSY={handleQSY}
-           audioLevel={audioLevel} 
-           onEmergencyClick={() => setShowEmergencyModal(true)}
+           connectionState={connectionState} isTalking={isTalking} activeChannelName={activeChannel.name}
+           onTalkStart={handleTalkStart} onTalkEnd={handleTalkEnd} lastTranscript={remoteTalker} 
+           onConnect={handleConnect} onDisconnect={handleDisconnect} onQSY={handleQSY}
+           audioLevel={audioLevel} onEmergencyClick={() => setShowEmergencyModal(true)}
         />
       </div>
-
       <EmergencyModal isOpen={showEmergencyModal} onClose={() => setShowEmergencyModal(false)} location={userLocation} />
     </div>
   );
