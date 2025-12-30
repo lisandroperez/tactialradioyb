@@ -51,10 +51,13 @@ function App() {
     const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
     setIsIOS(isIosDevice);
 
-    window.addEventListener('beforeinstallprompt', (e) => {
+    const handler = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
-    });
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
   const handleInstallClick = async () => {
@@ -203,19 +206,9 @@ function App() {
     setRadioHistory([]);
   };
 
-  const GlobalHelpButton = () => (
-    <button 
-      onClick={handleInstallClick}
-      className="w-full mt-4 bg-blue-600 hover:bg-blue-500 text-white rounded-lg py-4 flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg animate-pulse"
-    >
-      <Smartphone size={18} />
-      CONFIGURAR / INSTALAR APP
-    </button>
-  );
-
   if (!isNameSet) {
     return (
-      <div className="min-h-[100dvh] w-screen bg-black flex items-center justify-center p-6 font-mono overflow-y-auto">
+      <div className="min-h-[100dvh] w-screen bg-black flex flex-col items-center justify-center p-6 font-mono overflow-y-auto">
         <div className="w-full max-w-sm space-y-6 bg-gray-950 border border-orange-500/20 p-8 rounded shadow-2xl relative">
           <div className="absolute top-0 left-0 w-full h-1 bg-orange-600"></div>
           <div className="text-center space-y-2">
@@ -238,7 +231,18 @@ function App() {
             >
               <ShieldCheck size={20} /> ENTRAR EN SERVICIO
             </button>
-            <GlobalHelpButton />
+            
+            {/* BOTÓN DE INSTALACIÓN INYECTADO DIRECTAMENTE */}
+            <button 
+              onClick={handleInstallClick}
+              className="w-full mt-4 bg-blue-600 hover:bg-blue-500 text-white rounded-lg py-4 flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg animate-pulse"
+            >
+              <Smartphone size={18} />
+              CONFIGURAR / INSTALAR APP
+            </button>
+          </div>
+          <div className="text-center">
+            <span className="text-[8px] text-gray-700 font-mono uppercase">Version 3.1 Stable</span>
           </div>
         </div>
         <InstallModal isOpen={showInstallModal} onClose={() => setShowInstallModal(false)} isIOS={isIOS} />
@@ -248,7 +252,7 @@ function App() {
 
   if (!activeChannel) {
     return (
-      <div className="min-h-[100dvh] w-screen bg-black flex items-center justify-center p-6 font-mono overflow-y-auto">
+      <div className="min-h-[100dvh] w-screen bg-black flex flex-col items-center justify-center p-6 font-mono overflow-y-auto">
          <div className="w-full max-w-md space-y-4 py-8">
             <div className="flex items-center justify-between mb-4 px-2">
                <div className="flex flex-col">
@@ -258,8 +262,15 @@ function App() {
                <button onClick={() => { localStorage.removeItem('user_callsign'); setIsNameSet(false); }} className="text-[9px] text-gray-500 hover:text-white uppercase tracking-tighter underline">Cerrar Sesión</button>
             </div>
             <ChannelSelector onSelect={(ch) => setActiveChannel(ch)} />
-            <div className="px-1">
-              <GlobalHelpButton />
+            
+            <div className="px-1 mt-6">
+              <button 
+                onClick={handleInstallClick}
+                className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-lg py-4 flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg animate-pulse"
+              >
+                <Smartphone size={18} />
+                CONFIGURAR / INSTALAR APP
+              </button>
             </div>
          </div>
          <InstallModal isOpen={showInstallModal} onClose={() => setShowInstallModal(false)} isIOS={isIOS} />
