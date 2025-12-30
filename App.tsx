@@ -9,7 +9,7 @@ import { ChannelSelector } from './components/ChannelSelector';
 import { TeamMember, ConnectionState, RadioHistory, Channel } from './types';
 import { RadioService } from './services/radioService';
 import { supabase, getDeviceId } from './services/supabase';
-import { User, ShieldCheck, List, X, Hash } from 'lucide-react';
+import { User, ShieldCheck, List, X, Hash, Download } from 'lucide-react';
 
 const DEVICE_ID = getDeviceId();
 
@@ -40,8 +40,25 @@ function App() {
   const [activeTab, setActiveTab] = useState<'team' | 'history'>('team');
   const [showMobileOverlay, setShowMobileOverlay] = useState(false);
 
+  // PWA Install Logic
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
   const radioRef = useRef<RadioService | null>(null);
   const userLocationRef = useRef<{ lat: number; lng: number } | null>(null);
+
+  useEffect(() => {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    });
+  }, []);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') setDeferredPrompt(null);
+  };
 
   useEffect(() => {
     userLocationRef.current = userLocation;
@@ -70,7 +87,6 @@ function App() {
 
     const fetchData = async () => {
       const yesterday = new Date(Date.now() - 86400000).toISOString();
-      
       const { data: members } = await supabase
         .from('locations')
         .select('*')
@@ -183,25 +199,36 @@ function App() {
   if (!isNameSet) {
     return (
       <div className="h-[100dvh] w-screen bg-black flex items-center justify-center p-6 font-mono">
-        <div className="w-full max-sm space-y-6 bg-gray-950 border border-orange-500/20 p-8 rounded shadow-2xl">
+        <div className="w-full max-w-sm space-y-6 bg-gray-950 border border-orange-500/20 p-8 rounded shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-orange-600"></div>
           <div className="text-center space-y-2">
             <div className="w-16 h-16 bg-orange-500/10 rounded-full flex items-center justify-center mx-auto border border-orange-500/30">
               <User className="text-orange-500" size={32} />
             </div>
-            <h1 className="text-orange-500 font-black tracking-widest text-xl">CALLSIGN_AUTH</h1>
+            <h1 className="text-orange-500 font-black tracking-widest text-xl">RADIO_TAC_V3</h1>
+            <p className="text-[10px] text-gray-500">AUTENTICACIÓN DE UNIDAD REQUERIDA</p>
           </div>
           <input 
             autoFocus type="text" value={tempName} onChange={(e) => setTempName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && (tempName.trim().length >= 3 && (localStorage.setItem('user_callsign', tempName.trim().toUpperCase()), setUserName(tempName.trim().toUpperCase()), setIsNameSet(true)))} 
-            placeholder="CALLSIGN"
+            onKeyDown={(e) => e.key === 'Enter' && tempName.trim().length >= 3 && (localStorage.setItem('user_callsign', tempName.trim().toUpperCase()), setUserName(tempName.trim().toUpperCase()), setIsNameSet(true))} 
+            placeholder="INDICATIVO (CALLSIGN)"
             className="w-full bg-black border border-gray-800 p-4 text-orange-500 focus:border-orange-500 outline-none text-center font-bold tracking-widest uppercase"
           />
           <button 
             onClick={() => { if(tempName.trim().length >= 3) { localStorage.setItem('user_callsign', tempName.trim().toUpperCase()); setUserName(tempName.trim().toUpperCase()); setIsNameSet(true); }}}
-            className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black py-4 flex items-center justify-center gap-2"
+            className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black py-4 flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-orange-900/20"
           >
-            <ShieldCheck size={20} /> IDENTIFICARSE
+            <ShieldCheck size={20} /> ENTRAR EN SERVICIO
           </button>
+          
+          {deferredPrompt && (
+            <button 
+              onClick={handleInstall}
+              className="w-full mt-4 flex items-center justify-center gap-2 text-xs text-gray-500 hover:text-white transition-colors"
+            >
+              <Download size={14} /> INSTALAR APP EN ESTE EQUIPO
+            </button>
+          )}
         </div>
       </div>
     );
@@ -211,12 +238,12 @@ function App() {
     return (
       <div className="h-[100dvh] w-screen bg-black flex items-center justify-center p-6 font-mono">
          <div className="w-full max-w-md space-y-4">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-4 px-2">
                <div className="flex flex-col">
-                  <span className="text-[10px] text-orange-500/50">SISTEMA_OPERATIVO</span>
+                  <span className="text-[9px] text-orange-500/50 uppercase tracking-widest">Operador</span>
                   <span className="text-sm font-bold text-white uppercase">{userName}</span>
                </div>
-               <button onClick={() => { localStorage.removeItem('user_callsign'); setIsNameSet(false); }} className="text-[10px] text-gray-600 hover:text-white underline">Cerrar Sesión</button>
+               <button onClick={() => { localStorage.removeItem('user_callsign'); setIsNameSet(false); }} className="text-[9px] text-gray-600 hover:text-white uppercase tracking-tighter">Desvincular Equipo</button>
             </div>
             <ChannelSelector onSelect={(ch) => setActiveChannel(ch)} />
          </div>
@@ -230,13 +257,13 @@ function App() {
          <MapDisplay userLocation={userLocation} teamMembers={teamMembers} />
          <div className="absolute top-4 left-4 z-[1000] flex flex-col gap-2 pointer-events-none">
             <div className="bg-black/80 backdrop-blur px-3 py-1 border border-orange-500/30 rounded shadow-lg">
-              <span className="text-[9px] text-orange-500/50 block font-mono">CANAL_ACTIVO</span>
+              <span className="text-[9px] text-orange-500/50 block font-mono">FREQ</span>
               <span className="text-xs font-bold text-orange-500 font-mono flex items-center gap-1 uppercase">
                 <Hash size={10} /> {activeChannel.name}
               </span>
             </div>
             <div className="bg-black/80 backdrop-blur px-3 py-1 border border-emerald-500/30 rounded shadow-lg">
-              <span className="text-[9px] text-emerald-500/50 block font-mono">GEO_LOCK</span>
+              <span className="text-[9px] text-emerald-500/50 block font-mono">SISTEMA</span>
               <span className="text-[10px] font-bold text-emerald-500 font-mono uppercase">{systemLog}</span>
             </div>
          </div>
@@ -245,21 +272,21 @@ function App() {
          </button>
          <div className="hidden md:flex flex-col absolute bottom-6 left-6 w-80 bg-black/90 backdrop-blur rounded border border-white/10 shadow-2xl h-[450px] overflow-hidden z-[500]">
             <div className="flex border-b border-white/10 bg-white/5">
-              <button onClick={() => setActiveTab('team')} className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest transition-colors ${activeTab === 'team' ? 'text-orange-500 border-b-2 border-orange-500 bg-orange-500/5' : 'text-gray-500'}`}>Personal</button>
-              <button onClick={() => setActiveTab('history')} className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest transition-colors ${activeTab === 'history' ? 'text-orange-500 border-b-2 border-orange-500 bg-orange-500/5' : 'text-gray-500'}`}>Historial</button>
+              <button onClick={() => setActiveTab('team')} className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest transition-colors ${activeTab === 'team' ? 'text-orange-500 border-b-2 border-orange-500 bg-orange-500/5' : 'text-gray-500'}`}>Unidades</button>
+              <button onClick={() => setActiveTab('history')} className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest transition-colors ${activeTab === 'history' ? 'text-orange-500 border-b-2 border-orange-500 bg-orange-500/5' : 'text-gray-500'}`}>Log Audio</button>
             </div>
             <div className="flex-1 overflow-hidden">
               {activeTab === 'team' ? <TeamList members={teamMembers} /> : <HistoryPanel history={radioHistory} />}
             </div>
          </div>
          {showMobileOverlay && (
-           <div className="md:hidden absolute inset-0 z-[1001] bg-gray-950 flex flex-col">
-              <div className="flex justify-between items-center p-4 border-b border-white/10">
-                <div className="flex gap-4">
-                  <button onClick={() => setActiveTab('team')} className={`font-bold uppercase text-xs ${activeTab === 'team' ? 'text-orange-500' : 'text-gray-500'}`}>Unidades</button>
-                  <button onClick={() => setActiveTab('history')} className={`font-bold uppercase text-xs ${activeTab === 'history' ? 'text-orange-500' : 'text-gray-500'}`}>Historial</button>
+           <div className="md:hidden absolute inset-0 z-[1001] bg-gray-950 flex flex-col animate-in slide-in-from-bottom duration-300">
+              <div className="flex justify-between items-center p-4 border-b border-white/10 bg-black">
+                <div className="flex gap-6">
+                  <button onClick={() => setActiveTab('team')} className={`font-bold uppercase text-[10px] tracking-widest ${activeTab === 'team' ? 'text-orange-500' : 'text-gray-500'}`}>Panel Unidades</button>
+                  <button onClick={() => setActiveTab('history')} className={`font-bold uppercase text-[10px] tracking-widest ${activeTab === 'history' ? 'text-orange-500' : 'text-gray-500'}`}>Log Historial</button>
                 </div>
-                <button onClick={() => setShowMobileOverlay(false)}><X size={24} /></button>
+                <button onClick={() => setShowMobileOverlay(false)} className="text-gray-500"><X size={24} /></button>
               </div>
               <div className="flex-1 overflow-hidden">
                 {activeTab === 'team' ? <TeamList members={teamMembers} /> : <HistoryPanel history={radioHistory} />}
@@ -267,7 +294,7 @@ function App() {
            </div>
          )}
       </div>
-      <div className="flex-none md:w-[400px] h-auto md:h-full bg-gray-950 z-20">
+      <div className="flex-none md:w-[400px] h-auto md:h-full bg-gray-950 z-20 shadow-[-10px_0_30px_rgba(0,0,0,0.5)]">
         <RadioControl 
            connectionState={connectionState} isTalking={isTalking} activeChannelName={activeChannel.name}
            onTalkStart={handleTalkStart} onTalkEnd={handleTalkEnd} lastTranscript={remoteTalker} 
