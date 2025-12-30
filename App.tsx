@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { MapDisplay } from './components/MapDisplay';
 import { RadioControl } from './components/RadioControl';
@@ -9,7 +8,7 @@ import { ChannelSelector } from './components/ChannelSelector';
 import { TeamMember, ConnectionState, RadioHistory, Channel } from './types';
 import { RadioService } from './services/radioService';
 import { supabase, getDeviceId } from './services/supabase';
-import { User, ShieldCheck, List, X, Hash, Download, Share } from 'lucide-react';
+import { User, ShieldCheck, List, X, Hash, Download } from 'lucide-react';
 
 const DEVICE_ID = getDeviceId();
 
@@ -40,19 +39,12 @@ function App() {
   const [activeTab, setActiveTab] = useState<'team' | 'history'>('team');
   const [showMobileOverlay, setShowMobileOverlay] = useState(false);
 
-  // PWA Install Logic
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [isIOS, setIsIOS] = useState(false);
 
   const radioRef = useRef<RadioService | null>(null);
   const userLocationRef = useRef<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
-    // Detectar iOS
-    const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone;
-    setIsIOS(isIosDevice && !isStandalone);
-
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -202,30 +194,6 @@ function App() {
     setRadioHistory([]);
   };
 
-  // Componente de Botón de Instalación Reutilizable
-  const InstallSection = () => (
-    <div className="space-y-3 pt-4 border-t border-white/5 mt-4">
-      {deferredPrompt && (
-        <button 
-          onClick={handleInstall}
-          className="w-full bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 rounded py-3 flex items-center justify-center gap-2 text-xs font-bold uppercase transition-all active:scale-95"
-        >
-          <Download size={14} /> INSTALAR APLICACIÓN (ANDROID/PC)
-        </button>
-      )}
-      
-      {isIOS && (
-        <div className="bg-white/5 rounded p-4 text-center space-y-2">
-          <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Instalación en iPhone (iOS)</p>
-          <div className="flex items-center justify-center gap-2 text-xs text-white">
-            <span>Toca</span> <Share size={16} className="text-blue-400" /> <span>y luego</span>
-            <span className="font-bold text-blue-400">"Añadir a pantalla de inicio"</span>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-
   if (!isNameSet) {
     return (
       <div className="h-[100dvh] w-screen bg-black flex items-center justify-center p-6 font-mono">
@@ -251,7 +219,14 @@ function App() {
             <ShieldCheck size={20} /> ENTRAR EN SERVICIO
           </button>
           
-          <InstallSection />
+          {deferredPrompt && (
+            <button 
+              onClick={handleInstall}
+              className="w-full mt-4 flex items-center justify-center gap-2 text-xs text-gray-500 hover:text-white transition-colors"
+            >
+              <Download size={14} /> INSTALAR APP EN ESTE EQUIPO
+            </button>
+          )}
         </div>
       </div>
     );
@@ -269,10 +244,6 @@ function App() {
                <button onClick={() => { localStorage.removeItem('user_callsign'); setIsNameSet(false); }} className="text-[9px] text-gray-600 hover:text-white uppercase tracking-tighter">Desvincular Equipo</button>
             </div>
             <ChannelSelector onSelect={(ch) => setActiveChannel(ch)} />
-            
-            <div className="px-4">
-              <InstallSection />
-            </div>
          </div>
       </div>
     );
