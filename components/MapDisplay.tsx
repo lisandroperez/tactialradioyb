@@ -3,7 +3,6 @@ import React, { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { TeamMember } from '../types';
-import { Radio } from 'lucide-react';
 
 const TUCUMAN_CENTER = { lat: -26.8241, lng: -65.2226 };
 const TUCUMAN_BOUNDS: L.LatLngBoundsExpression = [
@@ -27,7 +26,7 @@ const MapController = ({ center }: { center: { lat: number; lng: number } | null
   useEffect(() => {
     const timer = setTimeout(() => {
       map.invalidateSize();
-    }, 500); // Aumentado para móviles lentos
+    }, 500); 
     return () => clearTimeout(timer);
   }, [map]);
 
