@@ -21,9 +21,8 @@
         overscroll-behavior-y: contain; 
         background-color: #0a0a0a;
         -webkit-tap-highlight-color: transparent;
-        overflow-y: auto !important; /* Habilitar scroll */
       }
-      #root { min-height: 100dvh; }
+      #root { height: 100dvh; }
     </style>
   <script type="importmap">
 {
@@ -40,7 +39,7 @@
 }
 </script>
 </head>
-  <body class="bg-gray-900 text-white select-none">
+  <body class="bg-gray-900 text-white overflow-hidden select-none">
     <div id="root"></div>
     <script>
       if ('serviceWorker' in navigator) {
