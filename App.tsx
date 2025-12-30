@@ -41,19 +41,15 @@ function App() {
   const [activeTab, setActiveTab] = useState<'team' | 'history'>('team');
   const [showMobileOverlay, setShowMobileOverlay] = useState(false);
 
-  // PWA Logic
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isIOS, setIsIOS] = useState(false);
-  const [isStandalone, setIsStandalone] = useState(false);
 
   const radioRef = useRef<RadioService | null>(null);
   const userLocationRef = useRef<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
     const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-    const standalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone;
     setIsIOS(isIosDevice);
-    setIsStandalone(standalone);
 
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
@@ -61,7 +57,7 @@ function App() {
     });
   }, []);
 
-  const handleInstall = async () => {
+  const handleInstallClick = async () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
@@ -207,27 +203,19 @@ function App() {
     setRadioHistory([]);
   };
 
-  const InstallSection = () => {
-    if (isStandalone) return null;
-    return (
-      <div className="mt-8 pt-6 border-t border-white/10 w-full animate-in fade-in zoom-in duration-500">
-        <button 
-          onClick={handleInstall}
-          className="w-full bg-blue-500 hover:bg-blue-400 text-white rounded-lg py-4 flex items-center justify-center gap-3 text-xs font-black uppercase transition-all active:scale-95 shadow-lg shadow-blue-950/20"
-        >
-          {deferredPrompt ? <Download size={18} /> : <HelpCircle size={18} />}
-          {deferredPrompt ? 'INSTALAR APLICACIÓN' : 'GUÍA DE INSTALACIÓN MÓVIL'}
-        </button>
-        <p className="text-[9px] text-gray-500 text-center mt-3 uppercase tracking-tighter">
-          Se recomienda instalar para mantener el GPS activo en segundo plano
-        </p>
-      </div>
-    );
-  };
+  const GlobalHelpButton = () => (
+    <button 
+      onClick={handleInstallClick}
+      className="w-full mt-4 bg-blue-600 hover:bg-blue-500 text-white rounded-lg py-4 flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg animate-pulse"
+    >
+      <Smartphone size={18} />
+      CONFIGURAR / INSTALAR APP
+    </button>
+  );
 
   if (!isNameSet) {
     return (
-      <div className="h-[100dvh] w-screen bg-black flex items-center justify-center p-6 font-mono overflow-y-auto">
+      <div className="min-h-[100dvh] w-screen bg-black flex items-center justify-center p-6 font-mono overflow-y-auto">
         <div className="w-full max-w-sm space-y-6 bg-gray-950 border border-orange-500/20 p-8 rounded shadow-2xl relative">
           <div className="absolute top-0 left-0 w-full h-1 bg-orange-600"></div>
           <div className="text-center space-y-2">
@@ -250,9 +238,8 @@ function App() {
             >
               <ShieldCheck size={20} /> ENTRAR EN SERVICIO
             </button>
+            <GlobalHelpButton />
           </div>
-          
-          <InstallSection />
         </div>
         <InstallModal isOpen={showInstallModal} onClose={() => setShowInstallModal(false)} isIOS={isIOS} />
       </div>
@@ -261,7 +248,7 @@ function App() {
 
   if (!activeChannel) {
     return (
-      <div className="h-[100dvh] w-screen bg-black flex items-center justify-center p-6 font-mono overflow-y-auto">
+      <div className="min-h-[100dvh] w-screen bg-black flex items-center justify-center p-6 font-mono overflow-y-auto">
          <div className="w-full max-w-md space-y-4 py-8">
             <div className="flex items-center justify-between mb-4 px-2">
                <div className="flex flex-col">
@@ -271,7 +258,9 @@ function App() {
                <button onClick={() => { localStorage.removeItem('user_callsign'); setIsNameSet(false); }} className="text-[9px] text-gray-500 hover:text-white uppercase tracking-tighter underline">Cerrar Sesión</button>
             </div>
             <ChannelSelector onSelect={(ch) => setActiveChannel(ch)} />
-            <InstallSection />
+            <div className="px-1">
+              <GlobalHelpButton />
+            </div>
          </div>
          <InstallModal isOpen={showInstallModal} onClose={() => setShowInstallModal(false)} isIOS={isIOS} />
       </div>
@@ -350,8 +339,8 @@ const InstallModal = ({ isOpen, onClose, isIOS }: { isOpen: boolean, onClose: ()
               <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center shrink-0 text-blue-400">
                 <Smartphone size={20} />
               </div>
-              <p className="text-xs text-gray-300 leading-relaxed">
-                Para que la radio funcione correctamente y el GPS no se apague, debes instalarla en tu pantalla de inicio.
+              <p className="text-xs text-gray-300 leading-relaxed font-mono">
+                Para que la radio funcione y el GPS NO SE APAGUE, debes instalarla en tu pantalla de inicio.
               </p>
             </div>
 
