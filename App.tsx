@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { MapDisplay } from './components/MapDisplay';
 import { RadioControl } from './components/RadioControl';
@@ -40,7 +39,6 @@ function App() {
   const [activeTab, setActiveTab] = useState<'team' | 'history'>('team');
   const [showMobileOverlay, setShowMobileOverlay] = useState(false);
 
-  // PWA Install Logic
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   const radioRef = useRef<RadioService | null>(null);
