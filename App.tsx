@@ -9,7 +9,7 @@ import { ChannelSelector } from './components/ChannelSelector';
 import { TeamMember, ConnectionState, RadioHistory, Channel } from './types';
 import { RadioService } from './services/radioService';
 import { supabase, getDeviceId } from './services/supabase';
-import { User, ShieldCheck, List, X, Hash, Download, Share, Smartphone, Info, HelpCircle } from 'lucide-react';
+import { User, ShieldCheck, List, X, Hash, Download, Share } from 'lucide-react';
 
 const DEVICE_ID = getDeviceId();
 
@@ -37,10 +37,10 @@ function App() {
   const [audioLevel, setAudioLevel] = useState(0);
   const [systemLog, setSystemLog] = useState<string>("ESPERANDO_GPS...");
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
-  const [showInstallModal, setShowInstallModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'team' | 'history'>('team');
   const [showMobileOverlay, setShowMobileOverlay] = useState(false);
 
+  // PWA Install Logic
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isIOS, setIsIOS] = useState(false);
 
@@ -48,26 +48,22 @@ function App() {
   const userLocationRef = useRef<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
+    // Detectar iOS
     const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-    setIsIOS(isIosDevice);
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone;
+    setIsIOS(isIosDevice && !isStandalone);
 
-    const handler = (e: any) => {
+    window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
-    };
-
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+    });
   }, []);
 
-  const handleInstallClick = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') setDeferredPrompt(null);
-    } else {
-      setShowInstallModal(true);
-    }
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') setDeferredPrompt(null);
   };
 
   useEffect(() => {
@@ -206,74 +202,78 @@ function App() {
     setRadioHistory([]);
   };
 
+  // Componente de Botón de Instalación Reutilizable
+  const InstallSection = () => (
+    <div className="space-y-3 pt-4 border-t border-white/5 mt-4">
+      {deferredPrompt && (
+        <button 
+          onClick={handleInstall}
+          className="w-full bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 rounded py-3 flex items-center justify-center gap-2 text-xs font-bold uppercase transition-all active:scale-95"
+        >
+          <Download size={14} /> INSTALAR APLICACIÓN (ANDROID/PC)
+        </button>
+      )}
+      
+      {isIOS && (
+        <div className="bg-white/5 rounded p-4 text-center space-y-2">
+          <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Instalación en iPhone (iOS)</p>
+          <div className="flex items-center justify-center gap-2 text-xs text-white">
+            <span>Toca</span> <Share size={16} className="text-blue-400" /> <span>y luego</span>
+            <span className="font-bold text-blue-400">"Añadir a pantalla de inicio"</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   if (!isNameSet) {
     return (
-      <div className="min-h-[100dvh] w-screen bg-black flex flex-col items-center justify-center p-6 font-mono overflow-y-auto">
-        <div className="w-full max-w-sm space-y-6 bg-gray-950 border border-orange-500/20 p-8 rounded shadow-2xl relative">
+      <div className="h-[100dvh] w-screen bg-black flex items-center justify-center p-6 font-mono">
+        <div className="w-full max-w-sm space-y-6 bg-gray-950 border border-orange-500/20 p-8 rounded shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-orange-600"></div>
           <div className="text-center space-y-2">
             <div className="w-16 h-16 bg-orange-500/10 rounded-full flex items-center justify-center mx-auto border border-orange-500/30">
               <User className="text-orange-500" size={32} />
             </div>
-            <h1 className="text-orange-500 font-black tracking-widest text-xl uppercase">Radio Tac V3</h1>
-            <p className="text-[10px] text-gray-500">IDENTIFICACIÓN DE UNIDAD</p>
+            <h1 className="text-orange-500 font-black tracking-widest text-xl">RADIO_TAC_V3</h1>
+            <p className="text-[10px] text-gray-500">AUTENTICACIÓN DE UNIDAD REQUERIDA</p>
           </div>
-          <div className="space-y-4">
-            <input 
-              autoFocus type="text" value={tempName} onChange={(e) => setTempName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && tempName.trim().length >= 3 && (localStorage.setItem('user_callsign', tempName.trim().toUpperCase()), setUserName(tempName.trim().toUpperCase()), setIsNameSet(true))} 
-              placeholder="CALLSIGN (EJ: ALPHA-1)"
-              className="w-full bg-black border border-gray-800 p-4 text-orange-500 focus:border-orange-500 outline-none text-center font-bold tracking-widest uppercase"
-            />
-            <button 
-              onClick={() => { if(tempName.trim().length >= 3) { localStorage.setItem('user_callsign', tempName.trim().toUpperCase()); setUserName(tempName.trim().toUpperCase()); setIsNameSet(true); }}}
-              className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black py-4 flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-orange-900/20"
-            >
-              <ShieldCheck size={20} /> ENTRAR EN SERVICIO
-            </button>
-            
-            {/* BOTÓN DE INSTALACIÓN INYECTADO DIRECTAMENTE */}
-            <button 
-              onClick={handleInstallClick}
-              className="w-full mt-4 bg-blue-600 hover:bg-blue-500 text-white rounded-lg py-4 flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg animate-pulse"
-            >
-              <Smartphone size={18} />
-              CONFIGURAR / INSTALAR APP
-            </button>
-          </div>
-          <div className="text-center">
-            <span className="text-[8px] text-gray-700 font-mono uppercase">Version 3.1 Stable</span>
-          </div>
+          <input 
+            autoFocus type="text" value={tempName} onChange={(e) => setTempName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && tempName.trim().length >= 3 && (localStorage.setItem('user_callsign', tempName.trim().toUpperCase()), setUserName(tempName.trim().toUpperCase()), setIsNameSet(true))} 
+            placeholder="INDICATIVO (CALLSIGN)"
+            className="w-full bg-black border border-gray-800 p-4 text-orange-500 focus:border-orange-500 outline-none text-center font-bold tracking-widest uppercase"
+          />
+          <button 
+            onClick={() => { if(tempName.trim().length >= 3) { localStorage.setItem('user_callsign', tempName.trim().toUpperCase()); setUserName(tempName.trim().toUpperCase()); setIsNameSet(true); }}}
+            className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black py-4 flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-orange-900/20"
+          >
+            <ShieldCheck size={20} /> ENTRAR EN SERVICIO
+          </button>
+          
+          <InstallSection />
         </div>
-        <InstallModal isOpen={showInstallModal} onClose={() => setShowInstallModal(false)} isIOS={isIOS} />
       </div>
     );
   }
 
   if (!activeChannel) {
     return (
-      <div className="min-h-[100dvh] w-screen bg-black flex flex-col items-center justify-center p-6 font-mono overflow-y-auto">
-         <div className="w-full max-w-md space-y-4 py-8">
+      <div className="h-[100dvh] w-screen bg-black flex items-center justify-center p-6 font-mono">
+         <div className="w-full max-w-md space-y-4">
             <div className="flex items-center justify-between mb-4 px-2">
                <div className="flex flex-col">
-                  <span className="text-[9px] text-orange-500/50 uppercase tracking-widest">Unidad Activa</span>
+                  <span className="text-[9px] text-orange-500/50 uppercase tracking-widest">Operador</span>
                   <span className="text-sm font-bold text-white uppercase">{userName}</span>
                </div>
-               <button onClick={() => { localStorage.removeItem('user_callsign'); setIsNameSet(false); }} className="text-[9px] text-gray-500 hover:text-white uppercase tracking-tighter underline">Cerrar Sesión</button>
+               <button onClick={() => { localStorage.removeItem('user_callsign'); setIsNameSet(false); }} className="text-[9px] text-gray-600 hover:text-white uppercase tracking-tighter">Desvincular Equipo</button>
             </div>
             <ChannelSelector onSelect={(ch) => setActiveChannel(ch)} />
             
-            <div className="px-1 mt-6">
-              <button 
-                onClick={handleInstallClick}
-                className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-lg py-4 flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg animate-pulse"
-              >
-                <Smartphone size={18} />
-                CONFIGURAR / INSTALAR APP
-              </button>
+            <div className="px-4">
+              <InstallSection />
             </div>
          </div>
-         <InstallModal isOpen={showInstallModal} onClose={() => setShowInstallModal(false)} isIOS={isIOS} />
       </div>
     );
   }
@@ -290,11 +290,11 @@ function App() {
               </span>
             </div>
             <div className="bg-black/80 backdrop-blur px-3 py-1 border border-emerald-500/30 rounded shadow-lg">
-              <span className="text-[9px] text-emerald-500/50 block font-mono uppercase tracking-tighter">Status</span>
+              <span className="text-[9px] text-emerald-500/50 block font-mono">SISTEMA</span>
               <span className="text-[10px] font-bold text-emerald-500 font-mono uppercase">{systemLog}</span>
             </div>
          </div>
-         <button onClick={() => setShowMobileOverlay(!showMobileOverlay)} className="md:hidden absolute top-4 right-4 z-[1000] w-10 h-10 bg-black/80 border border-white/20 rounded flex items-center justify-center text-white shadow-xl">
+         <button onClick={() => setShowMobileOverlay(!showMobileOverlay)} className="md:hidden absolute top-4 right-4 z-[1000] w-10 h-10 bg-black/80 border border-white/20 rounded flex items-center justify-center text-white">
            {showMobileOverlay ? <X size={20} /> : <List size={20} />}
          </button>
          <div className="hidden md:flex flex-col absolute bottom-6 left-6 w-80 bg-black/90 backdrop-blur rounded border border-white/10 shadow-2xl h-[450px] overflow-hidden z-[500]">
@@ -310,10 +310,10 @@ function App() {
            <div className="md:hidden absolute inset-0 z-[1001] bg-gray-950 flex flex-col animate-in slide-in-from-bottom duration-300">
               <div className="flex justify-between items-center p-4 border-b border-white/10 bg-black">
                 <div className="flex gap-6">
-                  <button onClick={() => setActiveTab('team')} className={`font-bold uppercase text-[10px] tracking-widest ${activeTab === 'team' ? 'text-orange-500' : 'text-gray-500'}`}>Unidades</button>
-                  <button onClick={() => setActiveTab('history')} className={`font-bold uppercase text-[10px] tracking-widest ${activeTab === 'history' ? 'text-orange-500' : 'text-gray-500'}`}>Historial</button>
+                  <button onClick={() => setActiveTab('team')} className={`font-bold uppercase text-[10px] tracking-widest ${activeTab === 'team' ? 'text-orange-500' : 'text-gray-500'}`}>Panel Unidades</button>
+                  <button onClick={() => setActiveTab('history')} className={`font-bold uppercase text-[10px] tracking-widest ${activeTab === 'history' ? 'text-orange-500' : 'text-gray-500'}`}>Log Historial</button>
                 </div>
-                <button onClick={() => setShowMobileOverlay(false)} className="text-gray-500 p-1"><X size={24} /></button>
+                <button onClick={() => setShowMobileOverlay(false)} className="text-gray-500"><X size={24} /></button>
               </div>
               <div className="flex-1 overflow-hidden">
                 {activeTab === 'team' ? <TeamList members={teamMembers} /> : <HistoryPanel history={radioHistory} />}
@@ -333,59 +333,5 @@ function App() {
     </div>
   );
 }
-
-const InstallModal = ({ isOpen, onClose, isIOS }: { isOpen: boolean, onClose: () => void, isIOS: boolean }) => {
-  if (!isOpen) return null;
-  return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/95 p-6 backdrop-blur-md">
-      <div className="bg-gray-900 border border-white/10 w-full max-w-sm rounded-xl overflow-hidden shadow-2xl">
-        <div className="p-6 space-y-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-black text-white uppercase tracking-widest">Guía de Instalación</h2>
-            <button onClick={onClose} className="text-gray-500 hover:text-white p-2"><X size={24} /></button>
-          </div>
-          
-          <div className="space-y-6">
-            <div className="flex gap-4">
-              <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center shrink-0 text-blue-400">
-                <Smartphone size={20} />
-              </div>
-              <p className="text-xs text-gray-300 leading-relaxed font-mono">
-                Para que la radio funcione y el GPS NO SE APAGUE, debes instalarla en tu pantalla de inicio.
-              </p>
-            </div>
-
-            {isIOS ? (
-              <div className="space-y-4 bg-blue-500/10 p-4 rounded-lg border border-blue-500/20">
-                <p className="text-xs font-bold text-blue-400 uppercase">iPhone / iPad (Safari):</p>
-                <ol className="text-xs text-gray-300 space-y-4 list-decimal pl-4">
-                  <li>Toca el botón <span className="inline-flex items-center gap-1 bg-white/10 px-1 rounded border border-white/10"><Share size={12} /> Compartir</span> abajo al centro.</li>
-                  <li>Busca y toca <span className="font-bold text-white">"Añadir a pantalla de inicio"</span>.</li>
-                  <li>Confirma tocando <span className="font-bold text-blue-400">"Añadir"</span> arriba a la derecha.</li>
-                </ol>
-              </div>
-            ) : (
-              <div className="space-y-4 bg-orange-500/10 p-4 rounded-lg border border-orange-500/20">
-                <p className="text-xs font-bold text-orange-500 uppercase">Android (Chrome):</p>
-                <ol className="text-xs text-gray-300 space-y-4 list-decimal pl-4">
-                  <li>Toca los <span className="font-bold text-white">3 puntos</span> arriba a la derecha.</li>
-                  <li>Selecciona <span className="font-bold text-white">"Instalar aplicación"</span> o "Agregar a pantalla de inicio".</li>
-                  <li>Acepta el cuadro de confirmación que aparecerá.</li>
-                </ol>
-              </div>
-            )}
-          </div>
-
-          <button 
-            onClick={onClose}
-            className="w-full bg-white text-black font-black py-4 rounded-lg uppercase tracking-widest text-xs transition-transform active:scale-95 shadow-lg"
-          >
-            ENTENDIDO
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 export default App;
