@@ -9,7 +9,7 @@ import { ChannelSelector } from './components/ChannelSelector';
 import { TeamMember, ConnectionState, RadioHistory, Channel } from './types';
 import { RadioService } from './services/radioService';
 import { supabase, getDeviceId } from './services/supabase';
-import { User, ShieldCheck, List, X, Hash, Download, Share, Smartphone, Info } from 'lucide-react';
+import { User, ShieldCheck, List, X, Hash, Download, Share, Smartphone, Info, HelpCircle } from 'lucide-react';
 
 const DEVICE_ID = getDeviceId();
 
@@ -50,7 +50,6 @@ function App() {
   const userLocationRef = useRef<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
-    // Detectar entorno
     const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
     const standalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone;
     setIsIOS(isIosDevice);
@@ -211,42 +210,47 @@ function App() {
   const InstallSection = () => {
     if (isStandalone) return null;
     return (
-      <div className="mt-6 pt-4 border-t border-white/5 w-full">
+      <div className="mt-8 pt-6 border-t border-white/10 w-full animate-in fade-in zoom-in duration-500">
         <button 
           onClick={handleInstall}
-          className="w-full bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 rounded-lg py-4 flex items-center justify-center gap-3 text-xs font-black uppercase transition-all active:scale-95"
+          className="w-full bg-blue-500 hover:bg-blue-400 text-white rounded-lg py-4 flex items-center justify-center gap-3 text-xs font-black uppercase transition-all active:scale-95 shadow-lg shadow-blue-950/20"
         >
-          {deferredPrompt ? <Download size={18} /> : <Smartphone size={18} />}
-          {deferredPrompt ? 'INSTALAR APLICACIÓN' : '¿CÓMO INSTALAR EN MÓVIL?'}
+          {deferredPrompt ? <Download size={18} /> : <HelpCircle size={18} />}
+          {deferredPrompt ? 'INSTALAR APLICACIÓN' : 'GUÍA DE INSTALACIÓN MÓVIL'}
         </button>
+        <p className="text-[9px] text-gray-500 text-center mt-3 uppercase tracking-tighter">
+          Se recomienda instalar para mantener el GPS activo en segundo plano
+        </p>
       </div>
     );
   };
 
   if (!isNameSet) {
     return (
-      <div className="h-[100dvh] w-screen bg-black flex items-center justify-center p-6 font-mono">
-        <div className="w-full max-w-sm space-y-6 bg-gray-950 border border-orange-500/20 p-8 rounded shadow-2xl relative overflow-hidden">
+      <div className="h-[100dvh] w-screen bg-black flex items-center justify-center p-6 font-mono overflow-y-auto">
+        <div className="w-full max-w-sm space-y-6 bg-gray-950 border border-orange-500/20 p-8 rounded shadow-2xl relative">
           <div className="absolute top-0 left-0 w-full h-1 bg-orange-600"></div>
           <div className="text-center space-y-2">
             <div className="w-16 h-16 bg-orange-500/10 rounded-full flex items-center justify-center mx-auto border border-orange-500/30">
               <User className="text-orange-500" size={32} />
             </div>
             <h1 className="text-orange-500 font-black tracking-widest text-xl uppercase">Radio Tac V3</h1>
-            <p className="text-[10px] text-gray-500">AUTENTICACIÓN DE UNIDAD REQUERIDA</p>
+            <p className="text-[10px] text-gray-500">IDENTIFICACIÓN DE UNIDAD</p>
           </div>
-          <input 
-            autoFocus type="text" value={tempName} onChange={(e) => setTempName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && tempName.trim().length >= 3 && (localStorage.setItem('user_callsign', tempName.trim().toUpperCase()), setUserName(tempName.trim().toUpperCase()), setIsNameSet(true))} 
-            placeholder="INDICATIVO (CALLSIGN)"
-            className="w-full bg-black border border-gray-800 p-4 text-orange-500 focus:border-orange-500 outline-none text-center font-bold tracking-widest uppercase"
-          />
-          <button 
-            onClick={() => { if(tempName.trim().length >= 3) { localStorage.setItem('user_callsign', tempName.trim().toUpperCase()); setUserName(tempName.trim().toUpperCase()); setIsNameSet(true); }}}
-            className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black py-4 flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-orange-900/20"
-          >
-            <ShieldCheck size={20} /> ENTRAR EN SERVICIO
-          </button>
+          <div className="space-y-4">
+            <input 
+              autoFocus type="text" value={tempName} onChange={(e) => setTempName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && tempName.trim().length >= 3 && (localStorage.setItem('user_callsign', tempName.trim().toUpperCase()), setUserName(tempName.trim().toUpperCase()), setIsNameSet(true))} 
+              placeholder="CALLSIGN (EJ: ALPHA-1)"
+              className="w-full bg-black border border-gray-800 p-4 text-orange-500 focus:border-orange-500 outline-none text-center font-bold tracking-widest uppercase"
+            />
+            <button 
+              onClick={() => { if(tempName.trim().length >= 3) { localStorage.setItem('user_callsign', tempName.trim().toUpperCase()); setUserName(tempName.trim().toUpperCase()); setIsNameSet(true); }}}
+              className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black py-4 flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-orange-900/20"
+            >
+              <ShieldCheck size={20} /> ENTRAR EN SERVICIO
+            </button>
+          </div>
           
           <InstallSection />
         </div>
@@ -257,14 +261,14 @@ function App() {
 
   if (!activeChannel) {
     return (
-      <div className="h-[100dvh] w-screen bg-black flex items-center justify-center p-6 font-mono">
-         <div className="w-full max-w-md space-y-4">
+      <div className="h-[100dvh] w-screen bg-black flex items-center justify-center p-6 font-mono overflow-y-auto">
+         <div className="w-full max-w-md space-y-4 py-8">
             <div className="flex items-center justify-between mb-4 px-2">
                <div className="flex flex-col">
-                  <span className="text-[9px] text-orange-500/50 uppercase tracking-widest">Unidad</span>
+                  <span className="text-[9px] text-orange-500/50 uppercase tracking-widest">Unidad Activa</span>
                   <span className="text-sm font-bold text-white uppercase">{userName}</span>
                </div>
-               <button onClick={() => { localStorage.removeItem('user_callsign'); setIsNameSet(false); }} className="text-[9px] text-gray-600 hover:text-white uppercase tracking-tighter underline">Cambiar Unidad</button>
+               <button onClick={() => { localStorage.removeItem('user_callsign'); setIsNameSet(false); }} className="text-[9px] text-gray-500 hover:text-white uppercase tracking-tighter underline">Cerrar Sesión</button>
             </div>
             <ChannelSelector onSelect={(ch) => setActiveChannel(ch)} />
             <InstallSection />
@@ -330,44 +334,43 @@ function App() {
   );
 }
 
-// Modal de ayuda para instalación
 const InstallModal = ({ isOpen, onClose, isIOS }: { isOpen: boolean, onClose: () => void, isIOS: boolean }) => {
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/90 p-6 backdrop-blur-md">
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/95 p-6 backdrop-blur-md">
       <div className="bg-gray-900 border border-white/10 w-full max-w-sm rounded-xl overflow-hidden shadow-2xl">
         <div className="p-6 space-y-6">
           <div className="flex justify-between items-center">
-            <h2 className="text-lg font-black text-white uppercase tracking-widest">Instalar Radio</h2>
-            <button onClick={onClose} className="text-gray-500 hover:text-white"><X size={24} /></button>
+            <h2 className="text-lg font-black text-white uppercase tracking-widest">Guía de Instalación</h2>
+            <button onClick={onClose} className="text-gray-500 hover:text-white p-2"><X size={24} /></button>
           </div>
           
           <div className="space-y-6">
             <div className="flex gap-4">
-              <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center shrink-0 text-blue-400">
-                <Info size={20} />
+              <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center shrink-0 text-blue-400">
+                <Smartphone size={20} />
               </div>
-              <p className="text-xs text-gray-400 leading-relaxed">
-                Para usar la radio como una aplicación real y evitar que el GPS se apague, debes agregarla a tu pantalla de inicio.
+              <p className="text-xs text-gray-300 leading-relaxed">
+                Para que la radio funcione correctamente y el GPS no se apague, debes instalarla en tu pantalla de inicio.
               </p>
             </div>
 
             {isIOS ? (
-              <div className="space-y-4 bg-white/5 p-4 rounded-lg border border-white/5">
-                <p className="text-xs font-bold text-blue-400 uppercase">Instrucciones iPhone / iPad:</p>
-                <ol className="text-xs text-gray-300 space-y-3 list-decimal pl-4">
-                  <li>Toca el botón <span className="inline-flex items-center gap-1 bg-white/10 px-1 rounded"><Share size={12} /> Compartir</span> abajo.</li>
-                  <li>Desliza hacia arriba y busca <span className="font-bold text-white">"Añadir a pantalla de inicio"</span>.</li>
-                  <li>Toca <span className="font-bold text-blue-400">"Añadir"</span> en la esquina superior derecha.</li>
+              <div className="space-y-4 bg-blue-500/10 p-4 rounded-lg border border-blue-500/20">
+                <p className="text-xs font-bold text-blue-400 uppercase">iPhone / iPad (Safari):</p>
+                <ol className="text-xs text-gray-300 space-y-4 list-decimal pl-4">
+                  <li>Toca el botón <span className="inline-flex items-center gap-1 bg-white/10 px-1 rounded border border-white/10"><Share size={12} /> Compartir</span> abajo al centro.</li>
+                  <li>Busca y toca <span className="font-bold text-white">"Añadir a pantalla de inicio"</span>.</li>
+                  <li>Confirma tocando <span className="font-bold text-blue-400">"Añadir"</span> arriba a la derecha.</li>
                 </ol>
               </div>
             ) : (
-              <div className="space-y-4 bg-white/5 p-4 rounded-lg border border-white/5">
-                <p className="text-xs font-bold text-blue-400 uppercase">Instrucciones Android / Chrome:</p>
-                <ol className="text-xs text-gray-300 space-y-3 list-decimal pl-4">
-                  <li>Toca los <span className="font-bold text-white">3 puntos</span> verticales del navegador (arriba a la derecha).</li>
+              <div className="space-y-4 bg-orange-500/10 p-4 rounded-lg border border-orange-500/20">
+                <p className="text-xs font-bold text-orange-500 uppercase">Android (Chrome):</p>
+                <ol className="text-xs text-gray-300 space-y-4 list-decimal pl-4">
+                  <li>Toca los <span className="font-bold text-white">3 puntos</span> arriba a la derecha.</li>
                   <li>Selecciona <span className="font-bold text-white">"Instalar aplicación"</span> o "Agregar a pantalla de inicio".</li>
-                  <li>Confirma la instalación.</li>
+                  <li>Acepta el cuadro de confirmación que aparecerá.</li>
                 </ol>
               </div>
             )}
@@ -375,7 +378,7 @@ const InstallModal = ({ isOpen, onClose, isIOS }: { isOpen: boolean, onClose: ()
 
           <button 
             onClick={onClose}
-            className="w-full bg-white text-black font-black py-4 rounded-lg uppercase tracking-widest text-xs transition-transform active:scale-95"
+            className="w-full bg-white text-black font-black py-4 rounded-lg uppercase tracking-widest text-xs transition-transform active:scale-95 shadow-lg"
           >
             ENTENDIDO
           </button>
