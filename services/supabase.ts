@@ -1,6 +1,13 @@
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
+/**
+ * NOTA DE SEGURIDAD:
+ * Si ves alertas de "RLS Disabled" en Supabase, es porque las tablas no tienen
+ * políticas de seguridad activas. Revisa el archivo 'supabase_setup.sql' adjunto
+ * en este proyecto para ver los comandos necesarios para corregirlo.
+ */
+
 const supabaseUrl = 'https://egohzqqondgbuijrybhy.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVnb2h6cXFvbmRnYnVpanJ5Ymh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3NjA3ODUsImV4cCI6MjA4MjMzNjc4NX0.W_1Lr0sF_VOcEdH89nKNaUTOxdUODNvJV6dYjpyVlu0';
 
