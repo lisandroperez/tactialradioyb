@@ -29,6 +29,7 @@ function App() {
   
   const [connectionState, setConnectionState] = useState<ConnectionState>(ConnectionState.DISCONNECTED);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationAccuracy, setLocationAccuracy] = useState<number>(0);
   const [teamMembersRaw, setTeamMembersRaw] = useState<TeamMember[]>([]);
   const [radioHistory, setRadioHistory] = useState<RadioHistory[]>([]);
   const [isTalking, setIsTalking] = useState(false);
@@ -80,18 +81,15 @@ function App() {
     }));
   }, [teamMembersRaw, userLocation]);
 
-  // Sincronización Estricta por Canal
   useEffect(() => {
     if (!activeChannel || !isNameSet) return;
 
     const fetchData = async () => {
-      // Limpiar historial previo antes de cargar el nuevo canal
       setRadioHistory([]);
       setTeamMembersRaw([]);
 
       const yesterday = new Date(Date.now() - 86400000).toISOString();
       
-      // 1. Obtener Unidades en el canal
       const { data: members } = await supabase
         .from('locations')
         .select('*')
@@ -99,7 +97,6 @@ function App() {
         .gt('last_seen', new Date(Date.now() - 3600000).toISOString()); 
       if (members) setTeamMembersRaw(members.filter(m => m.id !== DEVICE_ID));
 
-      // 2. Obtener Historial DISCRIMINADO por el canal activo
       const { data: history } = await supabase
         .from('radio_history')
         .select('*')
@@ -111,7 +108,6 @@ function App() {
 
     fetchData();
 
-    // 3. Suscripción en tiempo real filtrada por canal
     const channel = supabase.channel(`sync-${activeChannel.id}`)
       .on('postgres_changes', { 
         event: '*', 
@@ -148,15 +144,30 @@ function App() {
     const watchId = navigator.geolocation.watchPosition(async (pos) => {
       const { latitude, longitude, accuracy } = pos.coords;
       setUserLocation({ lat: latitude, lng: longitude });
-      setSystemLog(`GPS_OK (${accuracy.toFixed(0)}m)`);
+      setLocationAccuracy(accuracy);
+      
+      if (accuracy > 200) {
+        setSystemLog(`UBICACIÓN_IP (±${accuracy.toFixed(0)}m)`);
+      } else {
+        setSystemLog(`GPS_FIX (±${accuracy.toFixed(0)}m)`);
+      }
       
       await supabase.from('locations').upsert({
-        id: DEVICE_ID, name: userName, lat: latitude, lng: longitude, role: 'Móvil', 
+        id: DEVICE_ID, 
+        name: userName, 
+        lat: latitude, 
+        lng: longitude, 
+        accuracy: Math.round(accuracy), // Guardamos precisión
+        role: accuracy > 200 ? 'Unidad PC' : 'Unidad Móvil', 
         status: isTalking ? 'talking' : 'online', 
         last_seen: new Date().toISOString(),
         channel_id: activeChannel.id
       });
-    }, (err) => setSystemLog(`GPS_ERR: ${err.code}`), { enableHighAccuracy: true });
+    }, (err) => setSystemLog(`GPS_ERR: ${err.code}`), { 
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 5000 // Permitimos 5 seg de cache para estabilidad en móviles
+    });
 
     return () => navigator.geolocation.clearWatch(watchId);
   }, [isTalking, activeChannel, isNameSet, userName]);
@@ -271,7 +282,7 @@ function App() {
   return (
     <div className="flex flex-col md:flex-row h-[100dvh] w-screen bg-black overflow-hidden relative text-white font-sans">
       <div className="flex-1 relative border-b md:border-b-0 md:border-r border-white/10 overflow-hidden">
-         <MapDisplay userLocation={userLocation} teamMembers={teamMembers} />
+         <MapDisplay userLocation={userLocation} teamMembers={teamMembers} accuracy={locationAccuracy} />
          <div className="absolute top-4 left-4 z-[1000] flex flex-col gap-2 pointer-events-none">
             <div className="bg-black/80 backdrop-blur px-3 py-1 border border-orange-500/30 rounded shadow-lg">
               <span className="text-[9px] text-orange-500/50 block font-mono">FREQ</span>
@@ -279,9 +290,9 @@ function App() {
                 <Hash size={10} /> {activeChannel.name}
               </span>
             </div>
-            <div className="bg-black/80 backdrop-blur px-3 py-1 border border-emerald-500/30 rounded shadow-lg">
-              <span className="text-[9px] text-emerald-500/50 block font-mono">SISTEMA</span>
-              <span className="text-[10px] font-bold text-emerald-500 font-mono uppercase">{systemLog}</span>
+            <div className={`bg-black/80 backdrop-blur px-3 py-1 border rounded shadow-lg ${locationAccuracy > 200 ? 'border-red-500/50' : 'border-emerald-500/30'}`}>
+              <span className={`text-[9px] block font-mono ${locationAccuracy > 200 ? 'text-red-500/70' : 'text-emerald-500/50'}`}>SISTEMA</span>
+              <span className={`text-[10px] font-bold font-mono uppercase ${locationAccuracy > 200 ? 'text-red-500' : 'text-emerald-500'}`}>{systemLog}</span>
             </div>
          </div>
          <button onClick={() => setShowMobileOverlay(!showMobileOverlay)} className="md:hidden absolute top-4 right-4 z-[1000] w-10 h-10 bg-black/80 border border-white/20 rounded flex items-center justify-center text-white">
