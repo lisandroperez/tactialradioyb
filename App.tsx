@@ -49,7 +49,6 @@ function App() {
 
   const radioRef = useRef<RadioService | null>(null);
   
-  // El locationRef debe apuntar a la ubicación actual efectiva (manual o auto)
   const effectiveLocation = isManualMode ? manualLocation : userLocation;
   const userLocationRef = useRef<{ lat: number; lng: number } | null>(null);
 
@@ -89,7 +88,6 @@ function App() {
     }));
   }, [teamMembersRaw, effectiveLocation]);
 
-  // Sincronización de base de datos
   useEffect(() => {
     if (!activeChannel || !isNameSet) return;
 
@@ -147,7 +145,6 @@ function App() {
     return () => { supabase.removeChannel(channel); };
   }, [activeChannel, isNameSet]);
 
-  // Manejo de ubicación GPS automática
   useEffect(() => {
     if (!activeChannel || !isNameSet || !navigator.geolocation || isManualMode) return;
     
@@ -157,9 +154,9 @@ function App() {
       setLocationAccuracy(accuracy);
       
       if (accuracy > 200) {
-        setSystemLog(`UBICACIÓN_IP (±${accuracy.toFixed(0)}m)`);
+        setSystemLog(`GPS_ESTIMADO (±${accuracy.toFixed(0)}m)`);
       } else {
-        setSystemLog(`GPS_FIX (±${accuracy.toFixed(0)}m)`);
+        setSystemLog(`GPS_FIABLE (±${accuracy.toFixed(0)}m)`);
       }
       
       await supabase.from('locations').upsert({
@@ -182,13 +179,12 @@ function App() {
     return () => navigator.geolocation.clearWatch(watchId);
   }, [isTalking, activeChannel, isNameSet, userName, isManualMode]);
 
-  // Actualización manual de ubicación
   const handleMapClick = async (lat: number, lng: number) => {
     if (!isManualMode || !activeChannel) return;
     
     setManualLocation({ lat, lng });
-    setLocationAccuracy(0); // Precisión manual es "perfecta"
-    setSystemLog("UBICACIÓN_CORREGIDA_MANUAL");
+    setLocationAccuracy(0);
+    setSystemLog("UBICACIÓN_MANUAL_FIJADA");
 
     await supabase.from('locations').upsert({
       id: DEVICE_ID, 
@@ -208,7 +204,6 @@ function App() {
         setManualLocation(userLocation);
     }
     setIsManualMode(!isManualMode);
-    setSystemLog(!isManualMode ? "MODO_MANUAL_ACTIVO" : "VOLVIENDO_A_GPS");
   };
 
   const handleConnect = useCallback(() => {
@@ -273,7 +268,6 @@ function App() {
               <User className="text-orange-500" size={32} />
             </div>
             <h1 className="text-orange-500 font-black tracking-widest text-xl">RADIO_TAC_V3</h1>
-            <p className="text-[10px] text-gray-500">AUTENTICACIÓN DE UNIDAD REQUERIDA</p>
           </div>
           <input 
             autoFocus type="text" value={tempName} onChange={(e) => setTempName(e.target.value)}
@@ -313,8 +307,8 @@ function App() {
            onMapClick={handleMapClick}
          />
          
-         {/* Overlays de Mapa */}
-         <div className="absolute top-4 left-4 z-[1000] flex flex-col gap-2 pointer-events-none">
+         {/* Bloque de Estado Superior Izquierda */}
+         <div className="absolute top-4 left-4 z-[2000] flex flex-col gap-2 pointer-events-none">
             <div className="bg-black/80 backdrop-blur px-3 py-1 border border-orange-500/30 rounded shadow-lg">
               <span className="text-[9px] text-orange-500/50 block font-mono">FREQ</span>
               <span className="text-xs font-bold text-orange-500 font-mono flex items-center gap-1 uppercase">
@@ -324,25 +318,37 @@ function App() {
             <div className={`bg-black/80 backdrop-blur px-3 py-1 border rounded shadow-lg ${isManualMode ? 'border-orange-500' : locationAccuracy > 200 ? 'border-red-500/50' : 'border-emerald-500/30'}`}>
               <span className={`text-[9px] block font-mono ${isManualMode ? 'text-orange-500' : locationAccuracy > 200 ? 'text-red-500/70' : 'text-emerald-500/50'}`}>SISTEMA</span>
               <span className={`text-[10px] font-bold font-mono uppercase ${isManualMode ? 'text-orange-500' : locationAccuracy > 200 ? 'text-red-500' : 'text-emerald-500'}`}>
-                {isManualMode ? 'CORRECCIÓN_MANUAL' : systemLog}
+                {isManualMode ? 'MODO_MANUAL_OK' : systemLog}
               </span>
+            </div>
+
+            {/* BOTÓN DE CORRECCIÓN MANUAL (Integrado en el stack de estado) */}
+            <div className="pointer-events-auto mt-2">
+              <button 
+                onClick={toggleManualMode}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 shadow-2xl transition-all active:scale-95 ${isManualMode ? 'bg-orange-600 border-orange-400 text-white animate-pulse' : 'bg-black/90 border-orange-500/50 text-orange-500 hover:bg-orange-950'}`}
+              >
+                {isManualMode ? <Crosshair size={18} /> : <MapPin size={18} />}
+                <span className="text-[10px] font-black uppercase tracking-widest">
+                  {isManualMode ? "CANCELAR_MANUAL" : "CORREGIR_POSICIÓN"}
+                </span>
+              </button>
+              {isManualMode && (
+                <div className="mt-2 text-[8px] bg-black/90 text-white p-2 rounded border border-orange-500/30 font-mono animate-bounce uppercase">
+                  Haga click en el mapa para marcar su posición real
+                </div>
+              )}
             </div>
          </div>
 
-         {/* Controles de Mapa */}
-         <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
-            <button 
-              onClick={toggleManualMode}
-              className={`w-10 h-10 rounded shadow-lg flex items-center justify-center transition-all border ${isManualMode ? 'bg-orange-600 border-orange-400 text-white animate-pulse' : 'bg-black/80 border-white/20 text-gray-400 hover:text-white'}`}
-              title={isManualMode ? "Desactivar Corrección Manual" : "Activar Corrección Manual"}
-            >
-              {isManualMode ? <Crosshair size={20} /> : <MapPin size={20} />}
-            </button>
+         {/* Controles de Vista Móvil */}
+         <div className="absolute top-4 right-4 z-[2000]">
             <button onClick={() => setShowMobileOverlay(!showMobileOverlay)} className="md:hidden w-10 h-10 bg-black/80 border border-white/20 rounded flex items-center justify-center text-white">
               {showMobileOverlay ? <X size={20} /> : <List size={20} />}
             </button>
          </div>
 
+         {/* Paneles laterales flotantes */}
          <div className="hidden md:flex flex-col absolute bottom-6 left-6 w-80 bg-black/90 backdrop-blur rounded border border-white/10 shadow-2xl h-[450px] overflow-hidden z-[500]">
             <div className="flex border-b border-white/10 bg-white/5">
               <button onClick={() => setActiveTab('team')} className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest transition-colors ${activeTab === 'team' ? 'text-orange-500 border-b-2 border-orange-500 bg-orange-500/5' : 'text-gray-500'}`}>Unidades</button>
@@ -354,7 +360,7 @@ function App() {
          </div>
 
          {showMobileOverlay && (
-           <div className="md:hidden absolute inset-0 z-[1001] bg-gray-950 flex flex-col animate-in slide-in-from-bottom duration-300">
+           <div className="md:hidden absolute inset-0 z-[2001] bg-gray-950 flex flex-col animate-in slide-in-from-bottom duration-300">
               <div className="flex justify-between items-center p-4 border-b border-white/10 bg-black">
                 <div className="flex gap-6">
                   <button onClick={() => setActiveTab('team')} className={`font-bold uppercase text-[10px] tracking-widest ${activeTab === 'team' ? 'text-orange-500' : 'text-gray-500'}`}>Panel Unidades</button>
