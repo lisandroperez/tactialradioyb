@@ -8,7 +8,7 @@ import { ChannelSelector } from './components/ChannelSelector';
 import { TeamMember, ConnectionState, RadioHistory, Channel } from './types';
 import { RadioService } from './services/radioService';
 import { supabase, getDeviceId } from './services/supabase';
-import { User, ShieldCheck, List, X, Hash, Download } from 'lucide-react';
+import { User, ShieldCheck, List, X, Hash, Download, MapPin, Crosshair } from 'lucide-react';
 
 const DEVICE_ID = getDeviceId();
 
@@ -28,8 +28,13 @@ function App() {
   const [tempName, setTempName] = useState('');
   
   const [connectionState, setConnectionState] = useState<ConnectionState>(ConnectionState.DISCONNECTED);
+  
+  // Ubicación
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationAccuracy, setLocationAccuracy] = useState<number>(0);
+  const [isManualMode, setIsManualMode] = useState<boolean>(false);
+  const [manualLocation, setManualLocation] = useState<{ lat: number; lng: number } | null>(null);
+
   const [teamMembersRaw, setTeamMembersRaw] = useState<TeamMember[]>([]);
   const [radioHistory, setRadioHistory] = useState<RadioHistory[]>([]);
   const [isTalking, setIsTalking] = useState(false);
@@ -43,6 +48,9 @@ function App() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   const radioRef = useRef<RadioService | null>(null);
+  
+  // El locationRef debe apuntar a la ubicación actual efectiva (manual o auto)
+  const effectiveLocation = isManualMode ? manualLocation : userLocation;
   const userLocationRef = useRef<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
@@ -60,8 +68,8 @@ function App() {
   };
 
   useEffect(() => {
-    userLocationRef.current = userLocation;
-  }, [userLocation]);
+    userLocationRef.current = effectiveLocation;
+  }, [effectiveLocation]);
 
   useEffect(() => {
     const handleGlobalMouseUp = () => { if (isTalking) handleTalkEnd(); };
@@ -74,13 +82,14 @@ function App() {
   }, [isTalking]);
 
   const teamMembers = useMemo(() => {
-    if (!userLocation) return teamMembersRaw;
+    if (!effectiveLocation) return teamMembersRaw;
     return teamMembersRaw.map(m => ({
       ...m,
-      distance: calculateDistance(userLocation.lat, userLocation.lng, m.lat, m.lng)
+      distance: calculateDistance(effectiveLocation.lat, effectiveLocation.lng, m.lat, m.lng)
     }));
-  }, [teamMembersRaw, userLocation]);
+  }, [teamMembersRaw, effectiveLocation]);
 
+  // Sincronización de base de datos
   useEffect(() => {
     if (!activeChannel || !isNameSet) return;
 
@@ -138,8 +147,9 @@ function App() {
     return () => { supabase.removeChannel(channel); };
   }, [activeChannel, isNameSet]);
 
+  // Manejo de ubicación GPS automática
   useEffect(() => {
-    if (!activeChannel || !isNameSet || !navigator.geolocation) return;
+    if (!activeChannel || !isNameSet || !navigator.geolocation || isManualMode) return;
     
     const watchId = navigator.geolocation.watchPosition(async (pos) => {
       const { latitude, longitude, accuracy } = pos.coords;
@@ -157,7 +167,7 @@ function App() {
         name: userName, 
         lat: latitude, 
         lng: longitude, 
-        accuracy: Math.round(accuracy), // Guardamos precisión
+        accuracy: Math.round(accuracy),
         role: accuracy > 200 ? 'Unidad PC' : 'Unidad Móvil', 
         status: isTalking ? 'talking' : 'online', 
         last_seen: new Date().toISOString(),
@@ -166,11 +176,40 @@ function App() {
     }, (err) => setSystemLog(`GPS_ERR: ${err.code}`), { 
       enableHighAccuracy: true,
       timeout: 10000,
-      maximumAge: 5000 // Permitimos 5 seg de cache para estabilidad en móviles
+      maximumAge: 5000 
     });
 
     return () => navigator.geolocation.clearWatch(watchId);
-  }, [isTalking, activeChannel, isNameSet, userName]);
+  }, [isTalking, activeChannel, isNameSet, userName, isManualMode]);
+
+  // Actualización manual de ubicación
+  const handleMapClick = async (lat: number, lng: number) => {
+    if (!isManualMode || !activeChannel) return;
+    
+    setManualLocation({ lat, lng });
+    setLocationAccuracy(0); // Precisión manual es "perfecta"
+    setSystemLog("UBICACIÓN_CORREGIDA_MANUAL");
+
+    await supabase.from('locations').upsert({
+      id: DEVICE_ID, 
+      name: userName, 
+      lat: lat, 
+      lng: lng, 
+      accuracy: 0,
+      role: 'Unidad Fija / Estacionaria', 
+      status: isTalking ? 'talking' : 'online', 
+      last_seen: new Date().toISOString(),
+      channel_id: activeChannel.id
+    });
+  };
+
+  const toggleManualMode = () => {
+    if (!isManualMode && userLocation) {
+        setManualLocation(userLocation);
+    }
+    setIsManualMode(!isManualMode);
+    setSystemLog(!isManualMode ? "MODO_MANUAL_ACTIVO" : "VOLVIENDO_A_GPS");
+  };
 
   const handleConnect = useCallback(() => {
     if (!activeChannel) return;
@@ -248,15 +287,6 @@ function App() {
           >
             <ShieldCheck size={20} /> ENTRAR EN SERVICIO
           </button>
-          
-          {deferredPrompt && (
-            <button 
-              onClick={handleInstall}
-              className="w-full mt-4 flex items-center justify-center gap-2 text-xs text-gray-500 hover:text-white transition-colors"
-            >
-              <Download size={14} /> INSTALAR APP EN ESTE EQUIPO
-            </button>
-          )}
         </div>
       </div>
     );
@@ -266,13 +296,6 @@ function App() {
     return (
       <div className="h-[100dvh] w-screen bg-black flex items-center justify-center p-6 font-mono">
          <div className="w-full max-w-md space-y-4">
-            <div className="flex items-center justify-between mb-4 px-2">
-               <div className="flex flex-col">
-                  <span className="text-[9px] text-orange-500/50 uppercase tracking-widest">Operador</span>
-                  <span className="text-sm font-bold text-white uppercase">{userName}</span>
-               </div>
-               <button onClick={() => { localStorage.removeItem('user_callsign'); setIsNameSet(false); }} className="text-[9px] text-gray-600 hover:text-white uppercase tracking-tighter">Desvincular Equipo</button>
-            </div>
             <ChannelSelector onSelect={(ch) => setActiveChannel(ch)} />
          </div>
       </div>
@@ -282,7 +305,15 @@ function App() {
   return (
     <div className="flex flex-col md:flex-row h-[100dvh] w-screen bg-black overflow-hidden relative text-white font-sans">
       <div className="flex-1 relative border-b md:border-b-0 md:border-r border-white/10 overflow-hidden">
-         <MapDisplay userLocation={userLocation} teamMembers={teamMembers} accuracy={locationAccuracy} />
+         <MapDisplay 
+           userLocation={effectiveLocation} 
+           teamMembers={teamMembers} 
+           accuracy={locationAccuracy} 
+           isManualMode={isManualMode}
+           onMapClick={handleMapClick}
+         />
+         
+         {/* Overlays de Mapa */}
          <div className="absolute top-4 left-4 z-[1000] flex flex-col gap-2 pointer-events-none">
             <div className="bg-black/80 backdrop-blur px-3 py-1 border border-orange-500/30 rounded shadow-lg">
               <span className="text-[9px] text-orange-500/50 block font-mono">FREQ</span>
@@ -290,14 +321,28 @@ function App() {
                 <Hash size={10} /> {activeChannel.name}
               </span>
             </div>
-            <div className={`bg-black/80 backdrop-blur px-3 py-1 border rounded shadow-lg ${locationAccuracy > 200 ? 'border-red-500/50' : 'border-emerald-500/30'}`}>
-              <span className={`text-[9px] block font-mono ${locationAccuracy > 200 ? 'text-red-500/70' : 'text-emerald-500/50'}`}>SISTEMA</span>
-              <span className={`text-[10px] font-bold font-mono uppercase ${locationAccuracy > 200 ? 'text-red-500' : 'text-emerald-500'}`}>{systemLog}</span>
+            <div className={`bg-black/80 backdrop-blur px-3 py-1 border rounded shadow-lg ${isManualMode ? 'border-orange-500' : locationAccuracy > 200 ? 'border-red-500/50' : 'border-emerald-500/30'}`}>
+              <span className={`text-[9px] block font-mono ${isManualMode ? 'text-orange-500' : locationAccuracy > 200 ? 'text-red-500/70' : 'text-emerald-500/50'}`}>SISTEMA</span>
+              <span className={`text-[10px] font-bold font-mono uppercase ${isManualMode ? 'text-orange-500' : locationAccuracy > 200 ? 'text-red-500' : 'text-emerald-500'}`}>
+                {isManualMode ? 'CORRECCIÓN_MANUAL' : systemLog}
+              </span>
             </div>
          </div>
-         <button onClick={() => setShowMobileOverlay(!showMobileOverlay)} className="md:hidden absolute top-4 right-4 z-[1000] w-10 h-10 bg-black/80 border border-white/20 rounded flex items-center justify-center text-white">
-           {showMobileOverlay ? <X size={20} /> : <List size={20} />}
-         </button>
+
+         {/* Controles de Mapa */}
+         <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
+            <button 
+              onClick={toggleManualMode}
+              className={`w-10 h-10 rounded shadow-lg flex items-center justify-center transition-all border ${isManualMode ? 'bg-orange-600 border-orange-400 text-white animate-pulse' : 'bg-black/80 border-white/20 text-gray-400 hover:text-white'}`}
+              title={isManualMode ? "Desactivar Corrección Manual" : "Activar Corrección Manual"}
+            >
+              {isManualMode ? <Crosshair size={20} /> : <MapPin size={20} />}
+            </button>
+            <button onClick={() => setShowMobileOverlay(!showMobileOverlay)} className="md:hidden w-10 h-10 bg-black/80 border border-white/20 rounded flex items-center justify-center text-white">
+              {showMobileOverlay ? <X size={20} /> : <List size={20} />}
+            </button>
+         </div>
+
          <div className="hidden md:flex flex-col absolute bottom-6 left-6 w-80 bg-black/90 backdrop-blur rounded border border-white/10 shadow-2xl h-[450px] overflow-hidden z-[500]">
             <div className="flex border-b border-white/10 bg-white/5">
               <button onClick={() => setActiveTab('team')} className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest transition-colors ${activeTab === 'team' ? 'text-orange-500 border-b-2 border-orange-500 bg-orange-500/5' : 'text-gray-500'}`}>Unidades</button>
@@ -307,6 +352,7 @@ function App() {
               {activeTab === 'team' ? <TeamList members={teamMembers} /> : <HistoryPanel history={radioHistory} activeChannel={activeChannel} />}
             </div>
          </div>
+
          {showMobileOverlay && (
            <div className="md:hidden absolute inset-0 z-[1001] bg-gray-950 flex flex-col animate-in slide-in-from-bottom duration-300">
               <div className="flex justify-between items-center p-4 border-b border-white/10 bg-black">
@@ -330,7 +376,7 @@ function App() {
            audioLevel={audioLevel} onEmergencyClick={() => setShowEmergencyModal(true)}
         />
       </div>
-      <EmergencyModal isOpen={showEmergencyModal} onClose={() => setShowEmergencyModal(false)} location={userLocation} />
+      <EmergencyModal isOpen={showEmergencyModal} onClose={() => setShowEmergencyModal(false)} location={effectiveLocation} />
     </div>
   );
 }
