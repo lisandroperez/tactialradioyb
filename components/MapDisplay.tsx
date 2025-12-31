@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { TeamMember } from '../types';
 
@@ -18,6 +18,8 @@ interface MapDisplayProps {
   userLocation: { lat: number; lng: number } | null;
   teamMembers: TeamMember[];
   accuracy: number;
+  isManualMode?: boolean;
+  onMapClick?: (lat: number, lng: number) => void;
 }
 
 const MapController = ({ center }: { center: { lat: number; lng: number } | null }) => {
@@ -39,24 +41,37 @@ const MapController = ({ center }: { center: { lat: number; lng: number } | null
   return null;
 };
 
-const createTacticalIcon = (color: string, isUser: boolean = false) => {
-  const pulseClass = isUser ? 'animate-pulse' : '';
+const MapEvents = ({ onMapClick, enabled }: { onMapClick?: (lat: number, lng: number) => void, enabled: boolean }) => {
+  useMapEvents({
+    click: (e) => {
+      if (enabled && onMapClick) {
+        onMapClick(e.latlng.lat, e.latlng.lng);
+      }
+    },
+  });
+  return null;
+};
+
+const createTacticalIcon = (color: string, isUser: boolean = false, isManual: boolean = false) => {
+  const pulseClass = (isUser && !isManual) ? 'animate-pulse' : '';
+  const manualBorder = isManual ? 'border-orange-500 border-dashed' : 'border-white';
+  
   return L.divIcon({
     className: 'custom-div-icon',
-    html: `<div class="${pulseClass}" style="background-color: ${color}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 15px ${color};"></div>`,
+    html: `<div class="${pulseClass}" style="background-color: ${color}; width: 14px; height: 14px; border-radius: 50%; border: 2px ${isManual ? 'dashed' : 'solid'} ${isManual ? '#f97316' : 'white'}; box-shadow: 0 0 15px ${color};"></div>`,
     iconSize: [14, 14],
     iconAnchor: [7, 7]
   });
 };
 
-const userIcon = createTacticalIcon('#10b981', true); 
-const teamIcon = createTacticalIcon('#f97316'); 
-
-export const MapDisplay: React.FC<MapDisplayProps> = ({ userLocation, teamMembers, accuracy }) => {
+export const MapDisplay: React.FC<MapDisplayProps> = ({ userLocation, teamMembers, accuracy, isManualMode = false, onMapClick }) => {
+  const userIcon = createTacticalIcon(isManualMode ? '#f97316' : '#10b981', true, isManualMode); 
+  const teamIcon = createTacticalIcon('#f97316'); 
+  
   const getAccuracyColor = (acc: number) => acc > 200 ? '#ef4444' : '#10b981';
 
   return (
-    <div className="w-full h-full bg-[#0a0a0a]">
+    <div className={`w-full h-full bg-[#0a0a0a] ${isManualMode ? 'cursor-crosshair' : ''}`}>
       <MapContainer 
         center={userLocation || TUCUMAN_CENTER} 
         zoom={13} 
@@ -71,28 +86,34 @@ export const MapDisplay: React.FC<MapDisplayProps> = ({ userLocation, teamMember
           className="map-tiles-grayscale"
         />
         
-        <MapController center={userLocation} />
+        <MapController center={isManualMode ? null : userLocation} />
+        <MapEvents onMapClick={onMapClick} enabled={isManualMode} />
 
         {/* Círculo y Marcador del Usuario */}
         {userLocation && (
           <>
             <Marker position={userLocation} icon={userIcon}>
               <Popup>
-                <div className="font-bold text-gray-900">MI_UNIDAD</div>
-                <div className="text-[10px] text-gray-500">PRECISIÓN: ±{accuracy.toFixed(0)}m</div>
+                <div className="font-bold text-gray-900">{isManualMode ? 'POSICIÓN_CORREGIDA' : 'MI_UNIDAD'}</div>
+                <div className="text-[10px] text-gray-500 uppercase">
+                  {isManualMode ? 'Modo Manual Activo' : `PRECISIÓN: ±${accuracy.toFixed(0)}m`}
+                </div>
+                {isManualMode && <div className="text-[9px] text-orange-600 font-bold mt-1">CLICK EN MAPA PARA MOVER</div>}
               </Popup>
             </Marker>
-            <Circle 
-              center={userLocation}
-              radius={accuracy || 50} 
-              pathOptions={{ 
-                color: getAccuracyColor(accuracy), 
-                fillColor: getAccuracyColor(accuracy), 
-                fillOpacity: 0.1, 
-                weight: 1,
-                dashArray: accuracy > 200 ? '5, 5' : '' 
-              }} 
-            />
+            {!isManualMode && accuracy > 0 && (
+              <Circle 
+                center={userLocation}
+                radius={accuracy || 50} 
+                pathOptions={{ 
+                  color: getAccuracyColor(accuracy), 
+                  fillColor: getAccuracyColor(accuracy), 
+                  fillOpacity: 0.1, 
+                  weight: 1,
+                  dashArray: accuracy > 200 ? '5, 5' : '' 
+                }} 
+              />
+            )}
           </>
         )}
 
@@ -106,11 +127,13 @@ export const MapDisplay: React.FC<MapDisplayProps> = ({ userLocation, teamMember
               <Popup>
                  <div className="font-bold text-gray-900 uppercase text-xs">{member.name}</div>
                  <div className="text-[10px] text-gray-500 font-mono mt-1">DIST: {member.distance}</div>
-                 <div className="text-[10px] text-gray-400 font-mono">PREC: ±{member.accuracy || '??'}m</div>
+                 <div className="text-[10px] text-gray-400 font-mono">
+                    PREC: {member.accuracy === 0 ? 'FIJA (Manual)' : `±${member.accuracy}m`}
+                 </div>
                  <div className="text-[9px] text-orange-500 mt-0.5 font-bold">{member.role}</div>
               </Popup>
             </Marker>
-            {member.accuracy && (
+            {member.accuracy && member.accuracy > 0 && (
               <Circle 
                 center={{ lat: member.lat, lng: member.lng }}
                 radius={member.accuracy}
