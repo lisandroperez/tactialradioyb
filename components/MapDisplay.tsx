@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -18,6 +17,7 @@ L.Icon.Default.mergeOptions({ iconUrl, shadowUrl });
 interface MapDisplayProps {
   userLocation: { lat: number; lng: number } | null;
   teamMembers: TeamMember[];
+  accuracy: number;
 }
 
 const MapController = ({ center }: { center: { lat: number; lng: number } | null }) => {
@@ -39,19 +39,22 @@ const MapController = ({ center }: { center: { lat: number; lng: number } | null
   return null;
 };
 
-const createTacticalIcon = (color: string) => {
+const createTacticalIcon = (color: string, isUser: boolean = false) => {
+  const pulseClass = isUser ? 'animate-pulse' : '';
   return L.divIcon({
     className: 'custom-div-icon',
-    html: `<div style="background-color: ${color}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 15px ${color};"></div>`,
+    html: `<div class="${pulseClass}" style="background-color: ${color}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 15px ${color};"></div>`,
     iconSize: [14, 14],
     iconAnchor: [7, 7]
   });
 };
 
-const userIcon = createTacticalIcon('#10b981'); 
+const userIcon = createTacticalIcon('#10b981', true); 
 const teamIcon = createTacticalIcon('#f97316'); 
 
-export const MapDisplay: React.FC<MapDisplayProps> = ({ userLocation, teamMembers }) => {
+export const MapDisplay: React.FC<MapDisplayProps> = ({ userLocation, teamMembers, accuracy }) => {
+  const getAccuracyColor = (acc: number) => acc > 200 ? '#ef4444' : '#10b981';
+
   return (
     <div className="w-full h-full bg-[#0a0a0a]">
       <MapContainer 
@@ -70,32 +73,57 @@ export const MapDisplay: React.FC<MapDisplayProps> = ({ userLocation, teamMember
         
         <MapController center={userLocation} />
 
+        {/* Círculo y Marcador del Usuario */}
         {userLocation && (
           <>
             <Marker position={userLocation} icon={userIcon}>
               <Popup>
                 <div className="font-bold text-gray-900">MI_UNIDAD</div>
+                <div className="text-[10px] text-gray-500">PRECISIÓN: ±{accuracy.toFixed(0)}m</div>
               </Popup>
             </Marker>
             <Circle 
               center={userLocation}
-              radius={150} 
-              pathOptions={{ color: '#10b981', fillColor: '#10b981', fillOpacity: 0.1, weight: 1 }} 
+              radius={accuracy || 50} 
+              pathOptions={{ 
+                color: getAccuracyColor(accuracy), 
+                fillColor: getAccuracyColor(accuracy), 
+                fillOpacity: 0.1, 
+                weight: 1,
+                dashArray: accuracy > 200 ? '5, 5' : '' 
+              }} 
             />
           </>
         )}
 
+        {/* Círculos y Marcadores de Compañeros */}
         {teamMembers.map((member) => (
-          <Marker 
-            key={member.id} 
-            position={{ lat: member.lat, lng: member.lng }} 
-            icon={teamIcon}
-          >
-            <Popup>
-               <div className="font-bold text-gray-900 uppercase text-xs">{member.name}</div>
-               <div className="text-[10px] text-gray-500 font-mono mt-1">DIST: {member.distance}</div>
-            </Popup>
-          </Marker>
+          <React.Fragment key={member.id}>
+            <Marker 
+              position={{ lat: member.lat, lng: member.lng }} 
+              icon={teamIcon}
+            >
+              <Popup>
+                 <div className="font-bold text-gray-900 uppercase text-xs">{member.name}</div>
+                 <div className="text-[10px] text-gray-500 font-mono mt-1">DIST: {member.distance}</div>
+                 <div className="text-[10px] text-gray-400 font-mono">PREC: ±{member.accuracy || '??'}m</div>
+                 <div className="text-[9px] text-orange-500 mt-0.5 font-bold">{member.role}</div>
+              </Popup>
+            </Marker>
+            {member.accuracy && (
+              <Circle 
+                center={{ lat: member.lat, lng: member.lng }}
+                radius={member.accuracy}
+                pathOptions={{ 
+                  color: member.accuracy > 200 ? '#ef4444' : '#f97316', 
+                  fillColor: member.accuracy > 200 ? '#ef4444' : '#f97316', 
+                  fillOpacity: 0.05, 
+                  weight: 0.5,
+                  dashArray: member.accuracy > 200 ? '3, 3' : '' 
+                }}
+              />
+            )}
+          </React.Fragment>
         ))}
       </MapContainer>
       <style>{`
