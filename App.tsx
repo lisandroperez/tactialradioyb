@@ -8,7 +8,7 @@ import { ChannelSelector } from './components/ChannelSelector';
 import { TeamMember, ConnectionState, RadioHistory, Channel } from './types';
 import { RadioService } from './services/radioService';
 import { supabase, getDeviceId } from './services/supabase';
-import { User, ShieldCheck, List, X, Hash, Download, MapPin, Crosshair } from 'lucide-react';
+import { User, ShieldCheck, List, X, Hash, Download, MapPin, Crosshair, Target } from 'lucide-react';
 
 const DEVICE_ID = getDeviceId();
 
@@ -40,7 +40,7 @@ function App() {
   const [isTalking, setIsTalking] = useState(false);
   const [remoteTalker, setRemoteTalker] = useState<string | null>(null);
   const [audioLevel, setAudioLevel] = useState(0);
-  const [systemLog, setSystemLog] = useState<string>("ESPERANDO_GPS...");
+  const [systemLog, setSystemLog] = useState<string>("BUSCANDO_GPS...");
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'team' | 'history'>('team');
   const [showMobileOverlay, setShowMobileOverlay] = useState(false);
@@ -58,13 +58,6 @@ function App() {
       setDeferredPrompt(e);
     });
   }, []);
-
-  const handleInstall = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') setDeferredPrompt(null);
-  };
 
   useEffect(() => {
     userLocationRef.current = effectiveLocation;
@@ -153,11 +146,7 @@ function App() {
       setUserLocation({ lat: latitude, lng: longitude });
       setLocationAccuracy(accuracy);
       
-      if (accuracy > 200) {
-        setSystemLog(`GPS_ESTIMADO (±${accuracy.toFixed(0)}m)`);
-      } else {
-        setSystemLog(`GPS_FIABLE (±${accuracy.toFixed(0)}m)`);
-      }
+      setSystemLog(accuracy > 200 ? `GPS_INEXACTO (±${accuracy.toFixed(0)}m)` : `GPS_OK (±${accuracy.toFixed(0)}m)`);
       
       await supabase.from('locations').upsert({
         id: DEVICE_ID, 
@@ -184,7 +173,7 @@ function App() {
     
     setManualLocation({ lat, lng });
     setLocationAccuracy(0);
-    setSystemLog("UBICACIÓN_MANUAL_FIJADA");
+    setSystemLog("POSICIÓN_CORREGIDA");
 
     await supabase.from('locations').upsert({
       id: DEVICE_ID, 
@@ -223,10 +212,8 @@ function App() {
         onIncomingStreamEnd: () => setRemoteTalker(null)
       });
       setConnectionState(ConnectionState.CONNECTED);
-      setSystemLog("LINK_ESTABLISHED");
     } catch (e) {
       setConnectionState(ConnectionState.ERROR);
-      setSystemLog("LINK_FAILED");
     }
   }, [userName, activeChannel]);
 
@@ -234,7 +221,6 @@ function App() {
     if (radioRef.current) radioRef.current.disconnect();
     radioRef.current = null;
     setConnectionState(ConnectionState.DISCONNECTED);
-    setSystemLog("RADIO_OFF");
   }, []);
 
   const handleTalkStart = async () => {
@@ -254,8 +240,6 @@ function App() {
   const handleQSY = () => {
     handleDisconnect();
     setActiveChannel(null);
-    setTeamMembersRaw([]);
-    setRadioHistory([]);
   };
 
   if (!isNameSet) {
@@ -288,8 +272,9 @@ function App() {
 
   if (!activeChannel) {
     return (
-      <div className="h-[100dvh] w-screen bg-black flex items-center justify-center p-6 font-mono">
+      <div className="h-[100dvh] w-screen bg-black flex items-center justify-center p-6 font-mono text-center">
          <div className="w-full max-w-md space-y-4">
+            <h2 className="text-orange-500 font-bold mb-4 uppercase tracking-widest">Seleccionar Frecuencia de Operación</h2>
             <ChannelSelector onSelect={(ch) => setActiveChannel(ch)} />
          </div>
       </div>
@@ -307,48 +292,50 @@ function App() {
            onMapClick={handleMapClick}
          />
          
-         {/* Bloque de Estado Superior Izquierda */}
+         {/* INDICADORES SUPERIORES */}
          <div className="absolute top-4 left-4 z-[2000] flex flex-col gap-2 pointer-events-none">
-            <div className="bg-black/80 backdrop-blur px-3 py-1 border border-orange-500/30 rounded shadow-lg">
-              <span className="text-[9px] text-orange-500/50 block font-mono">FREQ</span>
+            <div className="bg-black/80 backdrop-blur px-3 py-1 border border-orange-500/30 rounded shadow-lg min-w-[120px]">
+              <span className="text-[9px] text-orange-500/50 block font-mono">CANAL</span>
               <span className="text-xs font-bold text-orange-500 font-mono flex items-center gap-1 uppercase">
                 <Hash size={10} /> {activeChannel.name}
               </span>
             </div>
-            <div className={`bg-black/80 backdrop-blur px-3 py-1 border rounded shadow-lg ${isManualMode ? 'border-orange-500' : locationAccuracy > 200 ? 'border-red-500/50' : 'border-emerald-500/30'}`}>
+            <div className={`bg-black/80 backdrop-blur px-3 py-1 border rounded shadow-lg min-w-[120px] ${isManualMode ? 'border-orange-500 shadow-orange-500/20' : locationAccuracy > 200 ? 'border-red-500/50' : 'border-emerald-500/30'}`}>
               <span className={`text-[9px] block font-mono ${isManualMode ? 'text-orange-500' : locationAccuracy > 200 ? 'text-red-500/70' : 'text-emerald-500/50'}`}>SISTEMA</span>
               <span className={`text-[10px] font-bold font-mono uppercase ${isManualMode ? 'text-orange-500' : locationAccuracy > 200 ? 'text-red-500' : 'text-emerald-500'}`}>
-                {isManualMode ? 'MODO_MANUAL_OK' : systemLog}
+                {isManualMode ? 'CORRECCIÓN_MANUAL' : systemLog}
               </span>
-            </div>
-
-            {/* BOTÓN DE CORRECCIÓN MANUAL (Integrado en el stack de estado) */}
-            <div className="pointer-events-auto mt-2">
-              <button 
-                onClick={toggleManualMode}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 shadow-2xl transition-all active:scale-95 ${isManualMode ? 'bg-orange-600 border-orange-400 text-white animate-pulse' : 'bg-black/90 border-orange-500/50 text-orange-500 hover:bg-orange-950'}`}
-              >
-                {isManualMode ? <Crosshair size={18} /> : <MapPin size={18} />}
-                <span className="text-[10px] font-black uppercase tracking-widest">
-                  {isManualMode ? "CANCELAR_MANUAL" : "CORREGIR_POSICIÓN"}
-                </span>
-              </button>
-              {isManualMode && (
-                <div className="mt-2 text-[8px] bg-black/90 text-white p-2 rounded border border-orange-500/30 font-mono animate-bounce uppercase">
-                  Haga click en el mapa para marcar su posición real
-                </div>
-              )}
             </div>
          </div>
 
-         {/* Controles de Vista Móvil */}
-         <div className="absolute top-4 right-4 z-[2000]">
-            <button onClick={() => setShowMobileOverlay(!showMobileOverlay)} className="md:hidden w-10 h-10 bg-black/80 border border-white/20 rounded flex items-center justify-center text-white">
-              {showMobileOverlay ? <X size={20} /> : <List size={20} />}
+         {/* BOTÓN FLOTANTE DE CORRECCIÓN (Inferior Derecha del Mapa) */}
+         <div className="absolute bottom-6 right-6 z-[9999] md:right-[20px]">
+            <div className="flex flex-col items-end gap-3">
+              {isManualMode && (
+                <div className="bg-orange-600 text-white text-[10px] font-black px-4 py-2 rounded shadow-2xl animate-bounce uppercase tracking-tighter border border-white/20">
+                  Click en el mapa para marcar posición
+                </div>
+              )}
+              <button 
+                onClick={toggleManualMode}
+                className={`flex items-center gap-3 px-5 py-4 rounded-full border-2 shadow-[0_0_50px_rgba(0,0,0,0.8)] transition-all active:scale-90 pointer-events-auto ${isManualMode ? 'bg-red-600 border-white text-white' : 'bg-black border-orange-500 text-orange-500 hover:bg-orange-950'}`}
+              >
+                {isManualMode ? <X size={24} /> : <Target size={24} />}
+                <span className="text-xs font-black uppercase tracking-widest pr-2">
+                  {isManualMode ? "SALIR_MANUAL" : "CORREGIR_GPS"}
+                </span>
+              </button>
+            </div>
+         </div>
+
+         {/* BOTÓN MENÚ MÓVIL */}
+         <div className="absolute top-4 right-4 z-[2000] md:hidden">
+            <button onClick={() => setShowMobileOverlay(!showMobileOverlay)} className="w-12 h-12 bg-black/80 border-2 border-white/20 rounded-full flex items-center justify-center text-white shadow-xl">
+              {showMobileOverlay ? <X size={24} /> : <List size={24} />}
             </button>
          </div>
 
-         {/* Paneles laterales flotantes */}
+         {/* PANELES TÁCTICOS (Escritorio) */}
          <div className="hidden md:flex flex-col absolute bottom-6 left-6 w-80 bg-black/90 backdrop-blur rounded border border-white/10 shadow-2xl h-[450px] overflow-hidden z-[500]">
             <div className="flex border-b border-white/10 bg-white/5">
               <button onClick={() => setActiveTab('team')} className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest transition-colors ${activeTab === 'team' ? 'text-orange-500 border-b-2 border-orange-500 bg-orange-500/5' : 'text-gray-500'}`}>Unidades</button>
@@ -359,12 +346,13 @@ function App() {
             </div>
          </div>
 
+         {/* OVERLAY MÓVIL */}
          {showMobileOverlay && (
            <div className="md:hidden absolute inset-0 z-[2001] bg-gray-950 flex flex-col animate-in slide-in-from-bottom duration-300">
               <div className="flex justify-between items-center p-4 border-b border-white/10 bg-black">
                 <div className="flex gap-6">
-                  <button onClick={() => setActiveTab('team')} className={`font-bold uppercase text-[10px] tracking-widest ${activeTab === 'team' ? 'text-orange-500' : 'text-gray-500'}`}>Panel Unidades</button>
-                  <button onClick={() => setActiveTab('history')} className={`font-bold uppercase text-[10px] tracking-widest ${activeTab === 'history' ? 'text-orange-500' : 'text-gray-500'}`}>Log Canal</button>
+                  <button onClick={() => setActiveTab('team')} className={`font-bold uppercase text-[10px] tracking-widest ${activeTab === 'team' ? 'text-orange-500' : 'text-gray-500'}`}>Unidades</button>
+                  <button onClick={() => setActiveTab('history')} className={`font-bold uppercase text-[10px] tracking-widest ${activeTab === 'history' ? 'text-orange-500' : 'text-gray-500'}`}>Historial</button>
                 </div>
                 <button onClick={() => setShowMobileOverlay(false)} className="text-gray-500"><X size={24} /></button>
               </div>
@@ -374,7 +362,9 @@ function App() {
            </div>
          )}
       </div>
-      <div className="flex-none md:w-[400px] h-auto md:h-full bg-gray-950 z-20 shadow-[-10px_0_30px_rgba(0,0,0,0.5)]">
+      
+      {/* BARRA LATERAL DE RADIO (PTT) */}
+      <div className="flex-none md:w-[400px] h-auto md:h-full bg-gray-950 z-20 shadow-[-10px_0_30px_rgba(0,0,0,0.5)] border-l border-white/5">
         <RadioControl 
            connectionState={connectionState} isTalking={isTalking} activeChannelName={activeChannel.name}
            onTalkStart={handleTalkStart} onTalkEnd={handleTalkEnd} lastTranscript={remoteTalker} 
@@ -382,6 +372,7 @@ function App() {
            audioLevel={audioLevel} onEmergencyClick={() => setShowEmergencyModal(true)}
         />
       </div>
+      
       <EmergencyModal isOpen={showEmergencyModal} onClose={() => setShowEmergencyModal(false)} location={effectiveLocation} />
     </div>
   );
