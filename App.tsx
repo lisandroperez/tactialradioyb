@@ -80,11 +80,18 @@ function App() {
     }));
   }, [teamMembersRaw, userLocation]);
 
+  // Sincronización Estricta por Canal
   useEffect(() => {
     if (!activeChannel || !isNameSet) return;
 
     const fetchData = async () => {
+      // Limpiar historial previo antes de cargar el nuevo canal
+      setRadioHistory([]);
+      setTeamMembersRaw([]);
+
       const yesterday = new Date(Date.now() - 86400000).toISOString();
+      
+      // 1. Obtener Unidades en el canal
       const { data: members } = await supabase
         .from('locations')
         .select('*')
@@ -92,6 +99,7 @@ function App() {
         .gt('last_seen', new Date(Date.now() - 3600000).toISOString()); 
       if (members) setTeamMembersRaw(members.filter(m => m.id !== DEVICE_ID));
 
+      // 2. Obtener Historial DISCRIMINADO por el canal activo
       const { data: history } = await supabase
         .from('radio_history')
         .select('*')
@@ -103,8 +111,14 @@ function App() {
 
     fetchData();
 
+    // 3. Suscripción en tiempo real filtrada por canal
     const channel = supabase.channel(`sync-${activeChannel.id}`)
-      .on('postgres_changes', { event: '*', table: 'locations', schema: 'public', filter: `channel_id=eq.${activeChannel.id}` }, (payload: any) => {
+      .on('postgres_changes', { 
+        event: '*', 
+        table: 'locations', 
+        schema: 'public', 
+        filter: `channel_id=eq.${activeChannel.id}` 
+      }, (payload: any) => {
         if (payload.new && payload.new.id !== DEVICE_ID) {
           setTeamMembersRaw(prev => {
             const index = prev.findIndex(m => m.id === payload.new.id);
@@ -115,7 +129,12 @@ function App() {
           });
         }
       })
-      .on('postgres_changes', { event: 'INSERT', table: 'radio_history', schema: 'public', filter: `channel_id=eq.${activeChannel.id}` }, (payload: any) => {
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        table: 'radio_history', 
+        schema: 'public', 
+        filter: `channel_id=eq.${activeChannel.id}` 
+      }, (payload: any) => {
         setRadioHistory(prev => [payload.new, ...prev]);
       })
       .subscribe();
@@ -274,7 +293,7 @@ function App() {
               <button onClick={() => setActiveTab('history')} className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest transition-colors ${activeTab === 'history' ? 'text-orange-500 border-b-2 border-orange-500 bg-orange-500/5' : 'text-gray-500'}`}>Log Audio</button>
             </div>
             <div className="flex-1 overflow-hidden">
-              {activeTab === 'team' ? <TeamList members={teamMembers} /> : <HistoryPanel history={radioHistory} />}
+              {activeTab === 'team' ? <TeamList members={teamMembers} /> : <HistoryPanel history={radioHistory} activeChannel={activeChannel} />}
             </div>
          </div>
          {showMobileOverlay && (
@@ -282,12 +301,12 @@ function App() {
               <div className="flex justify-between items-center p-4 border-b border-white/10 bg-black">
                 <div className="flex gap-6">
                   <button onClick={() => setActiveTab('team')} className={`font-bold uppercase text-[10px] tracking-widest ${activeTab === 'team' ? 'text-orange-500' : 'text-gray-500'}`}>Panel Unidades</button>
-                  <button onClick={() => setActiveTab('history')} className={`font-bold uppercase text-[10px] tracking-widest ${activeTab === 'history' ? 'text-orange-500' : 'text-gray-500'}`}>Log Historial</button>
+                  <button onClick={() => setActiveTab('history')} className={`font-bold uppercase text-[10px] tracking-widest ${activeTab === 'history' ? 'text-orange-500' : 'text-gray-500'}`}>Log Canal</button>
                 </div>
                 <button onClick={() => setShowMobileOverlay(false)} className="text-gray-500"><X size={24} /></button>
               </div>
               <div className="flex-1 overflow-hidden">
-                {activeTab === 'team' ? <TeamList members={teamMembers} /> : <HistoryPanel history={radioHistory} />}
+                {activeTab === 'team' ? <TeamList members={teamMembers} /> : <HistoryPanel history={radioHistory} activeChannel={activeChannel} />}
               </div>
            </div>
          )}
