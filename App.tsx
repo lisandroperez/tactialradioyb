@@ -8,7 +8,7 @@ import { ChannelSelector } from './components/ChannelSelector';
 import { TeamMember, ConnectionState, RadioHistory, Channel } from './types';
 import { RadioService } from './services/radioService';
 import { supabase, getDeviceId } from './services/supabase';
-import { User, ShieldCheck, List, X, Hash, Download, MapPin, Crosshair, Target, Settings2 } from 'lucide-react';
+import { User, ShieldCheck, List, X, Hash, Settings2 } from 'lucide-react';
 
 const DEVICE_ID = getDeviceId();
 
@@ -275,25 +275,12 @@ function App() {
   return (
     <div className="flex flex-col md:flex-row h-[100dvh] w-screen bg-black overflow-hidden relative text-white font-sans">
       
-      {/* BOTÓN FLOTANTE PRINCIPAL (FIXED - SIEMPRE ARRIBA) */}
-      <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100000] pointer-events-none">
-          <div className="flex flex-col items-center gap-3">
-              <button 
-                onClick={toggleManualMode}
-                className={`pointer-events-auto flex items-center gap-3 px-6 py-4 rounded-full border-2 shadow-[0_0_30px_rgba(249,115,22,0.5)] transition-all active:scale-90 animate-in fade-in zoom-in duration-300 ${isManualMode ? 'bg-orange-500 border-white text-black font-black' : 'bg-black border-orange-500 text-orange-500 hover:bg-orange-600 hover:text-white'}`}
-              >
-                {isManualMode ? <Crosshair size={24} className="animate-spin" /> : <MapPin size={24} />}
-                <span className="text-sm font-black uppercase tracking-[0.2em]">
-                  {isManualMode ? "CALIBRACIÓN_ACTIVA" : "CORREGIR_UBICACIÓN"}
-                </span>
-              </button>
-              {isManualMode && (
-                <div className="bg-white text-black text-[11px] font-black px-4 py-2 rounded-lg shadow-2xl animate-pulse uppercase border-2 border-orange-500">
-                  ⚠️ HAGA CLICK EN SU POSICIÓN REAL EN EL MAPA
-                </div>
-              )}
-          </div>
-      </div>
+      {/* Banner de Calibración sobre el mapa */}
+      {isManualMode && (
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[3000] bg-orange-600 text-white font-black px-6 py-3 rounded-full shadow-2xl animate-pulse flex items-center gap-3 border-2 border-white uppercase text-xs tracking-widest">
+           <Settings2 size={16} /> Toque el mapa para fijar su posición
+        </div>
+      )}
 
       <div className="flex-1 relative border-b md:border-b-0 md:border-r border-white/10 overflow-hidden">
          <MapDisplay 
@@ -304,31 +291,25 @@ function App() {
            onMapClick={handleMapClick}
          />
          
-         {/* INDICADORES SUPERIORES IZQUIERDA */}
+         {/* Indicadores Fijos Arriba Izquierda */}
          <div className="absolute top-4 left-4 z-[2000] flex flex-col gap-2 pointer-events-none">
-            <div className="bg-black/80 backdrop-blur px-3 py-1 border border-orange-500/30 rounded shadow-lg min-w-[120px]">
-              <span className="text-[9px] text-orange-500/50 block font-mono">FREQ</span>
-              <span className="text-xs font-bold text-orange-500 font-mono flex items-center gap-1 uppercase">
-                <Hash size={10} /> {activeChannel.name}
-              </span>
-            </div>
-            <div className={`bg-black/80 backdrop-blur px-3 py-1 border rounded shadow-lg min-w-[120px] ${isManualMode ? 'border-orange-500' : locationAccuracy > 200 ? 'border-red-500/50' : 'border-emerald-500/30'}`}>
-              <span className={`text-[9px] block font-mono ${isManualMode ? 'text-orange-500' : locationAccuracy > 200 ? 'text-red-500/70' : 'text-emerald-500/50'}`}>STATUS</span>
-              <span className={`text-[10px] font-bold font-mono uppercase ${isManualMode ? 'text-orange-500' : locationAccuracy > 200 ? 'text-red-500' : 'text-emerald-500'}`}>
-                {isManualMode ? 'CAL_MANUAL' : systemLog}
+            <div className="bg-black/80 backdrop-blur px-3 py-1 border border-orange-500/30 rounded shadow-lg">
+              <span className="text-[9px] text-orange-500/50 block font-mono">FRECUENCIA</span>
+              <span className="text-xs font-bold text-orange-500 font-mono uppercase tracking-widest">
+                <Hash size={10} className="inline mr-1" /> {activeChannel.name}
               </span>
             </div>
          </div>
 
-         {/* MENÚ MÓVIL */}
+         {/* Menú Móvil */}
          <div className="absolute top-4 right-4 z-[2000] md:hidden">
             <button onClick={() => setShowMobileOverlay(!showMobileOverlay)} className="w-12 h-12 bg-black/80 border-2 border-white/20 rounded-full flex items-center justify-center text-white shadow-xl">
               {showMobileOverlay ? <X size={24} /> : <List size={24} />}
             </button>
          </div>
 
-         {/* PANELES TÁCTICOS (Escritorio) */}
-         <div className="hidden md:flex flex-col absolute bottom-6 left-6 w-80 bg-black/90 backdrop-blur rounded border border-white/10 shadow-2xl h-[450px] overflow-hidden z-[500]">
+         {/* Paneles Tácticos (Escritorio) */}
+         <div className="hidden md:flex flex-col absolute bottom-6 left-6 w-80 bg-black/90 backdrop-blur rounded border border-white/10 shadow-2xl h-[400px] overflow-hidden z-[500]">
             <div className="flex border-b border-white/10 bg-white/5">
               <button onClick={() => setActiveTab('team')} className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest transition-colors ${activeTab === 'team' ? 'text-orange-500 border-b-2 border-orange-500 bg-orange-500/5' : 'text-gray-500'}`}>Unidades</button>
               <button onClick={() => setActiveTab('history')} className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest transition-colors ${activeTab === 'history' ? 'text-orange-500 border-b-2 border-orange-500 bg-orange-500/5' : 'text-gray-500'}`}>Log Audio</button>
@@ -338,9 +319,9 @@ function App() {
             </div>
          </div>
 
-         {/* OVERLAY MÓVIL */}
+         {/* Overlay Móvil */}
          {showMobileOverlay && (
-           <div className="md:hidden absolute inset-0 z-[2001] bg-gray-950 flex flex-col animate-in slide-in-from-bottom duration-300">
+           <div className="md:hidden absolute inset-0 z-[2001] bg-gray-950 flex flex-col">
               <div className="flex justify-between items-center p-4 border-b border-white/10 bg-black">
                 <div className="flex gap-6">
                   <button onClick={() => setActiveTab('team')} className={`font-bold uppercase text-[10px] tracking-widest ${activeTab === 'team' ? 'text-orange-500' : 'text-gray-500'}`}>Unidades</button>
@@ -355,23 +336,15 @@ function App() {
          )}
       </div>
       
-      {/* BARRA LATERAL DE RADIO */}
-      <div className="flex-none md:w-[400px] h-auto md:h-full bg-gray-950 z-20 shadow-[-10px_0_30px_rgba(0,0,0,0.5)] border-l border-white/5 relative">
+      {/* Barra de Radio (SIDEBAR) */}
+      <div className="flex-none md:w-[400px] h-auto md:h-full bg-gray-950 z-20 shadow-[-10px_0_30px_rgba(0,0,0,0.5)] border-l border-white/5">
         <RadioControl 
            connectionState={connectionState} isTalking={isTalking} activeChannelName={activeChannel.name}
            onTalkStart={handleTalkStart} onTalkEnd={handleTalkEnd} lastTranscript={remoteTalker} 
            onConnect={handleConnect} onDisconnect={handleDisconnect} onQSY={handleQSY}
            audioLevel={audioLevel} onEmergencyClick={() => setShowEmergencyModal(true)}
+           isManualMode={isManualMode} onToggleManual={toggleManualMode}
         />
-        {/* BOTÓN DE RESPALDO EN BARRA LATERAL (Por si el otro falla) */}
-        <div className="absolute bottom-4 left-4 z-30">
-           <button 
-             onClick={toggleManualMode}
-             className={`p-3 rounded-lg border flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all ${isManualMode ? 'bg-orange-600 border-white' : 'bg-gray-900 border-white/10 text-gray-400'}`}
-           >
-              <Settings2 size={16} /> {isManualMode ? "MODO_MANUAL_ON" : "CALIBRAR_GPS"}
-           </button>
-        </div>
       </div>
       
       <EmergencyModal isOpen={showEmergencyModal} onClose={() => setShowEmergencyModal(false)} location={effectiveLocation} />
