@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Mic, Radio, Power, AlertTriangle, Wifi, Globe, LogOut } from 'lucide-react';
+import { Mic, Radio, Power, AlertTriangle, Wifi, Globe, LogOut, MapPin, Target } from 'lucide-react';
 import { ConnectionState } from '../types';
 
 interface RadioControlProps {
@@ -13,12 +12,14 @@ interface RadioControlProps {
   onConnect: () => void;
   onDisconnect: () => void;
   onEmergencyClick: () => void;
-  onQSY: () => void; // Función para cambiar de canal
+  onQSY: () => void; 
   audioLevel: number; 
+  isManualMode: boolean;
+  onToggleManual: () => void;
 }
 
 export const RadioControl: React.FC<RadioControlProps> = ({
-  connectionState, isTalking, activeChannelName, onTalkStart, onTalkEnd, lastTranscript, onConnect, onDisconnect, onEmergencyClick, onQSY, audioLevel
+  connectionState, isTalking, activeChannelName, onTalkStart, onTalkEnd, lastTranscript, onConnect, onDisconnect, onEmergencyClick, onQSY, audioLevel, isManualMode, onToggleManual
 }) => {
   const isConnected = connectionState === ConnectionState.CONNECTED;
   const triggerHaptic = () => { if (navigator.vibrate) navigator.vibrate(50); };
@@ -44,7 +45,17 @@ export const RadioControl: React.FC<RadioControlProps> = ({
                   <span className="text-[8px] text-gray-500 font-mono tracking-tighter uppercase">{isConnected ? 'Link Activo' : 'Sistema Standby'}</span>
                 </div>
             </div>
+            
             <div className="flex gap-2">
+              {/* NUEVO BOTÓN DE UBICACIÓN DENTRO DEL PANEL */}
+              <button 
+                onClick={onToggleManual} 
+                className={`w-10 h-10 rounded-lg flex items-center justify-center border transition-all active:scale-90 ${isManualMode ? 'bg-orange-600 border-white text-white animate-pulse' : 'bg-gray-800 border-white/5 text-gray-400 hover:text-orange-500'}`}
+                title="Corregir Ubicación"
+              >
+                <Target size={18} />
+              </button>
+
               <button 
                 onClick={onQSY} 
                 className="w-10 h-10 rounded-lg bg-gray-800 hover:bg-gray-700 text-orange-500 flex items-center justify-center border border-white/5 shadow-lg active:scale-90 transition-transform"
@@ -68,14 +79,20 @@ export const RadioControl: React.FC<RadioControlProps> = ({
                   <span className="uppercase tracking-widest">Digital Tactical Radio v3.0</span>
                   <span>{isConnected ? 'ENLAZADO' : 'BUSCANDO'}</span>
                 </div>
-                {connectionState === ConnectionState.CONNECTING && <div className="text-orange-400 text-center animate-pulse text-xs">SINCRO_FREQ...</div>}
-                {isConnected && !isTalking && !lastTranscript && <div className="text-emerald-500 text-center text-[10px] md:text-sm font-bold tracking-[0.2em] uppercase">FRECUENCIA_LIMPIA</div>}
-                {isTalking && <div className="text-orange-500 text-center font-black text-sm md:text-lg animate-pulse uppercase tracking-widest">TX_TRANSMITIENDO</div>}
-                {lastTranscript && !isTalking && (
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="w-1 h-1 bg-orange-500 rounded-full animate-ping" />
-                    <p className="text-[10px] md:text-sm text-orange-500 font-bold uppercase tracking-widest truncate max-w-[200px]">{lastTranscript}</p>
-                  </div>
+                {isManualMode ? (
+                  <div className="text-orange-500 text-center font-bold text-[10px] animate-pulse">MODO_CALIBRACIÓN_ACTIVO: PULSE EL MAPA</div>
+                ) : (
+                  <>
+                    {connectionState === ConnectionState.CONNECTING && <div className="text-orange-400 text-center animate-pulse text-xs">SINCRO_FREQ...</div>}
+                    {isConnected && !isTalking && !lastTranscript && <div className="text-emerald-500 text-center text-[10px] md:text-sm font-bold tracking-[0.2em] uppercase">FRECUENCIA_LIMPIA</div>}
+                    {isTalking && <div className="text-orange-500 text-center font-black text-sm md:text-lg animate-pulse uppercase tracking-widest">TX_TRANSMITIENDO</div>}
+                    {lastTranscript && !isTalking && (
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="w-1 h-1 bg-orange-500 rounded-full animate-ping" />
+                        <p className="text-[10px] md:text-sm text-orange-500 font-bold uppercase tracking-widest truncate max-w-[200px]">{lastTranscript}</p>
+                      </div>
+                    )}
+                  </>
                 )}
             </div>
 
