@@ -8,7 +8,7 @@ import { ChannelSelector } from './components/ChannelSelector';
 import { TeamMember, ConnectionState, RadioHistory, Channel } from './types';
 import { RadioService } from './services/radioService';
 import { supabase, getDeviceId } from './services/supabase';
-import { User, ShieldCheck, List, X, Hash, Settings2 } from 'lucide-react';
+import { User, ShieldCheck, List, X, Hash, Settings2, UserCog } from 'lucide-react';
 
 const DEVICE_ID = getDeviceId();
 
@@ -234,6 +234,11 @@ function App() {
     setActiveChannel(null);
   };
 
+  const handleChangeCallsign = () => {
+    setIsNameSet(false);
+    setTempName(userName);
+  };
+
   if (!isNameSet) {
     return (
       <div className="h-[100dvh] w-screen bg-black flex items-center justify-center p-6 font-mono">
@@ -265,8 +270,21 @@ function App() {
   if (!activeChannel) {
     return (
       <div className="h-[100dvh] w-screen bg-black flex items-center justify-center p-6 font-mono text-center">
-         <div className="w-full max-w-md space-y-4">
-            <h2 className="text-orange-500 font-bold mb-4 uppercase tracking-widest">Seleccionar Frecuencia de Operación</h2>
+         <div className="w-full max-w-md space-y-6">
+            <div className="flex flex-col items-center gap-2 mb-2">
+              <span className="text-[10px] text-gray-500 uppercase tracking-[0.2em]">Operando como:</span>
+              <div className="flex items-center gap-3 bg-white/5 px-4 py-2 border border-white/10 rounded-full">
+                <span className="text-orange-500 font-bold tracking-widest uppercase">{userName}</span>
+                <button 
+                  onClick={handleChangeCallsign}
+                  className="p-1.5 hover:bg-orange-500 hover:text-white text-gray-400 rounded-full transition-all active:scale-90"
+                  title="Cambiar Indicativo"
+                >
+                  <UserCog size={16} />
+                </button>
+              </div>
+            </div>
+            <h2 className="text-orange-500 font-bold mb-4 uppercase tracking-widest text-sm">Seleccionar Frecuencia</h2>
             <ChannelSelector onSelect={(ch) => setActiveChannel(ch)} />
          </div>
       </div>
