@@ -47,7 +47,8 @@ function App() {
 
   const radioRef = useRef<RadioService | null>(null);
   
-  const effectiveLocation = isManualMode ? (manualLocation || userLocation) : (manualLocation || userLocation);
+  // La ubicación efectiva es la manual si existe, sino la del GPS.
+  const effectiveLocation = manualLocation || userLocation;
   const userLocationRef = useRef<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
@@ -130,6 +131,8 @@ function App() {
   }, [activeChannel, isNameSet]);
 
   useEffect(() => {
+    // Si ya fijamos la ubicación manualmente, detenemos el rastreo GPS por completo para ahorrar batería
+    // y evitar sobrescrituras accidentales.
     if (!activeChannel || !isNameSet || !navigator.geolocation || manualLocation) return;
     
     const watchId = navigator.geolocation.watchPosition(async (pos) => {
@@ -160,17 +163,19 @@ function App() {
   }, [isTalking, activeChannel, isNameSet, userName, manualLocation]);
 
   const handleMapClick = async (lat: number, lng: number) => {
+    // IMPORTANTE: Si por un milisegundo el componente MapClickCapture sigue vivo, 
+    // este check de isManualMode bloquea la segunda ejecución.
     if (!isManualMode || !activeChannel) return;
     
-    // 1. Guardar la nueva posición
+    // Apagamos el modo manual INMEDIATAMENTE
+    setIsManualMode(false);
+    
+    // Guardamos la posición
     setManualLocation({ lat, lng });
     setLocationAccuracy(0);
-    setSystemLog("POSICIÓN_FIJADA");
+    setSystemLog("UBICACIÓN_FIJADA");
 
-    // 2. Apagar el modo manual inmediatamente (One-shot)
-    setIsManualMode(false);
-
-    // 3. Notificar a la red
+    // Notificamos a la base de datos
     await supabase.from('locations').upsert({
       id: DEVICE_ID, 
       name: userName, 
