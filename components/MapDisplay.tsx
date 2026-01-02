@@ -41,12 +41,14 @@ const MapController = ({ center }: { center: { lat: number; lng: number } | null
   return null;
 };
 
-const MapEvents = ({ onMapClick, enabled }: { onMapClick?: (lat: number, lng: number) => void, enabled: boolean }) => {
+/**
+ * Este componente SOLO se monta cuando queremos capturar un click.
+ * Al desmontarse, Leaflet limpia el evento 'click'.
+ */
+const MapClickCapture = ({ onMapClick }: { onMapClick: (lat: number, lng: number) => void }) => {
   useMapEvents({
     click: (e) => {
-      if (enabled && onMapClick) {
-        onMapClick(e.latlng.lat, e.latlng.lng);
-      }
+      onMapClick(e.latlng.lat, e.latlng.lng);
     },
   });
   return null;
@@ -54,11 +56,10 @@ const MapEvents = ({ onMapClick, enabled }: { onMapClick?: (lat: number, lng: nu
 
 const createTacticalIcon = (color: string, isUser: boolean = false, isManual: boolean = false) => {
   const pulseClass = (isUser && !isManual) ? 'animate-pulse' : '';
-  const manualBorder = isManual ? 'border-orange-500 border-dashed' : 'border-white';
   
   return L.divIcon({
     className: 'custom-div-icon',
-    html: `<div class="${pulseClass}" style="background-color: ${color}; width: 14px; height: 14px; border-radius: 50%; border: 2px ${isManual ? 'dashed' : 'solid'} ${isManual ? '#f97316' : 'white'}; box-shadow: 0 0 15px ${color};"></div>`,
+    html: `<div class="${pulseClass}" style="background-color: ${color}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid ${isManual ? '#f97316' : 'white'}; box-shadow: 0 0 15px ${color};"></div>`,
     iconSize: [14, 14],
     iconAnchor: [7, 7]
   });
@@ -87,18 +88,20 @@ export const MapDisplay: React.FC<MapDisplayProps> = ({ userLocation, teamMember
         />
         
         <MapController center={isManualMode ? null : userLocation} />
-        <MapEvents onMapClick={onMapClick} enabled={isManualMode} />
+        
+        {/* Solo activamos el capturador de clicks si estamos en modo manual */}
+        {isManualMode && onMapClick && (
+          <MapClickCapture onMapClick={onMapClick} />
+        )}
 
-        {/* Círculo y Marcador del Usuario */}
         {userLocation && (
           <>
             <Marker position={userLocation} icon={userIcon}>
               <Popup>
-                <div className="font-bold text-gray-900">{isManualMode ? 'POSICIÓN_CORREGIDA' : 'MI_UNIDAD'}</div>
+                <div className="font-bold text-gray-900">{isManualMode ? 'MODO_CALIBRACIÓN' : 'MI_UNIDAD'}</div>
                 <div className="text-[10px] text-gray-500 uppercase">
-                  {isManualMode ? 'Modo Manual Activo' : `PRECISIÓN: ±${accuracy.toFixed(0)}m`}
+                  {accuracy === 0 ? 'Posición fijada manualmente' : `PRECISIÓN: ±${accuracy.toFixed(0)}m`}
                 </div>
-                {isManualMode && <div className="text-[9px] text-orange-600 font-bold mt-1">CLICK EN MAPA PARA MOVER</div>}
               </Popup>
             </Marker>
             {!isManualMode && accuracy > 0 && (
@@ -117,7 +120,6 @@ export const MapDisplay: React.FC<MapDisplayProps> = ({ userLocation, teamMember
           </>
         )}
 
-        {/* Círculos y Marcadores de Compañeros */}
         {teamMembers.map((member) => (
           <React.Fragment key={member.id}>
             <Marker 
