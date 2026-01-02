@@ -1,8 +1,7 @@
-
 {
-  "short_name": "RadioTac",
-  "name": "Tactical Multi-Channel Radio",
-  "description": "Sistema de comunicación táctica simplex con geolocalización.",
+  "short_name": "RadioUbic",
+  "name": "Radio ubicación móvil",
+  "description": "Sistema de comunicación táctica simplex con geolocalización en tiempo real.",
   "icons": [
     {
       "src": "https://cdn-icons-png.flaticon.com/512/944/944431.png",
