@@ -1,6 +1,6 @@
 {
-  "name": "Tactical Simplex Radio",
-  "description": "Walkie-talkie PTT y seguimiento táctico en tiempo real para equipos operativos.",
+  "name": "Radio ubicación móvil",
+  "description": "“Una app de comunicación táctica para emergencias que combina radio por voz, GPS y alertas SMS, diseñada para seguir funcionando cuando fallan los datos y la señal.”",
   "requestFramePermissions": [
     "microphone",
     "geolocation"
