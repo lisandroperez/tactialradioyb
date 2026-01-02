@@ -47,7 +47,6 @@ export const RadioControl: React.FC<RadioControlProps> = ({
             </div>
             
             <div className="flex gap-2">
-              {/* NUEVO BOTÓN DE UBICACIÓN DENTRO DEL PANEL */}
               <button 
                 onClick={onToggleManual} 
                 className={`w-10 h-10 rounded-lg flex items-center justify-center border transition-all active:scale-90 ${isManualMode ? 'bg-orange-600 border-white text-white animate-pulse' : 'bg-gray-800 border-white/5 text-gray-400 hover:text-orange-500'}`}
@@ -76,11 +75,11 @@ export const RadioControl: React.FC<RadioControlProps> = ({
         <div className="flex-1 flex flex-col items-center justify-center z-10 gap-3 md:gap-8 min-h-[280px]">
             <div className="w-full bg-black/60 border border-white/5 p-3 md:p-4 rounded font-mono shadow-inner min-h-[70px] flex flex-col justify-center">
                 <div className="flex justify-between text-[7px] md:text-[9px] text-orange-500/40 mb-1">
-                  <span className="uppercase tracking-widest">Digital Tactical Radio v3.0</span>
+                  <span className="uppercase tracking-widest">Radio Ubicación Móvil v3.0</span>
                   <span>{isConnected ? 'ENLAZADO' : 'BUSCANDO'}</span>
                 </div>
                 {isManualMode ? (
-                  <div className="text-orange-500 text-center font-bold text-[10px] animate-pulse">MODO_CALIBRACIÓN_ACTIVO: PULSE EL MAPA</div>
+                  <div className="text-orange-500 text-center font-bold text-[10px] animate-pulse uppercase">MODO_CALIBRACION_ACTIVO: TOQUE EL MAPA</div>
                 ) : (
                   <>
                     {connectionState === ConnectionState.CONNECTING && <div className="text-orange-400 text-center animate-pulse text-xs">SINCRO_FREQ...</div>}
