@@ -131,8 +131,6 @@ function App() {
   }, [activeChannel, isNameSet]);
 
   useEffect(() => {
-    // Si ya fijamos la ubicación manualmente, detenemos el rastreo GPS por completo para ahorrar batería
-    // y evitar sobrescrituras accidentales.
     if (!activeChannel || !isNameSet || !navigator.geolocation || manualLocation) return;
     
     const watchId = navigator.geolocation.watchPosition(async (pos) => {
@@ -163,19 +161,15 @@ function App() {
   }, [isTalking, activeChannel, isNameSet, userName, manualLocation]);
 
   const handleMapClick = async (lat: number, lng: number) => {
-    // IMPORTANTE: Si por un milisegundo el componente MapClickCapture sigue vivo, 
-    // este check de isManualMode bloquea la segunda ejecución.
     if (!isManualMode || !activeChannel) return;
     
-    // Apagamos el modo manual INMEDIATAMENTE
+    // Apagamos el modo manual INMEDIATAMENTE para que sea 'one-shot'
     setIsManualMode(false);
     
-    // Guardamos la posición
     setManualLocation({ lat, lng });
     setLocationAccuracy(0);
     setSystemLog("UBICACIÓN_FIJADA");
 
-    // Notificamos a la base de datos
     await supabase.from('locations').upsert({
       id: DEVICE_ID, 
       name: userName, 
@@ -249,7 +243,7 @@ function App() {
             <div className="w-16 h-16 bg-orange-500/10 rounded-full flex items-center justify-center mx-auto border border-orange-500/30">
               <User className="text-orange-500" size={32} />
             </div>
-            <h1 className="text-orange-500 font-black tracking-widest text-xl">RADIO_TAC_V3</h1>
+            <h1 className="text-orange-500 font-black tracking-widest text-lg uppercase">RADIO_UBICACION_MOVIL</h1>
           </div>
           <input 
             autoFocus type="text" value={tempName} onChange={(e) => setTempName(e.target.value)}
