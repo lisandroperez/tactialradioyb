@@ -47,7 +47,7 @@ function App() {
 
   const radioRef = useRef<RadioService | null>(null);
   
-  const effectiveLocation = isManualMode ? manualLocation : userLocation;
+  const effectiveLocation = isManualMode ? (manualLocation || userLocation) : (manualLocation || userLocation);
   const userLocationRef = useRef<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
@@ -130,7 +130,7 @@ function App() {
   }, [activeChannel, isNameSet]);
 
   useEffect(() => {
-    if (!activeChannel || !isNameSet || !navigator.geolocation || isManualMode) return;
+    if (!activeChannel || !isNameSet || !navigator.geolocation || manualLocation) return;
     
     const watchId = navigator.geolocation.watchPosition(async (pos) => {
       const { latitude, longitude, accuracy } = pos.coords;
@@ -157,15 +157,20 @@ function App() {
     });
 
     return () => navigator.geolocation.clearWatch(watchId);
-  }, [isTalking, activeChannel, isNameSet, userName, isManualMode]);
+  }, [isTalking, activeChannel, isNameSet, userName, manualLocation]);
 
   const handleMapClick = async (lat: number, lng: number) => {
     if (!isManualMode || !activeChannel) return;
     
+    // 1. Guardar la nueva posición
     setManualLocation({ lat, lng });
     setLocationAccuracy(0);
     setSystemLog("POSICIÓN_FIJADA");
 
+    // 2. Apagar el modo manual inmediatamente (One-shot)
+    setIsManualMode(false);
+
+    // 3. Notificar a la red
     await supabase.from('locations').upsert({
       id: DEVICE_ID, 
       name: userName, 
@@ -180,9 +185,6 @@ function App() {
   };
 
   const toggleManualMode = () => {
-    if (!isManualMode && userLocation) {
-        setManualLocation(userLocation);
-    }
     setIsManualMode(!isManualMode);
   };
 
