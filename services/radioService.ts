@@ -2,6 +2,7 @@
 import { RealtimeChannel } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 import { supabase } from './supabase';
 import { decode, decodeAudioData, createPcmBlob, bufferToWavBase64 } from '../utils/audioUtils';
+import { outbox, OutboxItemType } from './outboxService';
 
 interface RadioOptions {
   userId: string;
@@ -89,6 +90,7 @@ export class RadioService {
           return;
         }
 
+        // Broadcast en tiempo real (si hay internet, se recibe, si no, se pierde el PTT en vivo pero se guarda en el historial localmente al final)
         const pcm = createPcmBlob(inputData);
         this.channel.send({
           type: 'broadcast',
@@ -163,7 +165,8 @@ export class RadioService {
         const wavBase64 = bufferToWavBase64(fullBuffer, this.sampleRate);
         const loc = this.options.getUserLocation();
         
-        await supabase.from('radio_history').insert({
+        // Encolar para envío resiliente en lugar de insertar directamente
+        await outbox.enqueue(OutboxItemType.VOICE, {
           sender_name: this.options.userName,
           lat: loc?.lat || 0,
           lng: loc?.lng || 0,
