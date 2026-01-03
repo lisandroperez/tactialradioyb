@@ -21,13 +21,14 @@ const LandingView = ({ onEnter }: { onEnter: () => void }) => {
       <div className="scanline"></div>
 
       {/* Navegación Superior Derecha */}
-      <nav className="fixed w-full z-50 bg-black/80 border-b border-white/5 backdrop-blur-xl">
+      <nav className="fixed w-full top-0 left-0 z-[100] bg-black/80 border-b border-white/5 backdrop-blur-xl">
           <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
               <div className="flex items-center gap-3">
                   <div className="w-8 h-8 bg-orange-600 rounded flex items-center justify-center font-black text-white shadow-lg">R</div>
                   <span className="mono font-extrabold tracking-tighter text-sm md:text-lg uppercase text-white">RADIO_UBICACIÓN</span>
               </div>
               <div className="flex items-center gap-4 md:gap-8">
+                  {/* Estos enlaces cargan las páginas HTML estáticas que ya tienes */}
                   <a 
                     href="manual.html" 
                     className="flex items-center gap-1.5 mono text-[10px] text-gray-400 hover:text-white font-bold uppercase tracking-widest transition-all"
@@ -40,6 +41,7 @@ const LandingView = ({ onEnter }: { onEnter: () => void }) => {
                   >
                     <Printer size={14} /> <span className="hidden sm:inline">GUÍA_IMPRESIÓN</span>
                   </a>
+                  {/* Este botón activa la entrada a la App de React */}
                   <button 
                     onClick={onEnter} 
                     className="mono text-[10px] font-bold text-white bg-orange-600 px-4 py-2 hover:bg-orange-500 transition-all uppercase shadow-[0_0_15px_rgba(249,115,22,0.3)]"
@@ -61,6 +63,7 @@ const LandingView = ({ onEnter }: { onEnter: () => void }) => {
                       Voz simplex y GPS para brigadas de emergencia.
                   </p>
                   <div className="flex justify-center gap-4">
+                      {/* El botón central también dispara el onEnter */}
                       <button onClick={onEnter} className="btn-ptt px-16 py-6 rounded-sm font-black text-sm md:text-lg tracking-[0.15em] uppercase text-white shadow-2xl transition-all hover:scale-105 active:scale-95">
                           DESPLEGAR UNIDAD
                       </button>
