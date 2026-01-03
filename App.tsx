@@ -18,14 +18,14 @@ const DEVICE_ID = getDeviceId();
 
 const LandingView = ({ onEnter }: { onEnter: () => void }) => {
   return (
-    <div className="overflow-x-hidden relative min-h-screen selection:bg-orange-500">
+    <div className="overflow-x-hidden relative min-h-screen selection:bg-orange-500 bg-[#0a0a0a]">
       <div className="scanline"></div>
 
       <nav className="fixed w-full z-50 bg-black/90 border-b border-white/10 backdrop-blur-xl">
           <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
               <div className="flex items-center gap-3">
                   <div className="w-8 h-8 bg-orange-600 rounded flex items-center justify-center font-black text-white shadow-lg">R</div>
-                  <span className="mono font-extrabold tracking-tighter text-sm md:text-lg uppercase">RADIO_UBICACIÓN_MÓVIL</span>
+                  <span className="mono font-extrabold tracking-tighter text-sm md:text-lg uppercase">RADIO_UBICACIÓN</span>
               </div>
               <div className="flex items-center gap-6">
                   <a href="manual.html" className="hidden sm:flex items-center gap-1.5 mono text-[10px] text-gray-500 hover:text-white font-bold uppercase tracking-widest transition-all">
@@ -35,21 +35,21 @@ const LandingView = ({ onEnter }: { onEnter: () => void }) => {
                     <Printer size={12} /> IMPRIMIR
                   </a>
                   <button onClick={onEnter} className="mono text-[10px] md:text-xs font-bold text-orange-500 border border-orange-500/40 px-5 py-2 hover:bg-orange-600 hover:text-white transition-all uppercase">
-                      ACCESO_SISTEMA &gt;
+                      ACCEDER &gt;
                   </button>
               </div>
           </div>
       </nav>
 
-      <section className="relative min-h-screen flex items-center justify-center hero-gradient pt-20 px-6 bg-[#0a0a0a]">
+      <section className="relative min-h-screen flex items-center justify-center hero-gradient pt-20 px-6">
           <div className="max-w-6xl mx-auto text-center z-10">
               <div className="animate__animated animate__fadeIn">
-                  <span className="mono text-orange-500 text-xs font-bold tracking-[0.4em] uppercase mb-10 block opacity-90">INFRAESTRUCTURA DE RESPUESTA RÁPIDA</span>
+                  <span className="mono text-orange-500 text-xs font-bold tracking-[0.4em] uppercase mb-10 block opacity-90">INFRAESTRUCTURA TÁCTICA DE CAMPO</span>
                   <h1 className="hero-title text-7xl md:text-9xl lg:text-[150px] text-white uppercase mb-12">
                       RADIO<br/>UBICACIÓN<br/>MÓVIL
                   </h1>
                   <p className="text-white text-xl md:text-3xl max-w-3xl mx-auto mb-16 font-bold leading-tight uppercase tracking-tight opacity-90">
-                      Voz y GPS cuando los datos fallan.
+                      Voz simplex y GPS para brigadas de emergencia.
                   </p>
                   <div className="flex justify-center gap-4">
                       <button onClick={onEnter} className="btn-ptt px-16 py-6 rounded-sm font-black text-sm md:text-lg tracking-[0.15em] uppercase text-white shadow-2xl transition-all">
@@ -60,17 +60,13 @@ const LandingView = ({ onEnter }: { onEnter: () => void }) => {
           </div>
       </section>
 
-      <footer className="py-32 bg-[#0e0a07] text-center border-t border-white/5 relative overflow-hidden">
+      <footer className="py-20 bg-black/50 text-center border-t border-white/5 relative overflow-hidden">
           <div className="max-w-4xl mx-auto px-6 relative z-10">
-              <h2 className="text-5xl md:text-8xl font-black mb-12 uppercase tracking-tighter leading-none text-white">
-                  La tecnología al servicio <br/>
-                  <span className="text-orange-500 italic">DE LA VIDA.</span>
-              </h2>
-              <div className="flex flex-col items-center gap-6 mb-24">
-                  <button onClick={onEnter} className="bg-white text-black px-16 py-6 font-black uppercase text-sm tracking-widest hover:bg-orange-600 hover:text-white transition-all transform hover:-translate-y-2 shadow-2xl">
-                      DESPLEGAR AHORA
-                  </button>
+              <div className="flex justify-center gap-8 mb-8 opacity-50">
+                <a href="manual.html" className="mono text-[10px] text-white uppercase hover:text-orange-500">Manual Táctico</a>
+                <a href="guia_rapida.html" className="mono text-[10px] text-white uppercase hover:text-orange-500">Guía de Impresión</a>
               </div>
+              <p className="text-[10px] text-gray-600 uppercase mono">Versión 3.2.0 STABLE // Resiliencia de Campo Activada</p>
           </div>
       </footer>
     </div>
@@ -109,8 +105,6 @@ function App() {
   const [remoteTalker, setRemoteTalker] = useState<string | null>(null);
   const [audioLevel, setAudioLevel] = useState(0);
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<'team' | 'history'>('team');
-  const [showMobileOverlay, setShowMobileOverlay] = useState(false);
 
   const radioRef = useRef<RadioService | null>(null);
   const syncTimerRef = useRef<number | null>(null);
@@ -160,6 +154,7 @@ function App() {
 
           await outbox.updateStatus(item.id, OutboxStatus.SENT);
         } catch (e) {
+          console.error("SYNC_ERROR", e);
           await outbox.updateStatus(item.id, OutboxStatus.PENDING, true);
           break; 
         }
@@ -169,7 +164,7 @@ function App() {
       const finalPending = await outbox.getPendingItems();
       setPendingSync(finalPending.length);
     } catch (e) {
-      console.error("SYNC_ERROR", e);
+      console.error("Critical Outbox fetch error", e);
     }
   }, []);
 
@@ -257,7 +252,7 @@ function App() {
     if (navigator.onLine) {
       await supabase.from('locations').upsert({
         id: DEVICE_ID, name: userName, lat: lat, lng: lng, accuracy: 0,
-        role: 'Unidad Fija', status: isTalking ? 'talking' : 'online', 
+        role: 'Unidad Fija (Fijada)', status: isTalking ? 'talking' : 'online', 
         last_seen: new Date().toISOString(), channel_id: activeChannel.id
       });
     }
@@ -323,7 +318,7 @@ function App() {
             {isOnline ? <CloudUpload size={12} /> : <CloudOff size={12} />}
             {isOnline ? 'Network_Live' : 'Offline_Mode'}
          </div>
-         {pendingSync > 0 && <div className="px-3 py-1.5 border border-orange-500/30 text-orange-500 font-mono text-[9px] font-bold uppercase tracking-widest">SYNC: {pendingSync} PKTS</div>}
+         {pendingSync > 0 && <div className="px-3 py-1.5 border border-orange-500/30 text-orange-500 font-mono text-[9px] font-bold uppercase tracking-widest animate-pulse">SINC: {pendingSync} PKTS</div>}
       </div>
 
       <div className="flex-1 relative border-b md:border-b-0 md:border-r border-white/10 overflow-hidden">
@@ -343,7 +338,12 @@ function App() {
            isManualMode={isManualMode} onToggleManual={() => setIsManualMode(!isManualMode)}
         />
         <div className="hidden md:block p-4 border-t border-white/5">
-           <button onClick={() => { handleDisconnect(); setActiveChannel(null); setCurrentView('landing'); }} className="w-full text-center text-[8px] text-gray-600 font-bold uppercase hover:text-orange-500 transition-colors">
+           <div className="flex border-b border-white/10 mb-4">
+              <button className="flex-1 py-2 text-[10px] font-bold uppercase tracking-widest text-orange-500 border-b-2 border-orange-500">Unidades</button>
+              <button className="flex-1 py-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">Log</button>
+           </div>
+           <TeamList members={teamMembers} />
+           <button onClick={() => { handleDisconnect(); setActiveChannel(null); setCurrentView('landing'); }} className="w-full text-center text-[8px] text-gray-600 font-bold uppercase hover:text-orange-500 transition-colors mt-4">
              Cerrar Estación y Volver al Inicio
            </button>
         </div>
