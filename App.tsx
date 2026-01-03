@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { MapDisplay } from './components/MapDisplay';
 import { RadioControl } from './components/RadioControl';
@@ -8,9 +9,114 @@ import { ChannelSelector } from './components/ChannelSelector';
 import { TeamMember, ConnectionState, RadioHistory, Channel } from './types';
 import { RadioService } from './services/radioService';
 import { supabase, getDeviceId } from './services/supabase';
-import { User, ShieldCheck, List, X, Hash, Settings2, UserCog } from 'lucide-react';
+import { User, ShieldCheck, List, X, Hash, Settings2, UserCog, Terminal, BookOpen, ChevronRight, Globe, AlertCircle } from 'lucide-react';
 
 const DEVICE_ID = getDeviceId();
+
+// --- COMPONENTES DE VISTA (LANDING Y MANUAL) ---
+
+const LandingView = ({ onEnter, onOpenManual }: { onEnter: () => void, onOpenManual: () => void }) => {
+  return (
+    <div className="min-h-screen bg-[#0e0a07] text-white font-sans selection:bg-orange-500 overflow-x-hidden relative">
+      <div className="fixed inset-0 pointer-events-none z-50 bg-[linear-gradient(to_bottom,transparent,rgba(249,115,22,0.05)_50%,transparent)] bg-[length:100%_8px] animate-[scan_8s_linear_infinite]"></div>
+      
+      <nav className="fixed w-full z-[60] bg-[#0e0a07]/90 backdrop-blur-md border-b border-white/5">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-orange-600 rounded-sm flex items-center justify-center font-black text-white text-[10px]">R</div>
+            <span className="font-bold tracking-tighter text-sm uppercase">RADIO_UBICACIÓN</span>
+          </div>
+          <div className="flex items-center gap-6">
+            <button onClick={onOpenManual} className="hidden md:block text-[10px] text-gray-500 hover:text-white font-bold uppercase tracking-widest transition-all">MANUAL_OPERATIVO</button>
+            <button onClick={onEnter} className="text-[10px] font-bold text-orange-500 border border-orange-500/30 px-4 py-1.5 hover:bg-orange-600 hover:text-white transition-all uppercase">ENTRAR_APP ></button>
+          </div>
+        </div>
+      </nav>
+
+      <section className="relative min-h-screen flex items-center justify-center pt-20 px-6">
+        <div className="max-w-5xl mx-auto text-center z-10 animate__animated animate__fadeIn">
+          <span className="text-[#f97316] text-[10px] md:text-xs font-bold tracking-[0.4em] uppercase mb-10 block opacity-90">INFRAESTRUCTURA DE RESPUESTA RÁPIDA</span>
+          <h1 className="text-7xl md:text-9xl lg:text-[140px] font-black leading-[0.82] tracking-tighter uppercase mb-12">RADIO<br/>UBICACIÓN<br/>MÓVIL</h1>
+          <p className="text-white text-xl md:text-3xl font-bold tracking-tight uppercase mb-16 opacity-90">VOZ Y GPS CUANDO LOS DATOS FALLAN.</p>
+          <div className="flex justify-center">
+            <button onClick={onEnter} className="bg-orange-600 px-16 py-6 rounded-sm font-black text-sm md:text-lg tracking-[0.15em] uppercase text-white shadow-2xl hover:scale-105 transition-transform active:scale-95">ENTRAR EN SERVICIO</button>
+          </div>
+        </div>
+      </section>
+
+      {/* El Carrusel (Swipe) solicitado */}
+      <section className="py-24 bg-black border-y border-white/5 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 mb-12 text-left">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-2 h-2 bg-orange-500 animate-pulse"></div>
+            <span className="text-orange-500 text-[11px] font-black tracking-[0.4em] uppercase">SITUACIÓN_DE_CAMPO</span>
+          </div>
+          <h2 className="text-5xl font-black uppercase tracking-tighter leading-[0.9]">EL DESAFÍO<br/><span className="text-gray-600">DEL TERRENO</span></h2>
+        </div>
+
+        <div className="flex overflow-x-auto gap-6 px-6 pb-12 snap-x snap-mandatory no-scrollbar cursor-grab active:cursor-grabbing">
+          {[
+            { id: '01', title: 'Handys con interferencia', desc: 'Eliminamos el ruido analógico. Audio digital cristalino optimizado.' },
+            { id: '02', title: 'Zonas muertas sin datos', desc: 'Cuando el 5G falla, ráfagas de datos 2G envían coordenadas SOS.' },
+            { id: '03', title: 'Caos y ruido ambiente', desc: 'Monitor visual integrado. Transcripción de protocolos críticos en pantalla.' },
+            { id: '04', title: 'Análisis de incidente', desc: 'Logs completos de voz y GPS para auditorías post-misión.' }
+          ].map((item) => (
+            <div key={item.id} className="min-w-[85%] md:min-w-[45%] lg:min-w-[25%] snap-center bg-[#0a0a0a] border border-white/5 p-8 relative group">
+              <span className="absolute top-4 right-4 text-6xl font-black text-white/5 group-hover:text-orange-500/10 transition-colors">{item.id}</span>
+              <h4 className="text-white font-black mb-4 uppercase text-2xl leading-none group-hover:text-orange-500 transition-colors">{item.title}</h4>
+              <p className="text-gray-500 text-sm">{item.desc}</p>
+            </div>
+          ))}
+        </div>
+        <div className="md:hidden text-center mt-4">
+          <p className="text-[8px] text-gray-600 uppercase tracking-widest animate-pulse">Deslizar para escanear desafíos</p>
+        </div>
+      </section>
+
+      <footer className="py-32 bg-[#0e0a07] text-center border-t border-white/5 relative overflow-hidden px-6">
+        <h2 className="text-5xl md:text-7xl font-black mb-12 uppercase tracking-tighter leading-none">TECNOLOGÍA AL SERVICIO <br/><span className="text-orange-500 italic">DE LA VIDA.</span></h2>
+        <p className="text-gray-400 mb-16 italic text-lg max-w-2xl mx-auto">"Gratuita para todas las entidades oficiales y grupos de respuesta."</p>
+        <button onClick={onEnter} className="bg-white text-black px-12 py-5 font-black uppercase text-xs tracking-widest hover:bg-orange-600 hover:text-white transition-all">DESPLEGAR AHORA</button>
+      </footer>
+    </div>
+  );
+};
+
+const ManualView = ({ onClose }: { onClose: () => void }) => {
+  return (
+    <div className="min-h-screen bg-[#0e0a07] text-white p-6 md:p-16 font-mono relative">
+      <div className="fixed top-6 right-6 flex gap-4 z-[100]">
+        <button onClick={() => window.print()} className="bg-white text-black px-4 py-2 font-bold text-[10px] uppercase">PDF</button>
+        <button onClick={onClose} className="bg-orange-600 text-white px-4 py-2 font-bold text-[10px] uppercase">CERRAR</button>
+      </div>
+
+      <header className="mb-20 max-w-5xl mx-auto">
+        <div className="w-10 h-1 bg-orange-500 mb-4"></div>
+        <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-none mb-10">MANUAL<br/>OPERATIVO</h1>
+        <div className="border-t border-white/10 pt-6">
+          <p className="font-bold text-sm uppercase">PROTOCOL_v3.0_STABLE</p>
+        </div>
+      </header>
+
+      <main className="max-w-5xl mx-auto space-y-16">
+        <div className="border-l-4 border-orange-500 bg-white/5 p-8">
+          <h2 className="text-xl font-bold mb-4 uppercase text-orange-500">01_IDENTIFICACIÓN</h2>
+          <p className="text-gray-400 text-sm">Configure su indicativo (Callsign). Use nombres de unidad claros como "MOVIL-1" o "BASE-CENTRAL".</p>
+        </div>
+        <div className="border-l-4 border-orange-500 bg-white/5 p-8">
+          <h2 className="text-xl font-bold mb-4 uppercase text-orange-500">02_COMUNICACIÓN PTT</h2>
+          <p className="text-gray-400 text-sm">Mantenga presionado el botón central para transmitir. Suelte para recibir. El sistema registra audio y ubicación en cada pulsación.</p>
+        </div>
+        <div className="border-l-4 border-orange-500 bg-white/5 p-8">
+          <h2 className="text-xl font-bold mb-4 uppercase text-orange-500">03_MODO TÁCTICO</h2>
+          <p className="text-gray-400 text-sm">Si el GPS falla, use el modo manual para fijar su posición en el mapa. Esto permite a la central coordinar recursos con precisión ±0m.</p>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+// --- LOGICA DE APP ---
 
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): string {
   const R = 6371; 
@@ -22,6 +128,9 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 }
 
 function App() {
+  // Ruteo interno
+  const [currentView, setCurrentView] = useState<'landing' | 'manual' | 'app'>('landing');
+  
   const [userName, setUserName] = useState<string>(localStorage.getItem('user_callsign') || '');
   const [isNameSet, setIsNameSet] = useState<boolean>(!!localStorage.getItem('user_callsign'));
   const [activeChannel, setActiveChannel] = useState<Channel | null>(null);
@@ -29,7 +138,6 @@ function App() {
   
   const [connectionState, setConnectionState] = useState<ConnectionState>(ConnectionState.DISCONNECTED);
   
-  // Ubicación
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationAccuracy, setLocationAccuracy] = useState<number>(0);
   const [isManualMode, setIsManualMode] = useState<boolean>(false);
@@ -46,8 +154,6 @@ function App() {
   const [showMobileOverlay, setShowMobileOverlay] = useState(false);
 
   const radioRef = useRef<RadioService | null>(null);
-  
-  // La ubicación efectiva es la manual si existe, sino la del GPS.
   const effectiveLocation = manualLocation || userLocation;
   const userLocationRef = useRef<{ lat: number; lng: number } | null>(null);
 
@@ -79,7 +185,6 @@ function App() {
     const fetchData = async () => {
       setRadioHistory([]);
       setTeamMembersRaw([]);
-
       const yesterday = new Date(Date.now() - 86400000).toISOString();
       
       const { data: members } = await supabase
@@ -101,28 +206,16 @@ function App() {
     fetchData();
 
     const channel = supabase.channel(`sync-${activeChannel.id}`)
-      .on('postgres_changes', { 
-        event: '*', 
-        table: 'locations', 
-        schema: 'public', 
-        filter: `channel_id=eq.${activeChannel.id}` 
-      }, (payload: any) => {
+      .on('postgres_changes', { event: '*', table: 'locations', schema: 'public', filter: `channel_id=eq.${activeChannel.id}` }, (payload: any) => {
         if (payload.new && payload.new.id !== DEVICE_ID) {
           setTeamMembersRaw(prev => {
             const index = prev.findIndex(m => m.id === payload.new.id);
             if (index === -1) return [...prev, payload.new];
-            const next = [...prev]; 
-            next[index] = payload.new; 
-            return next;
+            const next = [...prev]; next[index] = payload.new; return next;
           });
         }
       })
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        table: 'radio_history', 
-        schema: 'public', 
-        filter: `channel_id=eq.${activeChannel.id}` 
-      }, (payload: any) => {
+      .on('postgres_changes', { event: 'INSERT', table: 'radio_history', schema: 'public', filter: `channel_id=eq.${activeChannel.id}` }, (payload: any) => {
         setRadioHistory(prev => [payload.new, ...prev]);
       })
       .subscribe();
@@ -137,54 +230,26 @@ function App() {
       const { latitude, longitude, accuracy } = pos.coords;
       setUserLocation({ lat: latitude, lng: longitude });
       setLocationAccuracy(accuracy);
-      
-      setSystemLog(accuracy > 200 ? `GPS_INEXACTO (±${accuracy.toFixed(0)}m)` : `GPS_OK (±${accuracy.toFixed(0)}m)`);
-      
       await supabase.from('locations').upsert({
-        id: DEVICE_ID, 
-        name: userName, 
-        lat: latitude, 
-        lng: longitude, 
-        accuracy: Math.round(accuracy),
-        role: accuracy > 200 ? 'Unidad PC' : 'Unidad Móvil', 
-        status: isTalking ? 'talking' : 'online', 
-        last_seen: new Date().toISOString(),
-        channel_id: activeChannel.id
+        id: DEVICE_ID, name: userName, lat: latitude, lng: longitude, accuracy: Math.round(accuracy),
+        role: accuracy > 200 ? 'Unidad PC' : 'Unidad Móvil', status: isTalking ? 'talking' : 'online', 
+        last_seen: new Date().toISOString(), channel_id: activeChannel.id
       });
-    }, (err) => setSystemLog(`GPS_ERR: ${err.code}`), { 
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 5000 
-    });
+    }, (err) => console.log(err), { enableHighAccuracy: true, timeout: 10000 });
 
     return () => navigator.geolocation.clearWatch(watchId);
   }, [isTalking, activeChannel, isNameSet, userName, manualLocation]);
 
   const handleMapClick = async (lat: number, lng: number) => {
     if (!isManualMode || !activeChannel) return;
-    
-    // Apagamos el modo manual INMEDIATAMENTE para que sea 'one-shot'
     setIsManualMode(false);
-    
     setManualLocation({ lat, lng });
     setLocationAccuracy(0);
-    setSystemLog("UBICACIÓN_FIJADA");
-
     await supabase.from('locations').upsert({
-      id: DEVICE_ID, 
-      name: userName, 
-      lat: lat, 
-      lng: lng, 
-      accuracy: 0,
-      role: 'Unidad Fija / Estacionaria', 
-      status: isTalking ? 'talking' : 'online', 
-      last_seen: new Date().toISOString(),
-      channel_id: activeChannel.id
+      id: DEVICE_ID, name: userName, lat: lat, lng: lng, accuracy: 0,
+      role: 'Unidad Fija / Estacionaria', status: isTalking ? 'talking' : 'online', 
+      last_seen: new Date().toISOString(), channel_id: activeChannel.id
     });
-  };
-
-  const toggleManualMode = () => {
-    setIsManualMode(!isManualMode);
   };
 
   const handleConnect = useCallback(() => {
@@ -192,21 +257,14 @@ function App() {
     setConnectionState(ConnectionState.CONNECTING);
     try {
       radioRef.current = new RadioService({
-        userId: DEVICE_ID,
-        userName: userName,
-        channelId: activeChannel.id,
+        userId: DEVICE_ID, userName: userName, channelId: activeChannel.id,
         getUserLocation: () => userLocationRef.current,
-        onAudioBuffer: () => {
-          setAudioLevel(prev => Math.min(100, prev + 25));
-          setTimeout(() => setAudioLevel(0), 100);
-        },
+        onAudioBuffer: () => { setAudioLevel(prev => Math.min(100, prev + 25)); setTimeout(() => setAudioLevel(0), 100); },
         onIncomingStreamStart: (name) => setRemoteTalker(name),
         onIncomingStreamEnd: () => setRemoteTalker(null)
       });
       setConnectionState(ConnectionState.CONNECTED);
-    } catch (e) {
-      setConnectionState(ConnectionState.ERROR);
-    }
+    } catch (e) { setConnectionState(ConnectionState.ERROR); }
   }, [userName, activeChannel]);
 
   const handleDisconnect = useCallback(() => {
@@ -229,15 +287,15 @@ function App() {
     }
   };
 
-  const handleQSY = () => {
-    handleDisconnect();
-    setActiveChannel(null);
-  };
+  // --- RENDERING LOGIC ---
 
-  const handleChangeCallsign = () => {
-    setIsNameSet(false);
-    setTempName(userName);
-  };
+  if (currentView === 'manual') {
+    return <ManualView onClose={() => setCurrentView('landing')} />;
+  }
+
+  if (currentView === 'landing' && !isNameSet) {
+    return <LandingView onEnter={() => setCurrentView('app')} onOpenManual={() => setCurrentView('manual')} />;
+  }
 
   if (!isNameSet) {
     return (
@@ -258,10 +316,11 @@ function App() {
           />
           <button 
             onClick={() => { if(tempName.trim().length >= 3) { localStorage.setItem('user_callsign', tempName.trim().toUpperCase()); setUserName(tempName.trim().toUpperCase()); setIsNameSet(true); }}}
-            className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black py-4 flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-orange-900/20"
+            className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black py-4 flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg"
           >
             <ShieldCheck size={20} /> ENTRAR EN SERVICIO
           </button>
+          <button onClick={() => setCurrentView('landing')} className="w-full text-gray-500 text-[10px] uppercase font-bold hover:text-white transition-colors">Volver a inicio</button>
         </div>
       </div>
     );
@@ -275,17 +334,14 @@ function App() {
               <span className="text-[10px] text-gray-500 uppercase tracking-[0.2em]">Operando como:</span>
               <div className="flex items-center gap-3 bg-white/5 px-4 py-2 border border-white/10 rounded-full">
                 <span className="text-orange-500 font-bold tracking-widest uppercase">{userName}</span>
-                <button 
-                  onClick={handleChangeCallsign}
-                  className="p-1.5 hover:bg-orange-500 hover:text-white text-gray-400 rounded-full transition-all active:scale-90"
-                  title="Cambiar Indicativo"
-                >
+                <button onClick={() => setIsNameSet(false)} className="p-1.5 hover:bg-orange-500 hover:text-white text-gray-400 rounded-full transition-all">
                   <UserCog size={16} />
                 </button>
               </div>
             </div>
             <h2 className="text-orange-500 font-bold mb-4 uppercase tracking-widest text-sm">Seleccionar Frecuencia</h2>
             <ChannelSelector onSelect={(ch) => setActiveChannel(ch)} />
+            <button onClick={() => setCurrentView('landing')} className="text-gray-600 text-[10px] uppercase hover:text-white transition-colors">Volver a Landing</button>
          </div>
       </div>
     );
@@ -293,8 +349,6 @@ function App() {
 
   return (
     <div className="flex flex-col md:flex-row h-[100dvh] w-screen bg-black overflow-hidden relative text-white font-sans">
-      
-      {/* Banner de Calibración sobre el mapa */}
       {isManualMode && (
         <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[3000] bg-orange-600 text-white font-black px-6 py-3 rounded-full shadow-2xl animate-pulse flex items-center gap-3 border-2 border-white uppercase text-xs tracking-widest">
            <Settings2 size={16} /> Toque el mapa para fijar su posición
@@ -302,70 +356,52 @@ function App() {
       )}
 
       <div className="flex-1 relative border-b md:border-b-0 md:border-r border-white/10 overflow-hidden">
-         <MapDisplay 
-           userLocation={effectiveLocation} 
-           teamMembers={teamMembers} 
-           accuracy={locationAccuracy} 
-           isManualMode={isManualMode}
-           onMapClick={handleMapClick}
-         />
-         
-         {/* Indicadores Fijos Arriba Izquierda */}
+         <MapDisplay userLocation={effectiveLocation} teamMembers={teamMembers} accuracy={locationAccuracy} isManualMode={isManualMode} onMapClick={handleMapClick} />
          <div className="absolute top-4 left-4 z-[2000] flex flex-col gap-2 pointer-events-none">
             <div className="bg-black/80 backdrop-blur px-3 py-1 border border-orange-500/30 rounded shadow-lg">
               <span className="text-[9px] text-orange-500/50 block font-mono">FRECUENCIA</span>
-              <span className="text-xs font-bold text-orange-500 font-mono uppercase tracking-widest">
-                <Hash size={10} className="inline mr-1" /> {activeChannel.name}
+              <span className="text-xs font-bold text-orange-500 font-mono uppercase tracking-widest leading-none">
+                {activeChannel.name}
               </span>
             </div>
          </div>
-
-         {/* Menú Móvil */}
          <div className="absolute top-4 right-4 z-[2000] md:hidden">
             <button onClick={() => setShowMobileOverlay(!showMobileOverlay)} className="w-12 h-12 bg-black/80 border-2 border-white/20 rounded-full flex items-center justify-center text-white shadow-xl">
               {showMobileOverlay ? <X size={24} /> : <List size={24} />}
             </button>
          </div>
-
-         {/* Paneles Tácticos (Escritorio) */}
          <div className="hidden md:flex flex-col absolute bottom-6 left-6 w-80 bg-black/90 backdrop-blur rounded border border-white/10 shadow-2xl h-[400px] overflow-hidden z-[500]">
             <div className="flex border-b border-white/10 bg-white/5">
-              <button onClick={() => setActiveTab('team')} className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest transition-colors ${activeTab === 'team' ? 'text-orange-500 border-b-2 border-orange-500 bg-orange-500/5' : 'text-gray-500'}`}>Unidades</button>
-              <button onClick={() => setActiveTab('history')} className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest transition-colors ${activeTab === 'history' ? 'text-orange-500 border-b-2 border-orange-500 bg-orange-500/5' : 'text-gray-500'}`}>Log Audio</button>
+              <button onClick={() => setActiveTab('team')} className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest ${activeTab === 'team' ? 'text-orange-500 border-b-2 border-orange-500' : 'text-gray-500'}`}>Unidades</button>
+              <button onClick={() => setActiveTab('history')} className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest ${activeTab === 'history' ? 'text-orange-500 border-b-2 border-orange-500' : 'text-gray-500'}`}>Log Audio</button>
             </div>
             <div className="flex-1 overflow-hidden">
               {activeTab === 'team' ? <TeamList members={teamMembers} /> : <HistoryPanel history={radioHistory} activeChannel={activeChannel} />}
             </div>
          </div>
-
-         {/* Overlay Móvil */}
          {showMobileOverlay && (
            <div className="md:hidden absolute inset-0 z-[2001] bg-gray-950 flex flex-col">
               <div className="flex justify-between items-center p-4 border-b border-white/10 bg-black">
                 <div className="flex gap-6">
-                  <button onClick={() => setActiveTab('team')} className={`font-bold uppercase text-[10px] tracking-widest ${activeTab === 'team' ? 'text-orange-500' : 'text-gray-500'}`}>Unidades</button>
-                  <button onClick={() => setActiveTab('history')} className={`font-bold uppercase text-[10px] tracking-widest ${activeTab === 'history' ? 'text-orange-500' : 'text-gray-500'}`}>Historial</button>
+                  <button onClick={() => setActiveTab('team')} className={`font-bold uppercase text-[10px] ${activeTab === 'team' ? 'text-orange-500' : 'text-gray-500'}`}>Unidades</button>
+                  <button onClick={() => setActiveTab('history')} className={`font-bold uppercase text-[10px] ${activeTab === 'history' ? 'text-orange-500' : 'text-gray-500'}`}>Historial</button>
                 </div>
                 <button onClick={() => setShowMobileOverlay(false)} className="text-gray-500"><X size={24} /></button>
               </div>
-              <div className="flex-1 overflow-hidden">
-                {activeTab === 'team' ? <TeamList members={teamMembers} /> : <HistoryPanel history={radioHistory} activeChannel={activeChannel} />}
-              </div>
+              <div className="flex-1 overflow-hidden">{activeTab === 'team' ? <TeamList members={teamMembers} /> : <HistoryPanel history={radioHistory} activeChannel={activeChannel} />}</div>
            </div>
          )}
       </div>
       
-      {/* Barra de Radio (SIDEBAR) */}
       <div className="flex-none md:w-[400px] h-auto md:h-full bg-gray-950 z-20 shadow-[-10px_0_30px_rgba(0,0,0,0.5)] border-l border-white/5">
         <RadioControl 
            connectionState={connectionState} isTalking={isTalking} activeChannelName={activeChannel.name}
            onTalkStart={handleTalkStart} onTalkEnd={handleTalkEnd} lastTranscript={remoteTalker} 
-           onConnect={handleConnect} onDisconnect={handleDisconnect} onQSY={handleQSY}
+           onConnect={handleConnect} onDisconnect={handleDisconnect} onQSY={() => { handleDisconnect(); setActiveChannel(null); }}
            audioLevel={audioLevel} onEmergencyClick={() => setShowEmergencyModal(true)}
-           isManualMode={isManualMode} onToggleManual={toggleManualMode}
+           isManualMode={isManualMode} onToggleManual={() => setIsManualMode(!isManualMode)}
         />
       </div>
-      
       <EmergencyModal isOpen={showEmergencyModal} onClose={() => setShowEmergencyModal(false)} location={effectiveLocation} />
     </div>
   );
