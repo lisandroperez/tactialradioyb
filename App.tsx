@@ -28,7 +28,7 @@ const LandingView = ({ onEnter }: { onEnter: () => void }) => {
                   <span className="mono font-extrabold tracking-tighter text-sm md:text-lg uppercase">RADIO_UBICACIÓN_MÓVIL</span>
               </div>
               <button onClick={onEnter} className="mono text-[10px] md:text-xs font-bold text-orange-500 border border-orange-500/40 px-5 py-2 hover:bg-orange-600 hover:text-white transition-all uppercase">
-                  ACCESO_SISTEMA >
+                  ACCESO_SISTEMA &gt;
               </button>
           </div>
       </nav>
