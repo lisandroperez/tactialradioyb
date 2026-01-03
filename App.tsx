@@ -9,8 +9,8 @@ import { ChannelSelector } from './components/ChannelSelector';
 import { TeamMember, ConnectionState, RadioHistory, Channel } from './types';
 import { RadioService } from './services/radioService';
 import { supabase, getDeviceId } from './services/supabase';
-import { outbox, OutboxItemType, OutboxStatus, OutboxItem } from './services/outboxService';
-import { User, ShieldCheck, List, X, Hash, Settings2, UserCog, Terminal, BookOpen, ChevronRight, Globe, AlertCircle, Home, Mic, MapPin, Activity, Send, Target, Volume2, ShieldAlert, CloudUpload, CloudOff, Printer } from 'lucide-react';
+import { outbox, OutboxItemType, OutboxStatus } from './services/outboxService';
+import { User, ShieldCheck, List, X, BookOpen, Home, Mic, MapPin, Send, Target, CloudUpload, CloudOff, Printer } from 'lucide-react';
 
 const DEVICE_ID = getDeviceId();
 
@@ -32,7 +32,7 @@ const LandingView = ({ onEnter }: { onEnter: () => void }) => {
                     <BookOpen size={12} /> MANUAL
                   </a>
                   <a href="guia_rapida.html" className="hidden sm:flex items-center gap-1.5 mono text-[10px] text-orange-500 hover:underline font-bold uppercase tracking-widest transition-all">
-                    <Printer size={12} /> GUÍA RÁPIDA
+                    <Printer size={12} /> IMPRIMIR
                   </a>
                   <button onClick={onEnter} className="mono text-[10px] md:text-xs font-bold text-orange-500 border border-orange-500/40 px-5 py-2 hover:bg-orange-600 hover:text-white transition-all uppercase">
                       ACCESO_SISTEMA &gt;
@@ -70,10 +70,6 @@ const LandingView = ({ onEnter }: { onEnter: () => void }) => {
                   <button onClick={onEnter} className="bg-white text-black px-16 py-6 font-black uppercase text-sm tracking-widest hover:bg-orange-600 hover:text-white transition-all transform hover:-translate-y-2 shadow-2xl">
                       DESPLEGAR AHORA
                   </button>
-                  <div className="flex gap-8">
-                    <a href="manual.html" className="text-gray-500 hover:text-white uppercase font-bold text-[10px] tracking-widest transition-all">Manual Operativo</a>
-                    <a href="guia_rapida.html" className="text-gray-500 hover:text-white uppercase font-bold text-[10px] tracking-widest transition-all">Guía Rápida (Impresión)</a>
-                  </div>
               </div>
           </div>
       </footer>
@@ -81,7 +77,7 @@ const LandingView = ({ onEnter }: { onEnter: () => void }) => {
   );
 };
 
-// --- LOGICA PRINCIPAL (RESTO DEL CODIGO) ---
+// --- LOGICA PRINCIPAL ---
 
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): string {
   const R = 6371; 
@@ -141,12 +137,15 @@ function App() {
     try {
       const pending = await outbox.getPendingItems();
       setPendingSync(pending.length);
+
       if (pending.length === 0) return;
 
       for (const item of pending) {
         if (item.id === undefined) continue;
-        await outbox.updateStatus(item.id, OutboxStatus.SENDING);
+        
         try {
+          await outbox.updateStatus(item.id, OutboxStatus.SENDING);
+          
           if (item.type === OutboxItemType.SOS) {
             await supabase.from('radio_history').insert({
               sender_name: item.payload.sender_name,
@@ -155,33 +154,29 @@ function App() {
               audio_data: '[SOS_ALERT_SMS_FIRED]',
               channel_id: item.payload.channel_id
             });
-          } else {
+          } else if (item.type === OutboxItemType.VOICE) {
             await supabase.from('radio_history').insert(item.payload);
           }
+
           await outbox.updateStatus(item.id, OutboxStatus.SENT);
         } catch (e) {
           await outbox.updateStatus(item.id, OutboxStatus.PENDING, true);
-          break;
+          break; 
         }
       }
+
       await outbox.deleteSentItems();
-    } catch (e) {}
+      const finalPending = await outbox.getPendingItems();
+      setPendingSync(finalPending.length);
+    } catch (e) {
+      console.error("SYNC_ERROR", e);
+    }
   }, []);
 
   useEffect(() => {
     syncTimerRef.current = window.setInterval(processOutbox, 5000);
     return () => { if (syncTimerRef.current) clearInterval(syncTimerRef.current); };
   }, [processOutbox]);
-
-  useEffect(() => {
-    const handleGlobalMouseUp = () => { if (isTalking) handleTalkEnd(); };
-    window.addEventListener('mouseup', handleGlobalMouseUp);
-    window.addEventListener('touchend', handleGlobalMouseUp);
-    return () => {
-      window.removeEventListener('mouseup', handleGlobalMouseUp);
-      window.removeEventListener('touchend', handleGlobalMouseUp);
-    };
-  }, [isTalking]);
 
   const teamMembers = useMemo(() => {
     if (!effectiveLocation) return teamMembersRaw;
@@ -193,14 +188,30 @@ function App() {
 
   useEffect(() => {
     if (!activeChannel || !userName) return;
+
     const fetchData = async () => {
+      setRadioHistory([]);
+      setTeamMembersRaw([]);
       const yesterday = new Date(Date.now() - 86400000).toISOString();
-      const { data: members } = await supabase.from('locations').select('*').eq('channel_id', activeChannel.id).gt('last_seen', new Date(Date.now() - 3600000).toISOString()); 
+      
+      const { data: members } = await supabase
+        .from('locations')
+        .select('*')
+        .eq('channel_id', activeChannel.id)
+        .gt('last_seen', new Date(Date.now() - 3600000).toISOString()); 
       if (members) setTeamMembersRaw(members.filter(m => m.id !== DEVICE_ID));
-      const { data: history } = await supabase.from('radio_history').select('*').eq('channel_id', activeChannel.id).gt('created_at', yesterday).order('created_at', { ascending: false });
+
+      const { data: history } = await supabase
+        .from('radio_history')
+        .select('*')
+        .eq('channel_id', activeChannel.id)
+        .gt('created_at', yesterday)
+        .order('created_at', { ascending: false });
       if (history) setRadioHistory(history);
     };
+
     fetchData();
+
     const channel = supabase.channel(`sync-${activeChannel.id}`)
       .on('postgres_changes', { event: '*', table: 'locations', schema: 'public', filter: `channel_id=eq.${activeChannel.id}` }, (payload: any) => {
         if (payload.new && payload.new.id !== DEVICE_ID) {
@@ -213,12 +224,15 @@ function App() {
       })
       .on('postgres_changes', { event: 'INSERT', table: 'radio_history', schema: 'public', filter: `channel_id=eq.${activeChannel.id}` }, (payload: any) => {
         setRadioHistory(prev => [payload.new, ...prev]);
-      }).subscribe();
+      })
+      .subscribe();
+    
     return () => { supabase.removeChannel(channel); };
   }, [activeChannel, userName]);
 
   useEffect(() => {
     if (!activeChannel || !userName || !navigator.geolocation || manualLocation) return;
+    
     const watchId = navigator.geolocation.watchPosition(async (pos) => {
       const { latitude, longitude, accuracy } = pos.coords;
       setUserLocation({ lat: latitude, lng: longitude });
@@ -230,7 +244,8 @@ function App() {
           last_seen: new Date().toISOString(), channel_id: activeChannel.id
         });
       }
-    }, (err) => {}, { enableHighAccuracy: true, timeout: 10000 });
+    }, (err) => console.log(err), { enableHighAccuracy: true, timeout: 10000 });
+
     return () => navigator.geolocation.clearWatch(watchId);
   }, [isTalking, activeChannel, userName, manualLocation]);
 
@@ -238,9 +253,10 @@ function App() {
     if (!isManualMode || !activeChannel) return;
     setIsManualMode(false);
     setManualLocation({ lat, lng });
+    setLocationAccuracy(0);
     if (navigator.onLine) {
       await supabase.from('locations').upsert({
-        id: DEVICE_ID, name: userName, lat, lng, accuracy: 0,
+        id: DEVICE_ID, name: userName, lat: lat, lng: lng, accuracy: 0,
         role: 'Unidad Fija', status: isTalking ? 'talking' : 'online', 
         last_seen: new Date().toISOString(), channel_id: activeChannel.id
       });
@@ -252,7 +268,7 @@ function App() {
     setConnectionState(ConnectionState.CONNECTING);
     try {
       radioRef.current = new RadioService({
-        userId: DEVICE_ID, userName, channelId: activeChannel.id,
+        userId: DEVICE_ID, userName: userName, channelId: activeChannel.id,
         getUserLocation: () => userLocationRef.current,
         onAudioBuffer: () => { setAudioLevel(prev => Math.min(100, prev + 25)); setTimeout(() => setAudioLevel(0), 100); },
         onIncomingStreamStart: (name) => setRemoteTalker(name),
@@ -277,7 +293,12 @@ function App() {
     <div className="h-[100dvh] w-screen bg-black flex items-center justify-center p-6 font-mono">
       <div className="w-full max-w-sm space-y-6 bg-gray-950 border border-orange-500/20 p-8 rounded shadow-2xl">
         <h1 className="text-orange-500 font-black tracking-widest text-lg uppercase text-center">IDENTIFICACIÓN_RADIO</h1>
-        <input autoFocus type="text" value={tempName} onChange={(e) => setTempName(e.target.value)} placeholder="INDICATIVO (CALLSIGN)" className="w-full bg-black border border-gray-800 p-4 text-orange-500 outline-none text-center font-bold tracking-widest uppercase" />
+        <input 
+          autoFocus type="text" value={tempName} onChange={(e) => setTempName(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && tempName.trim().length >= 3 && (localStorage.setItem('user_callsign', tempName.trim().toUpperCase()), setUserName(tempName.trim().toUpperCase()))} 
+          placeholder="INDICATIVO (CALLSIGN)"
+          className="w-full bg-black border border-gray-800 p-4 text-orange-500 outline-none text-center font-bold tracking-widest uppercase"
+        />
         <button onClick={() => { if(tempName.trim().length >= 3) { localStorage.setItem('user_callsign', tempName.trim().toUpperCase()); setUserName(tempName.trim().toUpperCase()); }}} className="w-full bg-orange-600 text-white font-black py-4 uppercase">ENTRAR EN SERVICIO</button>
       </div>
     </div>
@@ -295,22 +316,46 @@ function App() {
 
   return (
     <div className="flex flex-col md:flex-row h-[100dvh] w-screen bg-black overflow-hidden relative text-white font-sans">
-      <div className="absolute bottom-4 left-4 z-[2005] flex gap-2 font-mono text-[9px] font-bold uppercase">
-         <div className={`px-3 py-1.5 border ${isOnline ? 'border-emerald-500/30 text-emerald-500' : 'border-red-500/30 text-red-500 animate-pulse'}`}>
+      <div className="scanline"></div>
+      
+      <div className="absolute bottom-4 left-4 z-[2005] flex gap-2">
+         <div className={`px-3 py-1.5 rounded-sm flex items-center gap-2 border font-mono text-[9px] font-bold uppercase tracking-widest ${isOnline ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500' : 'bg-red-500/10 border-red-500/30 text-red-500 animate-pulse'}`}>
+            {isOnline ? <CloudUpload size={12} /> : <CloudOff size={12} />}
             {isOnline ? 'Network_Live' : 'Offline_Mode'}
          </div>
-         {pendingSync > 0 && <div className="px-3 py-1.5 border border-orange-500/30 text-orange-500">SYNC: {pendingSync} PKTS</div>}
+         {pendingSync > 0 && <div className="px-3 py-1.5 border border-orange-500/30 text-orange-500 font-mono text-[9px] font-bold uppercase tracking-widest">SYNC: {pendingSync} PKTS</div>}
       </div>
+
       <div className="flex-1 relative border-b md:border-b-0 md:border-r border-white/10 overflow-hidden">
          <MapDisplay userLocation={effectiveLocation} teamMembers={teamMembers} accuracy={locationAccuracy} isManualMode={isManualMode} onMapClick={handleMapClick} />
-         <div className="absolute top-4 left-4 z-[2000] bg-black/80 p-2 border border-orange-500/30 rounded">
-            <span className="text-xs font-bold text-orange-500 uppercase font-mono">{activeChannel.name}</span>
+         
+         <div className="absolute top-4 left-4 z-[2000] bg-black/80 backdrop-blur px-3 py-1 border border-orange-500/30 rounded">
+            <span className="text-xs font-bold text-orange-500 font-mono uppercase tracking-widest">{activeChannel.name}</span>
          </div>
       </div>
-      <div className="flex-none md:w-[400px] h-auto md:h-full bg-gray-950 z-20">
-        <RadioControl connectionState={connectionState} isTalking={isTalking} activeChannelName={activeChannel.name} onTalkStart={handleTalkStart} onTalkEnd={handleTalkEnd} lastTranscript={remoteTalker} onConnect={handleConnect} onDisconnect={handleDisconnect} onQSY={() => { handleDisconnect(); setActiveChannel(null); }} audioLevel={audioLevel} onEmergencyClick={() => setShowEmergencyModal(true)} isManualMode={isManualMode} onToggleManual={() => setIsManualMode(!isManualMode)} />
+      
+      <div className="flex-none md:w-[400px] h-auto md:h-full bg-gray-950 z-20 shadow-[-10px_0_30px_rgba(0,0,0,0.5)]">
+        <RadioControl 
+           connectionState={connectionState} isTalking={isTalking} activeChannelName={activeChannel.name}
+           onTalkStart={handleTalkStart} onTalkEnd={handleTalkEnd} lastTranscript={remoteTalker} 
+           onConnect={handleConnect} onDisconnect={handleDisconnect} onQSY={() => { handleDisconnect(); setActiveChannel(null); }}
+           audioLevel={audioLevel} onEmergencyClick={() => setShowEmergencyModal(true)}
+           isManualMode={isManualMode} onToggleManual={() => setIsManualMode(!isManualMode)}
+        />
+        <div className="hidden md:block p-4 border-t border-white/5">
+           <button onClick={() => { handleDisconnect(); setActiveChannel(null); setCurrentView('landing'); }} className="w-full text-center text-[8px] text-gray-600 font-bold uppercase hover:text-orange-500 transition-colors">
+             Cerrar Estación y Volver al Inicio
+           </button>
+        </div>
       </div>
-      <EmergencyModal isOpen={showEmergencyModal} onClose={() => setShowEmergencyModal(false)} location={effectiveLocation} userName={userName} channelId={activeChannel.id} />
+      
+      <EmergencyModal 
+        isOpen={showEmergencyModal} 
+        onClose={() => setShowEmergencyModal(false)} 
+        location={effectiveLocation} 
+        userName={userName}
+        channelId={activeChannel.id}
+      />
     </div>
   );
 }
