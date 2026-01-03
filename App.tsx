@@ -10,7 +10,7 @@ import { TeamMember, ConnectionState, RadioHistory, Channel } from './types';
 import { RadioService } from './services/radioService';
 import { supabase, getDeviceId } from './services/supabase';
 import { outbox, OutboxItemType, OutboxStatus, OutboxItem } from './services/outboxService';
-import { User, ShieldCheck, List, X, Hash, Settings2, UserCog, Terminal, BookOpen, ChevronRight, Globe, AlertCircle, Home, Mic, MapPin, Activity, Send, Target, Volume2, ShieldAlert, CloudUpload, CloudOff } from 'lucide-react';
+import { User, ShieldCheck, List, X, Hash, Settings2, UserCog, Terminal, BookOpen, ChevronRight, Globe, AlertCircle, Home, Mic, MapPin, Activity, Send, Target, Volume2, ShieldAlert, CloudUpload, CloudOff, Printer } from 'lucide-react';
 
 const DEVICE_ID = getDeviceId();
 
@@ -27,9 +27,17 @@ const LandingView = ({ onEnter }: { onEnter: () => void }) => {
                   <div className="w-8 h-8 bg-orange-600 rounded flex items-center justify-center font-black text-white shadow-lg">R</div>
                   <span className="mono font-extrabold tracking-tighter text-sm md:text-lg uppercase">RADIO_UBICACIÓN_MÓVIL</span>
               </div>
-              <button onClick={onEnter} className="mono text-[10px] md:text-xs font-bold text-orange-500 border border-orange-500/40 px-5 py-2 hover:bg-orange-600 hover:text-white transition-all uppercase">
-                  ACCESO_SISTEMA &gt;
-              </button>
+              <div className="flex items-center gap-6">
+                  <a href="manual.html" className="hidden sm:flex items-center gap-1.5 mono text-[10px] text-gray-500 hover:text-white font-bold uppercase tracking-widest transition-all">
+                    <BookOpen size={12} /> MANUAL
+                  </a>
+                  <a href="guia_rapida.html" className="hidden sm:flex items-center gap-1.5 mono text-[10px] text-orange-500 hover:underline font-bold uppercase tracking-widest transition-all">
+                    <Printer size={12} /> IMPRIMIR
+                  </a>
+                  <button onClick={onEnter} className="mono text-[10px] md:text-xs font-bold text-orange-500 border border-orange-500/40 px-5 py-2 hover:bg-orange-600 hover:text-white transition-all uppercase">
+                      ACCESO_SISTEMA &gt;
+                  </button>
+              </div>
           </div>
       </nav>
 
@@ -43,7 +51,7 @@ const LandingView = ({ onEnter }: { onEnter: () => void }) => {
                   <p className="text-white text-xl md:text-3xl max-w-3xl mx-auto mb-16 font-bold leading-tight uppercase tracking-tight opacity-90">
                       Voz y GPS cuando los datos fallan.
                   </p>
-                  <div className="flex justify-center">
+                  <div className="flex justify-center gap-4">
                       <button onClick={onEnter} className="btn-ptt px-16 py-6 rounded-sm font-black text-sm md:text-lg tracking-[0.15em] uppercase text-white shadow-2xl transition-all">
                           ENTRAR EN SERVICIO
                       </button>
@@ -91,7 +99,7 @@ const LandingView = ({ onEnter }: { onEnter: () => void }) => {
                           <Mic size={28} />
                       </div>
                       <h3 className="mono text-xl font-bold mb-4 uppercase text-white">Radio PTT Profesional</h3>
-                      <p className="text-gray-500 leading-relaxed text-sm">Audio nítido optimizado para voz. Comunicación simplex que emula un Handy pero con la claridad del entorno digital.</p>
+                      <p className="text-gray-500 leading-relaxed text-sm">Audio nítido optimizado para voice. Comunicación simplex que emula un Handy pero con la claridad del entorno digital.</p>
                   </div>
                   <div className="feature-card p-10 rounded-sm group">
                       <div className="w-14 h-14 bg-orange-500/10 text-orange-500 rounded flex items-center justify-center mb-8 border border-orange-500/20 group-hover:bg-orange-500 group-hover:text-white transition-all">
@@ -117,10 +125,14 @@ const LandingView = ({ onEnter }: { onEnter: () => void }) => {
                   La tecnología al servicio <br/>
                   <span className="text-orange-500 italic">DE LA VIDA.</span>
               </h2>
-              <div className="flex justify-center mb-24">
+              <div className="flex flex-col items-center gap-6 mb-24">
                   <button onClick={onEnter} className="bg-white text-black px-16 py-6 font-black uppercase text-sm tracking-widest hover:bg-orange-600 hover:text-white transition-all transform hover:-translate-y-2 shadow-2xl">
                       DESPLEGAR AHORA
                   </button>
+                  <div className="flex gap-8">
+                    <a href="manual.html" className="text-gray-500 hover:text-white uppercase font-bold text-[10px] tracking-widest transition-all">Manual Operativo</a>
+                    <a href="guia_rapida.html" className="text-gray-500 hover:text-white uppercase font-bold text-[10px] tracking-widest transition-all">Guía Rápida (Impresión)</a>
+                  </div>
               </div>
           </div>
       </footer>
@@ -199,7 +211,6 @@ function App() {
         await outbox.updateStatus(item.id, OutboxStatus.SENDING);
         
         if (item.type === OutboxItemType.SOS) {
-          // Las alertas SOS por SMS ya se dispararon, pero aquí registramos el evento en DB central si hay red
           const { error } = await supabase.from('radio_history').insert({
             sender_name: item.payload.sender_name,
             lat: item.payload.lat,
@@ -217,7 +228,7 @@ function App() {
       } catch (e) {
         console.error("SYNC_ERROR:", e);
         await outbox.updateStatus(item.id, OutboxStatus.PENDING, true);
-        break; // Detener cola si hay error persistente
+        break; 
       }
     }
 
