@@ -10,146 +10,12 @@ import { TeamMember, ConnectionState, RadioHistory, Channel } from './types';
 import { RadioService } from './services/radioService';
 import { supabase, getDeviceId } from './services/supabase';
 import { outbox, OutboxItemType, OutboxStatus } from './services/outboxService';
-import { BookOpen, Printer, Home, Radio as RadioIcon, CloudUpload, CloudOff, ChevronLeft, MapPin, Activity, AlertTriangle, Send, Users, Clock, Hash, Volume2, Play, Download } from 'lucide-react';
+import { BookOpen, Printer, Home, Radio as RadioIcon, CloudUpload, CloudOff } from 'lucide-react';
 
 const DEVICE_ID = getDeviceId();
 
-// --- VISTA DEL MANUAL TÁCTICO (Convertido de manual.html) ---
-const ManualView = ({ onBack }: { onBack: () => void }) => {
-  return (
-    <div className="bg-[#0e0a07] min-h-screen p-6 md:p-12 text-gray-200 selection:bg-orange-500 font-sans">
-      <div className="max-w-5xl mx-auto">
-        <button onClick={onBack} className="fixed bottom-6 right-6 z-50 bg-gray-800 text-white px-5 py-2.5 font-black text-[10px] uppercase tracking-widest hover:bg-orange-600 transition-all border border-white/10 flex items-center gap-2">
-           <ChevronLeft size={14} /> VOLVER_AL_INICIO
-        </button>
-
-        <header className="mb-16 animate__animated animate__fadeIn">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-1 bg-orange-500"></div>
-            <p className="mono text-orange-500 font-bold tracking-[0.4em] text-[9px] uppercase">OPERATIONAL_MANUAL_v3.2</p>
-          </div>
-          <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-none mb-6 uppercase text-white">GUÍA DE<br />USUARIO</h1>
-          <p className="text-gray-500 font-mono text-[10px] uppercase tracking-widest border-t border-white/10 pt-4">Protocolo de Comunicaciones Resilientes para Brigadas</p>
-        </header>
-
-        <div className="grid md:grid-cols-2 gap-8 mb-16">
-          <section className="space-y-4">
-            <div className="flex items-center gap-3">
-              <span className="w-7 h-7 bg-orange-500 text-white flex items-center justify-center font-black text-sm">01</span>
-              <h2 className="text-2xl font-black uppercase text-white">Identificación</h2>
-            </div>
-            <div className="bg-white/5 border border-white/10 p-6">
-              <p className="text-xs text-gray-400 mb-4">Al iniciar, ingrese su <span className="text-white font-bold">Callsign (Indicativo)</span>. Este nombre será su identificador único en el mapa y en el registro de audio.</p>
-              <div className="bg-black/40 p-3 border border-white/5 font-mono text-[10px] text-orange-500">
-                RECOMENDACIÓN: Use nombres cortos y claros.<br />Ej: "MOVIL-1", "BASE-TUC", "BRIGADA-B".
-              </div>
-            </div>
-          </section>
-
-          <section className="space-y-4">
-            <div className="flex items-center gap-3">
-              <span className="w-7 h-7 bg-orange-500 text-white flex items-center justify-center font-black text-sm">02</span>
-              <h2 className="text-2xl font-black uppercase text-white">Frecuencias</h2>
-            </div>
-            <div className="bg-white/5 border border-white/10 p-6">
-              <p className="text-xs text-gray-400 mb-4">Seleccione su canal de operación en el <span className="text-white font-bold">Selector de Frecuencias</span>.</p>
-              <ul className="text-[10px] space-y-2 font-mono uppercase">
-                <li className="flex items-center gap-2"><span className="w-2 h-2 bg-emerald-500 rounded-full"></span> Canales Públicos: Acceso libre.</li>
-                <li className="flex items-center gap-2"><span className="w-2 h-2 bg-red-500 rounded-full"></span> Canales Seguros: Requieren llave (PIN).</li>
-              </ul>
-            </div>
-          </section>
-        </div>
-
-        <section className="mb-16 space-y-6">
-          <div className="flex items-center gap-3">
-            <span className="w-7 h-7 bg-orange-500 text-white flex items-center justify-center font-black text-sm text-3xl">03</span>
-            <h2 className="text-3xl font-black uppercase text-white">Comunicaciones de Voz (PTT)</h2>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="bg-white/5 border border-white/10 p-6 border-l-4 border-l-orange-500">
-              <h4 className="font-black text-orange-500 uppercase text-[11px] mb-3">TX: Transmitir</h4>
-              <p className="text-[11px] text-gray-400">Presione y <span className="text-white font-bold">mantenga</span> el botón central. Espere el sonido de entrada y hable a 15cm del micrófono.</p>
-            </div>
-            <div className="bg-white/5 border border-white/10 p-6 border-l-4 border-l-emerald-500">
-              <h4 className="font-black text-emerald-500 uppercase text-[11px] mb-3">RX: Recibir</h4>
-              <p className="text-[11px] text-gray-400">El audio se reproduce en tiempo real. Un aro naranja en pantalla indica quién está modulando.</p>
-            </div>
-            <div className="bg-white/5 border border-white/10 p-6 border-l-4 border-l-gray-500">
-              <h4 className="font-black text-gray-400 uppercase text-[11px] mb-3">Simplex</h4>
-              <p className="text-[11px] text-gray-500">El sistema es de una vía. No puede transmitir mientras otra unidad está hablando.</p>
-            </div>
-          </div>
-        </section>
-
-        <section className="mb-16 space-y-6">
-          <div className="flex items-center gap-3">
-            <span className="w-7 h-7 bg-orange-500 text-white flex items-center justify-center font-black text-sm text-3xl">04</span>
-            <h2 className="text-3xl font-black uppercase text-white">Geolocalización</h2>
-          </div>
-          <div className="bg-white/5 border border-white/10 p-6">
-            <div className="grid md:grid-cols-2 gap-8">
-              <div>
-                <h4 className="font-black text-white uppercase text-sm mb-2">GPS Automático</h4>
-                <p className="text-xs text-gray-400">Su ubicación se actualiza cada vez que modula o detecta movimiento. El radio de precisión (círculo) indica la confiabilidad de la señal.</p>
-              </div>
-              <div className="bg-orange-500/5 p-4 border border-orange-500/20">
-                <h4 className="font-black text-orange-500 uppercase text-xs mb-2">Modo Táctico Fijo (Target)</h4>
-                <p className="text-[11px] text-gray-300">Si establece un Puesto de Comando o Base, use el icono de <span className="font-bold">MIRA</span> para tocar el mapa y fijar su posición manualmente.</p>
-              </div>
-            </div>
-          </div>
-        </section>
-      </div>
-    </div>
-  );
-};
-
-// --- VISTA DE GUÍA RÁPIDA (B/W - Convertido de guia_rapida.html) ---
-const GuideView = ({ onBack }: { onBack: () => void }) => {
-  return (
-    <div className="bg-white min-h-screen p-8 text-black font-mono">
-      <div className="max-w-4xl mx-auto">
-        <button onClick={onBack} className="no-print fixed bottom-6 right-6 bg-black text-white px-6 py-2 uppercase font-bold text-xs">VOLVER</button>
-        
-        <div className="border-4 border-black p-4 mb-8 flex justify-between items-center">
-            <div>
-                <h1 className="text-3xl font-bold uppercase">GUÍA RÁPIDA DE OPERACIÓN</h1>
-                <p className="text-sm font-bold">SISTEMA: RADIO UBICACIÓN MÓVIL (v3.2)</p>
-            </div>
-            <div className="text-right font-bold text-xs">
-                DOCUMENTO: OP-01-B/W
-            </div>
-        </div>
-
-        <div className="divide-y divide-black">
-          {[
-            { id: "01", title: "IDENTIFICACIÓN (CALLSIGN)", desc: "Ingrese su indicativo de radio. Es el nombre que verán los demás en el mapa." },
-            { id: "02", title: "SELECCIÓN DE CANAL", desc: "Toque el canal deseado para entrar. Los canales con candado requieren PIN." },
-            { id: "03", title: "TRANSMISIÓN (PTT)", desc: "Mantenga presionado el círculo central para hablar. Suelte para escuchar." },
-            { id: "04", title: "GPS FIJO (BASE / PC)", desc: "Toque el icono de la MIRA, luego toque el mapa para fijar su posición exacta." },
-            { id: "05", title: "ALERTA SOS (PRIORIDAD)", desc: "Presione el triángulo rojo en emergencias. Seleccione el incidente y envíe el SMS." },
-          ].map(item => (
-            <div key={item.id} className="py-6 flex gap-8">
-              <div className="w-12 h-12 border-2 border-black flex items-center justify-center font-bold text-xl flex-shrink-0">{item.id}</div>
-              <div>
-                <h3 className="font-bold text-lg uppercase">{item.title}</h3>
-                <p className="text-sm">{item.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-8 pt-4 border-t-4 border-black text-center font-bold text-sm uppercase">
-            EN CASO DE FALLA TOTAL: UTILICE RADIO VHF/UHF
-        </div>
-      </div>
-    </div>
-  );
-};
-
 // --- COMPONENTE LANDING CON NAVEGACIÓN SUPERIOR ---
-const LandingView = ({ onEnter, onManual, onGuide }: { onEnter: () => void; onManual: () => void; onGuide: () => void }) => {
+const LandingView = ({ onEnter }: { onEnter: () => void }) => {
   return (
     <div className="overflow-x-hidden relative min-h-screen selection:bg-orange-500 bg-[#0a0a0a]">
       <div className="scanline"></div>
@@ -162,18 +28,20 @@ const LandingView = ({ onEnter, onManual, onGuide }: { onEnter: () => void; onMa
                   <span className="mono font-extrabold tracking-tighter text-sm md:text-lg uppercase text-white">RADIO_UBICACIÓN</span>
               </div>
               <div className="flex items-center gap-4 md:gap-8">
-                  <button 
-                    onClick={onManual}
+                  {/* Estos enlaces cargan las páginas HTML estáticas que ya tienes */}
+                  <a 
+                    href="manual.html" 
                     className="flex items-center gap-1.5 mono text-[10px] text-gray-400 hover:text-white font-bold uppercase tracking-widest transition-all"
                   >
                     <BookOpen size={14} /> <span className="hidden sm:inline">MANUAL</span>
-                  </button>
-                  <button 
-                    onClick={onGuide}
+                  </a>
+                  <a 
+                    href="guia_rapida.html" 
                     className="flex items-center gap-1.5 mono text-[10px] text-orange-500 hover:underline font-bold uppercase tracking-widest transition-all"
                   >
                     <Printer size={14} /> <span className="hidden sm:inline">GUÍA_IMPRESIÓN</span>
-                  </button>
+                  </a>
+                  {/* Este botón activa la entrada a la App de React */}
                   <button 
                     onClick={onEnter} 
                     className="mono text-[10px] font-bold text-white bg-orange-600 px-4 py-2 hover:bg-orange-500 transition-all uppercase shadow-[0_0_15px_rgba(249,115,22,0.3)]"
@@ -195,6 +63,7 @@ const LandingView = ({ onEnter, onManual, onGuide }: { onEnter: () => void; onMa
                       Voz simplex y GPS para brigadas de emergencia.
                   </p>
                   <div className="flex justify-center gap-4">
+                      {/* El botón central también dispara el onEnter */}
                       <button onClick={onEnter} className="btn-ptt px-16 py-6 rounded-sm font-black text-sm md:text-lg tracking-[0.15em] uppercase text-white shadow-2xl transition-all hover:scale-105 active:scale-95">
                           DESPLEGAR UNIDAD
                       </button>
@@ -206,8 +75,8 @@ const LandingView = ({ onEnter, onManual, onGuide }: { onEnter: () => void; onMa
       <footer className="py-20 bg-black/50 text-center border-t border-white/5 relative overflow-hidden">
           <div className="max-w-4xl mx-auto px-6 relative z-10">
               <div className="flex justify-center gap-8 mb-8 opacity-50">
-                <button onClick={onManual} className="mono text-[10px] text-white uppercase hover:text-orange-500 transition-colors">Documentación Técnica</button>
-                <button onClick={onGuide} className="mono text-[10px] text-white uppercase hover:text-orange-500 transition-colors">Protocolo Impreso</button>
+                <a href="manual.html" className="mono text-[10px] text-white uppercase hover:text-orange-500 transition-colors">Documentación Técnica</a>
+                <a href="guia_rapida.html" className="mono text-[10px] text-white uppercase hover:text-orange-500 transition-colors">Protocolo Impreso</a>
               </div>
               <p className="text-[10px] text-gray-600 uppercase mono tracking-widest">Versión 3.2.0 STABLE // Resiliencia de Campo Activada</p>
           </div>
@@ -226,7 +95,7 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 }
 
 function App() {
-  const [currentView, setCurrentView] = useState<'landing' | 'app' | 'manual' | 'guia'>('landing');
+  const [currentView, setCurrentView] = useState<'landing' | 'app'>('landing');
   const [userName, setUserName] = useState<string>(localStorage.getItem('user_callsign') || '');
   const [activeChannel, setActiveChannel] = useState<Channel | null>(null);
   const [tempName, setTempName] = useState('');
@@ -423,10 +292,7 @@ function App() {
   const handleTalkStart = () => { if (radioRef.current) { setIsTalking(true); radioRef.current.startTransmission(); } };
   const handleTalkEnd = () => { if (radioRef.current) { radioRef.current.stopTransmission(); setIsTalking(false); } };
 
-  // --- RENDERING ROUTER ---
-  if (currentView === 'manual') return <ManualView onBack={() => setCurrentView('landing')} />;
-  if (currentView === 'guia') return <GuideView onBack={() => setCurrentView('landing')} />;
-  if (currentView === 'landing') return <LandingView onEnter={() => setCurrentView('app')} onManual={() => setCurrentView('manual')} onGuide={() => setCurrentView('guia')} />;
+  if (currentView === 'landing') return <LandingView onEnter={() => setCurrentView('app')} />;
 
   if (!userName) return (
     <div className="h-[100dvh] w-screen bg-black flex items-center justify-center p-6 font-mono">
