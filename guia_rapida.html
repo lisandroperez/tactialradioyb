@@ -1,0 +1,153 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GUÍA RÁPIDA | RADIO UBICACIÓN MÓVIL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            .no-print { display: none; }
+            body { padding: 0; margin: 0; }
+        }
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: white;
+            color: black;
+        }
+        .icon-box {
+            width: 48px;
+            height: 48px;
+            border: 2px solid black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .instruction-row {
+            border-bottom: 1px solid black;
+            padding: 1rem 0;
+            display: flex;
+            gap: 1.5rem;
+            align-items: flex-start;
+        }
+        .instruction-row:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body class="p-8 max-w-4xl mx-auto">
+
+    <!-- CABECERA DE IMPRESIÓN -->
+    <div class="border-4 border-black p-4 mb-8 flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold uppercase">GUÍA RÁPIDA DE OPERACIÓN</h1>
+            <p class="text-sm font-bold">SISTEMA: RADIO UBICACIÓN MÓVIL (v3.2)</p>
+        </div>
+        <div class="text-right font-bold text-xs">
+            CONFIDENCIALIDAD: USO INTERNO<br>
+            DOCUMENTO: OP-01-B/W
+        </div>
+    </div>
+
+    <!-- CUERPO DE LA GUÍA -->
+    <div class="space-y-2">
+        
+        <!-- 01 IDENTIFICACIÓN -->
+        <div class="instruction-row">
+            <div class="icon-box">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3" stroke-linecap="square"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <div>
+                <h3 class="font-bold text-lg uppercase">01. IDENTIFICACIÓN (CALLSIGN)</h3>
+                <p class="text-sm">Ingrese su indicativo de radio. Es el nombre que verán los demás en el mapa. Sea breve y use mayúsculas.</p>
+                <p class="text-xs mt-1 font-bold italic">Ejemplo: MOVIL-01, BASE-01, RESCATE-A.</p>
+            </div>
+        </div>
+
+        <!-- 02 CANALES -->
+        <div class="instruction-row">
+            <div class="icon-box">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3" stroke-linecap="square"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>
+            </div>
+            <div>
+                <h3 class="font-bold text-lg uppercase">02. SELECCIÓN DE CANAL</h3>
+                <p class="text-sm">Toque el canal deseado para entrar. Los canales con candado requieren PIN.</p>
+                <p class="text-xs mt-1 font-bold italic">Si no ve su canal, use el botón (+) para crear una nueva frecuencia.</p>
+            </div>
+        </div>
+
+        <!-- 03 PUSH TO TALK -->
+        <div class="instruction-row">
+            <div class="icon-box">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3" stroke-linecap="square"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            </div>
+            <div>
+                <h3 class="font-bold text-lg uppercase">03. TRANSMISIÓN (PTT)</h3>
+                <p class="text-sm">Mantenga presionado el círculo central para hablar. Suelte para escuchar.</p>
+                <p class="text-xs mt-1 font-bold italic">La barra de estado dirá "TX_TRANSMITIENDO" durante la modulación.</p>
+            </div>
+        </div>
+
+        <!-- 04 MODO TÁCTICO FIJO -->
+        <div class="instruction-row">
+            <div class="icon-box">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3" stroke-linecap="square"><circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/></svg>
+            </div>
+            <div>
+                <h3 class="font-bold text-lg uppercase">04. GPS FIJO (BASE / PC)</h3>
+                <p class="text-sm">Para unidades estáticas: Toque el icono de la MIRA, luego toque el mapa donde está ubicado.</p>
+                <p class="text-xs mt-1 font-bold italic">Esto anula el GPS dinámico y fija su unidad en una coordenada exacta.</p>
+            </div>
+        </div>
+
+        <!-- 05 SOS RESILIENTE -->
+        <div class="instruction-row">
+            <div class="icon-box">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3" stroke-linecap="square"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <div>
+                <h3 class="font-bold text-lg uppercase">05. ALERTA SOS (PRIORIDAD)</h3>
+                <p class="text-sm">Presione el triángulo rojo en emergencias. Seleccione el tipo de incidente y envíe el SMS.</p>
+                <p class="text-xs mt-1 font-bold italic">Funciona sin datos de internet. Envía sus coordenadas vía red celular tradicional.</p>
+            </div>
+        </div>
+
+        <!-- 06 STORE & FORWARD -->
+        <div class="instruction-row">
+            <div class="icon-box">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3" stroke-linecap="square"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>
+            </div>
+            <div>
+                <h3 class="font-bold text-lg uppercase">06. RESILIENCIA DE SEÑAL</h3>
+                <p class="text-sm">Si no hay red, la app guarda sus mensajes y alertas en una cola local (Outbox).</p>
+                <p class="text-xs mt-1 font-bold italic">Al recuperar señal, el sistema reintenta el envío automáticamente.</p>
+            </div>
+        </div>
+
+        <!-- 07 LOG DE AUDIO -->
+        <div class="instruction-row">
+            <div class="icon-box">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3" stroke-linecap="square"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div>
+                <h3 class="font-bold text-lg uppercase">07. HISTORIAL Y AUDITORÍA</h3>
+                <p class="text-sm">Toque el panel "LOG AUDIO" para revisar transmisiones pasadas.</p>
+                <p class="text-xs mt-1 font-bold italic">Puede reproducir el audio o descargarlo en formato .WAV como evidencia.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- PIE DE PÁGINA -->
+    <div class="mt-8 pt-4 border-t-4 border-black text-center font-bold text-sm uppercase">
+        EN CASO DE FALLA TOTAL: UTILICE FRECUENCIAS ANALÓGICAS VÍA RADIO VHF/UHF
+        <div class="no-print mt-6 space-x-4">
+            <button onclick="window.print()" class="bg-black text-white px-6 py-2">IMPRIMIR PDF</button>
+            <button onclick="window.history.back()" class="border-2 border-black px-6 py-2">VOLVER</button>
+        </div>
+    </div>
+
+</body>
+</html>
