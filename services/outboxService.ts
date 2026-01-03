@@ -55,12 +55,7 @@ class OutboxService {
   async getPendingItems(): Promise<OutboxItem[]> {
     const db = await this.db;
     const items = await db.getAllFromIndex(STORE_NAME, 'status', OutboxStatus.PENDING);
-    // Priorizamos SOS sobre Voz, y por fecha de creación
-    return items.sort((a, b) => {
-      if (a.type === OutboxItemType.SOS && b.type !== OutboxItemType.SOS) return -1;
-      if (a.type !== OutboxItemType.SOS && b.type === OutboxItemType.SOS) return 1;
-      return a.createdAt - b.createdAt;
-    });
+    return items.sort((a, b) => a.createdAt - b.createdAt);
   }
 
   async updateStatus(id: number, status: OutboxStatus, attemptsInc: boolean = false) {
