@@ -1,10 +1,12 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MANUAL DE OPERACIONES | RADIO UBICACIÓN MÓVIL</title>
+    <title>MANUAL TÁCTICO | RADIO UBICACIÓN MÓVIL</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Inter:wght@400;700;900&display=swap');
         
@@ -22,142 +24,222 @@
                 linear-gradient(var(--grid-color) 1px, transparent 1px),
                 linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
             background-size: 40px 40px;
+            line-height: 1.5;
         }
 
         .mono { font-family: 'JetBrains Mono', monospace; }
 
         @media print {
             .no-print { display: none; }
-            body { background: white !important; color: black !important; padding: 2rem !important; }
-            .tactical-card { border: 1px solid black !important; background: white !important; color: black !important; }
-            .text-orange-500 { color: black !important; font-weight: bold; }
-            .text-gray-400, .text-gray-500 { color: #333 !important; }
-            .bg-red-600\/10 { background: #fee2e2 !important; }
-            .text-white { color: black !important; }
+            body { background: white !important; color: black !important; padding: 1rem !important; background-image: none !important; }
+            .tactical-card { border: 1px solid black !important; background: white !important; color: black !important; box-shadow: none !important; }
+            .text-orange-500, .text-emerald-500, .text-red-500 { color: black !important; font-weight: bold !important; }
+            .bg-orange-600, .bg-red-600 { background: black !important; color: white !important; }
+            .border-white\/10 { border-color: #ddd !important; }
         }
 
         .tactical-card {
             background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 2rem;
-            border-left: 4px solid var(--tactical-orange);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
         }
 
         .step-num {
             background: var(--tactical-orange);
             color: white;
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             font-weight: 900;
-            margin-right: 12px;
+            font-size: 14px;
+            margin-right: 10px;
             clip-path: polygon(20% 0%, 100% 0, 100% 80%, 80% 100%, 0 100%, 0% 20%);
         }
 
-        h2 {
-            letter-spacing: -0.05em;
-            line-height: 0.9;
-        }
+        h2 { letter-spacing: -0.05em; line-height: 0.9; }
+        .feature-icon { color: var(--tactical-orange); margin-bottom: 0.5rem; }
     </style>
 </head>
-<body class="p-6 md:p-16 max-w-5xl mx-auto">
-    <div class="no-print fixed top-6 right-6 flex gap-4 z-50">
-        <button onclick="window.print()" class="bg-white text-black px-6 py-3 font-black text-xs uppercase tracking-widest hover:bg-orange-600 hover:text-white transition-all shadow-2xl">IMPRIMIR_PDF</button>
-        <a href="landing.html" class="bg-gray-800 text-white px-6 py-3 font-black text-xs uppercase tracking-widest hover:bg-gray-700 transition-all">VOLVER</a>
+<body class="p-6 md:p-12 max-w-5xl mx-auto">
+    
+    <div class="no-print fixed bottom-6 right-6 flex gap-3 z-50">
+        <button onclick="window.print()" class="bg-white text-black px-5 py-2.5 font-black text-[10px] uppercase tracking-widest hover:bg-orange-600 hover:text-white transition-all shadow-2xl border border-black/10">IMPRIMIR_PDF</button>
+        <a href="landing.html" class="bg-gray-800 text-white px-5 py-2.5 font-black text-[10px] uppercase tracking-widest hover:bg-gray-700 transition-all border border-white/10">VOLVER</a>
     </div>
 
-    <!-- PORTADA TÁCTICA -->
-    <header class="mb-20 animate__animated animate__fadeIn">
-        <div class="flex items-center gap-3 mb-6">
-            <div class="w-10 h-1 bg-orange-500"></div>
-            <p class="mono text-orange-500 font-bold tracking-[0.4em] text-[10px] uppercase">MISSION_CRITICAL_PROTOCOL_v3.0</p>
+    <!-- CABECERA -->
+    <header class="mb-16 animate__animated animate__fadeIn">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-8 h-1 bg-orange-500"></div>
+            <p class="mono text-orange-500 font-bold tracking-[0.4em] text-[9px] uppercase">OPERATIONAL_MANUAL_v3.2</p>
         </div>
-        <h1 class="text-7xl md:text-9xl font-black tracking-tighter leading-none mb-10 uppercase text-white">MANUAL<br>OPERATIVO</h1>
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-t border-white/10 pt-8">
-            <div>
-                <p class="font-black text-2xl uppercase text-white">Radio Ubicación Móvil</p>
-                <p class="text-gray-500 font-mono text-xs uppercase tracking-widest">Digital Simplex Mesh System</p>
-            </div>
-            <div class="text-left md:text-right">
-                <p class="font-mono text-[10px] font-bold uppercase text-orange-500">Clasificación: SERVICIO_PÚBLICO</p>
-                <p class="font-mono text-[10px] uppercase text-gray-600">Revision: MAY_2025_02</p>
-            </div>
-        </div>
+        <h1 class="text-6xl md:text-8xl font-black tracking-tighter leading-none mb-6 uppercase text-white">GUÍA DE<br>USUARIO</h1>
+        <p class="text-gray-500 font-mono text-[10px] uppercase tracking-widest border-t border-white/10 pt-4">Protocolo de Comunicaciones Resilientes para Brigadas</p>
     </header>
 
-    <!-- SECCIONES -->
-    <main class="space-y-24">
-        
-        <!-- INTRO -->
-        <section>
-            <div class="flex items-center gap-4 mb-8">
-                <span class="text-orange-500 font-black text-4xl opacity-20">01</span>
-                <h2 class="text-4xl font-black uppercase text-white">Misión del Sistema</h2>
+    <div class="grid md:grid-cols-2 gap-8 mb-16">
+        <!-- 01 REGISTRO -->
+        <section class="space-y-4">
+            <div class="flex items-center gap-3">
+                <span class="step-num">01</span>
+                <h2 class="text-2xl font-black uppercase text-white">Identificación</h2>
             </div>
             <div class="tactical-card">
-                <p class="text-gray-400 leading-relaxed mb-6">
-                    Este sistema garantiza la <span class="text-white font-bold">comunicación por voz y telemetría GPS</span> en entornos de alta interferencia. Utiliza tecnología digital simplex para emular la experiencia de un Handy profesional sobre dispositivos móviles.
-                </p>
-                <div class="bg-red-600/10 border border-red-600/30 p-6">
-                    <h3 class="font-black text-red-500 uppercase text-sm mb-2 tracking-widest">AVISO_CRÍTICO</h3>
-                    <p class="text-xs text-red-400 font-mono">ESTA HERRAMIENTA COMPLEMENTA LAS RADIOS VHF/UHF OFICIALES. EN CASO DE EMERGENCIA EXTREMA, USE LOS CANALES DE SOCORRO NACIONALES.</p>
+                <p class="text-xs text-gray-400 mb-4">Al iniciar, ingrese su <span class="text-white font-bold">Callsign (Indicativo)</span>. Este nombre será su identificador único en el mapa y en el registro de audio.</p>
+                <div class="bg-black/40 p-3 border border-white/5 font-mono text-[10px] text-orange-500">
+                    RECOMENDACIÓN: Use nombres cortos y claros.<br>Ej: "MOVIL-1", "BASE-TUC", "BRIGADA-B".
                 </div>
             </div>
         </section>
 
-        <!-- PUESTA EN SERVICIO -->
-        <section>
-            <div class="flex items-center gap-4 mb-8">
-                <span class="text-orange-500 font-black text-4xl opacity-20">02</span>
-                <h2 class="text-4xl font-black uppercase text-white">Puesta en Servicio</h2>
+        <!-- 02 CANALES -->
+        <section class="space-y-4">
+            <div class="flex items-center gap-3">
+                <span class="step-num">02</span>
+                <h2 class="text-2xl font-black uppercase text-white">Frecuencias</h2>
             </div>
-            <div class="grid md:grid-cols-3 gap-6">
-                <div class="tactical-card">
-                    <div class="step-num mb-4">1</div>
-                    <h4 class="font-black text-orange-500 uppercase text-sm mb-2">Identificación</h4>
-                    <p class="text-xs text-gray-500 leading-relaxed">Configure su INDICATIVO (EJ: MOVIL-1). Este nombre aparecerá en cada transmisión.</p>
-                </div>
-                <div class="tactical-card">
-                    <div class="step-num mb-4">2</div>
-                    <h4 class="font-black text-orange-500 uppercase text-sm mb-2">Sincronización</h4>
-                    <p class="text-xs text-gray-500 leading-relaxed">Seleccione una FRECUENCIA. Los canales privados requieren contraseña.</p>
-                </div>
-                <div class="tactical-card">
-                    <div class="step-num mb-4">3</div>
-                    <h4 class="font-black text-orange-500 uppercase text-sm mb-2">Permisos</h4>
-                    <p class="text-xs text-gray-500 leading-relaxed">Debe autorizar el acceso al MICRÓFONO y a la UBICACIÓN para el despliegue completo.</p>
-                </div>
+            <div class="tactical-card">
+                <p class="text-xs text-gray-400 mb-4">Seleccione su canal de operación en el <span class="text-white font-bold">Selector de Frecuencias</span>.</p>
+                <ul class="text-[10px] space-y-2 font-mono uppercase">
+                    <li class="flex items-center gap-2"><span class="w-2 h-2 bg-emerald-500 rounded-full"></span> Canales Públicos: Acceso libre.</li>
+                    <li class="flex items-center gap-2"><span class="w-2 h-2 bg-red-500 rounded-full"></span> Canales Seguros: Requieren llave (PIN).</li>
+                </ul>
             </div>
         </section>
+    </div>
 
-        <!-- PROTOCOLO PTT -->
-        <section>
-            <div class="flex items-center gap-4 mb-8">
-                <span class="text-orange-500 font-black text-4xl opacity-20">03</span>
-                <h2 class="text-4xl font-black uppercase text-white">Protocolo de Voz</h2>
+    <!-- 03 COMUNICACIÓN DE VOZ -->
+    <section class="mb-16 space-y-6">
+        <div class="flex items-center gap-3">
+            <span class="step-num">03</span>
+            <h2 class="text-3xl font-black uppercase text-white">Comunicaciones de Voz (PTT)</h2>
+        </div>
+        <div class="grid md:grid-cols-3 gap-6">
+            <div class="tactical-card border-l-orange-500">
+                <h4 class="font-black text-orange-500 uppercase text-[11px] mb-3">TX: Transmitir</h4>
+                <p class="text-[11px] text-gray-400">Presione y <span class="text-white font-bold">mantenga</span> el botón central. Espere el sonido de entrada y hable a 15cm del micrófono.</p>
             </div>
-            <div class="grid md:grid-cols-2 gap-12">
-                <div class="space-y-4">
-                    <h4 class="text-orange-500 font-black uppercase text-xs tracking-widest border-b border-white/10 pb-2">TRANSMISIÓN (TX)</h4>
-                    <p class="text-sm text-gray-400">1. Mantenga presionado el botón central naranja.</p>
-                    <p class="text-sm text-gray-400">2. Espere el indicador visual "TX_HABLANDO".</p>
-                    <p class="text-sm text-gray-400">3. Hable claramente y suelte para escuchar.</p>
+            <div class="tactical-card border-l-emerald-500">
+                <h4 class="font-black text-emerald-500 uppercase text-[11px] mb-3">RX: Recibir</h4>
+                <p class="text-[11px] text-gray-400">El audio se reproduce en tiempo real. Un aro naranja en pantalla indica quién está modulando.</p>
+            </div>
+            <div class="tactical-card border-l-gray-500">
+                <h4 class="font-black text-gray-400 uppercase text-[11px] mb-3">Simplex</h4>
+                <p class="text-[11px] text-gray-500">El sistema es de una vía. No puede transmitir mientras otra unidad está hablando.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 04 GPS Y MODO FIJO -->
+    <section class="mb-16 space-y-6">
+        <div class="flex items-center gap-3">
+            <span class="step-num">04</span>
+            <h2 class="text-3xl font-black uppercase text-white">Geolocalización</h2>
+        </div>
+        <div class="tactical-card">
+            <div class="grid md:grid-cols-2 gap-8">
+                <div>
+                    <h4 class="font-black text-white uppercase text-sm mb-2">GPS Automático</h4>
+                    <p class="text-xs text-gray-400">Su ubicación se actualiza cada vez que modula o detecta movimiento. El radio de precisión (círculo) indica la confiabilidad de la señal.</p>
                 </div>
-                <div class="space-y-4">
-                    <h4 class="text-orange-500 font-black uppercase text-xs tracking-widest border-b border-white/10 pb-2">RECEPCIÓN (RX)</h4>
-                    <p class="text-sm text-gray-400">1. El audio se reproduce automáticamente.</p>
-                    <p class="text-sm text-gray-400">2. Si no escuchó bien, use el LOG_AUDIO para re-reproducir.</p>
+                <div class="bg-orange-500/5 p-4 border border-orange-500/20">
+                    <h4 class="font-black text-orange-500 uppercase text-xs mb-2">Modo Táctico Fijo (Target)</h4>
+                    <p class="text-[11px] text-gray-300">Si establece un Puesto de Comando o Base, use el icono de <span class="font-bold">MIRA</span> para tocar el mapa y fijar su posición manualmente, ignorando el rebote del GPS.</p>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-    </main>
+    <!-- 05 EMERGENCIAS Y RESILIENCIA -->
+    <section class="mb-16 space-y-6">
+        <div class="flex items-center gap-3">
+            <span class="step-num">05</span>
+            <h2 class="text-3xl font-black uppercase text-white text-red-500">Emergencia SOS</h2>
+        </div>
+        <div class="tactical-card border-red-600 bg-red-600/5">
+            <div class="flex flex-col md:flex-row gap-8 items-center">
+                <div class="flex-1 space-y-4">
+                    <p class="text-sm text-white font-bold italic">"Diseñado para que nadie se quede atrás."</p>
+                    <p class="text-xs text-gray-400">El botón de SOS (Triángulo Rojo) genera una alerta que se envía por <span class="text-white">Broadcast</span> a toda la red y prepara un <span class="text-white">SMS de Rescate</span> con sus coordenadas exactas.</p>
+                </div>
+                <div class="w-full md:w-64 bg-black/60 p-4 border border-red-600/30 font-mono text-[9px] text-red-400">
+                    <p class="font-bold border-b border-red-600/20 pb-1 mb-2">PROTOCOLO SOS SMS:</p>
+                    1. Tocar icono SOS.<br>
+                    2. Elegir tipo de incidente.<br>
+                    3. Se abrirá su app de SMS.<br>
+                    4. Presione ENVIAR.<br>
+                    <span class="text-white">Funciona incluso sin datos (Internet).</span>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    <footer class="mt-40 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center opacity-30 gap-4">
-        <p class="mono text-[10px] uppercase font-bold tracking-widest">RADIO_UBICACION_MOVIL // DOC_ID: 001-OP-TECH</p>
-        <p class="mono text-[10px] uppercase font-bold">Fin del Documento</p>
+    <!-- 06 STORE & FORWARD -->
+    <section class="mb-16 space-y-6">
+        <div class="flex items-center gap-3">
+            <span class="step-num">06</span>
+            <h2 class="text-3xl font-black uppercase text-white">Modo Store & Forward</h2>
+        </div>
+        <div class="tactical-card">
+            <div class="flex items-start gap-4">
+                <div class="bg-blue-500/10 p-3 border border-blue-500/30 rounded">
+                    <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                </div>
+                <div>
+                    <h4 class="font-black text-white uppercase text-sm mb-2">Gestión de falta de señal</h4>
+                    <p class="text-xs text-gray-400 mb-3">Si transmite y el sistema detecta <span class="text-red-500 font-bold">OFFLINE</span>, el mensaje no se pierde. Se guarda en la <span class="text-white">Bandeja de Salida Táctica (Outbox)</span>.</p>
+                    <div className="flex gap-4">
+                        <div class="text-[9px] font-mono text-gray-500 uppercase">
+                            <span class="text-orange-500 font-bold">STATUS_PENDING:</span> Esperando conexión.
+                        </div>
+                        <div class="text-[9px] font-mono text-gray-500 uppercase">
+                            <span class="text-emerald-500 font-bold">AUTO_RETRY:</span> Reintento automático cada 5s.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 07 LOG Y AUDITORIA -->
+    <section class="mb-24 space-y-4">
+        <div class="flex items-center gap-3">
+            <span class="step-num">07</span>
+            <h2 class="text-2xl font-black uppercase text-white">Log de Auditoría</h2>
+        </div>
+        <div class="tactical-card">
+            <p class="text-xs text-gray-400">Acceda al panel <span class="text-white font-bold">"Log Audio"</span> para ver el historial de transmisiones. Cada registro incluye:</p>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 font-mono text-[9px] text-orange-500">
+                <div class="border border-white/5 p-2 bg-black/20">HORA EXACTA</div>
+                <div class="border border-white/5 p-2 bg-black/20">COORDENADAS</div>
+                <div class="border border-white/5 p-2 bg-black/20">AUDIO ORIGINAL</div>
+                <div class="border border-white/5 p-2 bg-black/20">DESCARGA .WAV</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center opacity-30 gap-4">
+        <p class="mono text-[9px] uppercase font-bold tracking-widest text-white">RADIO_UBICACION_MOVIL // DOC_ID: 001-OP-TECH</p>
+        <p class="mono text-[9px] uppercase font-bold text-orange-500">FIN DEL PROTOCOLO</p>
     </footer>
+
+    <script>
+        // Efecto Fade In para secciones al hacer scroll
+        const observerOptions = { threshold: 0.1 };
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate__animated', 'animate__fadeInUp');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('section').forEach(section => observer.observe(section));
+    </script>
 </body>
 </html>
