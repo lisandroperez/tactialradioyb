@@ -1,6 +1,5 @@
 
 import { openDB, IDBPDatabase } from 'https://cdn.jsdelivr.net/npm/idb@8/+esm';
-import { supabase } from './supabase';
 
 export enum OutboxItemType {
   VOICE = 'voice',
@@ -32,9 +31,11 @@ class OutboxService {
   constructor() {
     this.db = openDB(DB_NAME, 1, {
       upgrade(db) {
-        const store = db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
-        store.createIndex('status', 'status');
-        store.createIndex('type', 'type');
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          const store = db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+          store.createIndex('status', 'status');
+          store.createIndex('type', 'type');
+        }
       },
     });
   }
@@ -54,12 +55,7 @@ class OutboxService {
   async getPendingItems(): Promise<OutboxItem[]> {
     const db = await this.db;
     const items = await db.getAllFromIndex(STORE_NAME, 'status', OutboxStatus.PENDING);
-    // Priorización: SOS primero, luego Voz por fecha
-    return items.sort((a, b) => {
-      if (a.type === OutboxItemType.SOS && b.type !== OutboxItemType.SOS) return -1;
-      if (a.type !== OutboxItemType.SOS && b.type === OutboxItemType.SOS) return 1;
-      return a.createdAt - b.createdAt;
-    });
+    return items.sort((a, b) => a.createdAt - b.createdAt);
   }
 
   async updateStatus(id: number, status: OutboxStatus, attemptsInc: boolean = false) {
