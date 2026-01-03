@@ -10,7 +10,7 @@
     <link rel="manifest" href="manifest.json" />
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/944/944431.png" />
     
-    <title>Radio ubicación móvil</title>
+    <title>RADIO UBICACIÓN MÓVIL | Comunicación de Emergencia</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
@@ -42,6 +42,12 @@
       #root { min-height: 100dvh; }
 
       .mono { font-family: 'JetBrains Mono', monospace; }
+
+      .hero-title {
+          line-height: 0.82;
+          letter-spacing: -0.04em;
+          font-weight: 900;
+      }
 
       .hero-gradient {
           background: radial-gradient(circle at 50% 40%, rgba(249, 115, 22, 0.15) 0%, rgba(10, 10, 10, 1) 75%);
@@ -90,6 +96,30 @@
       
       .no-scrollbar::-webkit-scrollbar { display: none; }
       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+      /* Carrusel Táctico con Scroll Snap */
+      .problem-carousel {
+          display: flex;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          -webkit-overflow-scrolling: touch;
+          gap: 1.5rem;
+          padding-bottom: 2rem;
+      }
+      .problem-slide {
+          flex: 0 0 85%;
+          scroll-snap-align: center;
+      }
+      @media (min-width: 768px) {
+          .problem-slide { flex: 0 0 calc(45% - 1rem); }
+      }
+      @media (min-width: 1280px) {
+          .problem-slide { flex: 0 0 calc(25% - 1.2rem); }
+      }
+
+      .map-tiles-grayscale {
+        filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+      }
     </style>
   <script type="importmap">
 {
