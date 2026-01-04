@@ -50,7 +50,7 @@ const ManualView = ({ onBack }: { onBack: () => void }) => {
   );
 };
 
-// --- LANDING VIEW ---
+// --- LANDING VIEW COMPLETO CON OPCIÓN 04 ---
 const LandingView = ({ onEnter, onManual }: { onEnter: () => void; onManual: () => void }) => {
   return (
     <div className="overflow-x-hidden relative min-h-screen selection:bg-orange-500 bg-[#0e0a07]">
@@ -203,7 +203,7 @@ function App() {
   const fetchAllData = useCallback(async () => {
     if (!activeChannel || !userName) return;
     
-    // 1. Latido inicial para aparecer en los mapas de otros
+    // 1. Latido inicial para aparecer en los mapas de otros inmediatamente
     if (navigator.geolocation && !manualLocation) {
         navigator.geolocation.getCurrentPosition(async (pos) => {
             const { latitude, longitude, accuracy } = pos.coords;
@@ -216,12 +216,12 @@ function App() {
         });
     }
 
-    // 2. Cargar Usuarios Actuales
+    // 2. Cargar Usuarios Actuales (Últimas 12 horas)
     const { data: members } = await supabase
       .from('locations')
       .select('*')
       .eq('channel_id', activeChannel.id)
-      .gt('last_seen', new Date(Date.now() - 43200000).toISOString()); // Últimas 12 horas
+      .gt('last_seen', new Date(Date.now() - 43200000).toISOString());
     
     if (members) {
       setTeamMembersRaw(members.filter(m => String(m.id) !== String(DEVICE_ID)).map(m => ({
@@ -244,13 +244,13 @@ function App() {
 
     fetchAllData();
 
-    const channel = supabase.channel(`sync-v7-${activeChannel.id}`)
+    // Suscripción con comparaciones de ID robustas
+    const channel = supabase.channel(`sync-v8-${activeChannel.id}`)
       .on('postgres_changes', { event: '*', table: 'locations', schema: 'public' }, (payload: any) => {
         const { eventType, new: newRec, old: oldRec } = payload;
         const target = newRec || oldRec;
         
         if (!target || String(target.id) === String(DEVICE_ID)) return;
-        // Comparación flexible de ID de canal
         if (target.channel_id && String(target.channel_id) !== String(activeChannel.id)) return;
 
         setTeamMembersRaw(prev => {
@@ -314,7 +314,7 @@ function App() {
   if (!userName) return (
     <div className="h-screen bg-black flex items-center justify-center p-6 font-mono relative overflow-hidden">
       <div className="scanline"></div>
-      <div className="w-full max-w-sm bg-gray-900 border border-orange-500/30 p-8 shadow-2xl relative z-10">
+      <div className="w-full max-sm bg-gray-900 border border-orange-500/30 p-8 shadow-2xl relative z-10">
         <h1 className="text-orange-500 font-black text-center mb-8 tracking-widest uppercase">Identificación Radio</h1>
         <input autoFocus type="text" value={tempName} onChange={e => setTempName(e.target.value.toUpperCase())} 
           onKeyDown={e => e.key === 'Enter' && tempName.length >= 3 && (localStorage.setItem('user_callsign', tempName), setUserName(tempName))}
@@ -356,7 +356,7 @@ function App() {
                 <button onClick={fetchAllData} className="text-gray-500 hover:text-white transition-colors"><RefreshCw size={12} /></button>
             </div>
 
-            {/* VISTAS QUE SOLO TOMAN TODA LA PANTALLA EN MÓVILES */}
+            {/* VISTAS QUE SOLO TOMAN TODA LA PANTALLA EN MÓVILES (md:hidden) */}
             <div className={`md:hidden absolute inset-0 z-[1002] bg-gray-950 transition-transform ${mobileTab === 'team' ? 'translate-x-0' : 'translate-x-full'}`}>
                <div className="p-2 border-b border-white/10 flex justify-between items-center bg-black">
                   <span className="text-[10px] font-black uppercase text-orange-500 px-2 tracking-widest">Unidades en Frecuencia</span>
@@ -374,7 +374,7 @@ function App() {
             </div>
          </div>
 
-         {/* Paneles laterales fijos solo en Escritorio (PC) */}
+         {/* Paneles laterales fijos solo en Escritorio (PC) - Evita el bloqueo de la vista */}
          <div className="hidden lg:flex flex-col absolute bottom-6 right-6 w-80 bg-black/90 backdrop-blur rounded border border-white/10 shadow-2xl h-[480px] overflow-hidden z-[500]">
             <div className="flex border-b border-white/10 bg-white/5">
               <button onClick={() => setMobileTab('team')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${mobileTab !== 'history' ? 'text-orange-500 bg-orange-500/5' : 'text-gray-500 hover:text-white'}`}>Unidades</button>
