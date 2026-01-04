@@ -1,7 +1,8 @@
+
 {
   "short_name": "RadioUbic",
-  "name": "Radio ubicación móvil",
-  "description": "Sistema de comunicación táctica simplex con geolocalización en tiempo real.",
+  "name": "Radio Ubicación Móvil Táctica",
+  "description": "Sistema de comunicación táctica simplex con geolocalización resiliente.",
   "icons": [
     {
       "src": "https://cdn-icons-png.flaticon.com/512/944/944431.png",
@@ -15,16 +16,16 @@
       "purpose": "any maskable"
     }
   ],
-  "start_url": "/",
+  "start_url": ".",
   "display": "standalone",
-  "theme_color": "#ea580c",
+  "theme_color": "#0a0a0a",
   "background_color": "#0a0a0a",
   "orientation": "portrait",
+  "scope": "/",
   "shortcuts": [
     {
-      "name": "Canal Alpha",
-      "short_name": "Alpha",
-      "url": "/?ch=ALPHA",
+      "name": "Entrar en Servicio",
+      "url": "/",
       "icons": [{ "src": "https://cdn-icons-png.flaticon.com/512/944/944431.png", "sizes": "192x192" }]
     }
   ]
