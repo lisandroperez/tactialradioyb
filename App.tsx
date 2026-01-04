@@ -15,56 +15,56 @@ import {
 
 const DEVICE_ID = getDeviceId();
 
-// --- COMPONENTE: GUÍA RÁPIDA (Basado en el HTML proporcionado) ---
+// --- COMPONENTE: GUÍA RÁPIDA (HTML ÍNTEGRO) ---
 const GuideView = ({ onBack }: { onBack: () => void }) => (
-  <div className="bg-white min-h-screen p-4 md:p-8 text-black font-mono overflow-y-auto">
-    <div className="max-w-4xl mx-auto border-4 border-black p-4 md:p-6">
-      <div className="flex flex-col md:flex-row justify-between items-start border-b-4 border-black pb-4 mb-8 gap-4">
+  <div className="bg-white min-h-screen p-8 text-black font-mono overflow-y-auto">
+    <div className="max-w-4xl mx-auto border-4 border-black p-6">
+      <div className="flex justify-between items-center border-b-4 border-black pb-4 mb-8">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold uppercase">GUÍA RÁPIDA DE OPERACIÓN</h1>
+          <h1 className="text-3xl font-bold uppercase">GUÍA RÁPIDA DE OPERACIÓN</h1>
           <p className="text-sm font-bold">SISTEMA: RADIO UBICACIÓN MÓVIL (v3.2)</p>
         </div>
-        <div className="text-left md:text-right font-bold text-[10px] md:text-xs">
+        <div className="text-right font-bold text-xs">
           CONFIDENCIALIDAD: USO INTERNO<br />
           DOCUMENTO: OP-01-B/W
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-2">
         {[
-          { id: "01", title: "01. IDENTIFICACIÓN (CALLSIGN)", desc: "Ingrese su indicativo de radio. Es el nombre que verán los demás en el mapa. Sea breve y use mayúsculas.", tip: "Ejemplo: MOVIL-01, BASE-01, RESCATE-A." },
-          { id: "02", title: "02. SELECCIÓN DE CANAL", desc: "Toque el canal deseado para entrar. Los canales con candado requieren PIN.", tip: "Si no ve su canal, use el botón (+) para crear una nueva frecuencia." },
-          { id: "03", title: "03. TRANSMISIÓN (PTT)", desc: "Mantenga presionado el círculo central para hablar. Suelte para escuchar.", tip: "La barra de estado dirá \"TX_TRANSMITIENDO\" durante la modulación." },
-          { id: "04", title: "04. GPS FIJO (BASE / PC)", desc: "Para unidades estáticas: Toque el icono de la MIRA, luego toque el mapa donde está ubicado.", tip: "Esto anula el GPS dinámico y fija su unidad en una coordenada exacta." },
-          { id: "05", title: "05. ALERTA SOS (PRIORIDAD)", desc: "Presione el triángulo rojo en emergencias. Seleccione el tipo de incidente y envíe el SMS.", tip: "Funciona sin datos de internet. Envía sus coordenadas vía red celular tradicional." },
-          { id: "06", title: "06. RESILIENCIA DE SEÑAL", desc: "Si no hay red, la app guarda sus mensajes y alertas en una cola local (Outbox).", tip: "Al recuperar señal, el sistema reintenta el envío automáticamente." },
-          { id: "07", title: "07. HISTORIAL Y AUDITORÍA", desc: "Toque el panel \"LOG AUDIO\" para revisar transmisiones pasadas.", tip: "Puede reproducir el audio o descargarlo en formato .WAV como evidencia." }
-        ].map((item) => (
-          <div key={item.id} className="border-b border-black py-4 flex gap-4 md:gap-6 last:border-0">
-            <div className="w-12 h-12 border-2 border-black flex-shrink-0 flex items-center justify-center font-bold text-xl">{item.id}</div>
+          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3" stroke-linecap="square"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>, title: "01. IDENTIFICACIÓN (CALLSIGN)", desc: "Ingrese su indicativo de radio. Es el nombre que verán los demás en el mapa. Sea breve y use mayúsculas.", tip: "Ejemplo: MOVIL-01, BASE-01, RESCATE-A." },
+          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3" stroke-linecap="square"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>, title: "02. SELECCIÓN DE CANAL", desc: "Toque el canal deseado para entrar. Los canales con candado requieren PIN.", tip: "Si no ve su canal, use el botón (+) para crear una nueva frecuencia." },
+          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3" stroke-linecap="square"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>, title: "03. TRANSMISIÓN (PTT)", desc: "Mantenga presionado el círculo central para hablar. Suelte para escuchar.", tip: "La barra de estado dirá \"TX_TRANSMITIENDO\" durante la modulación." },
+          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3" stroke-linecap="square"><circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/></svg>, title: "04. GPS FIJO (BASE / PC)", desc: "Para unidades estáticas: Toque el icono de la MIRA, luego toque el mapa donde está ubicado.", tip: "Esto anula el GPS dinámico y fija su unidad en una coordenada exacta." },
+          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3" stroke-linecap="square"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>, title: "05. ALERTA SOS (PRIORIDAD)", desc: "Presione el triángulo rojo en emergencias. Seleccione el tipo de incidente y envíe el SMS.", tip: "Funciona sin datos de internet. Envía sus coordenadas vía red celular tradicional." },
+          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3" stroke-linecap="square"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>, title: "06. RESILIENCIA DE SEÑAL", desc: "Si no hay red, la app guarda sus mensajes y alertas en una cola local (Outbox).", tip: "Al recuperar señal, el sistema reintenta el envío automáticamente." },
+          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3" stroke-linecap="square"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, title: "07. HISTORIAL Y AUDITORÍA", desc: "Toque el panel \"LOG AUDIO\" para revisar transmisiones pasadas.", tip: "Puede reproducir el audio o descargarlo en formato .WAV como evidencia." }
+        ].map((item, idx) => (
+          <div key={idx} className="flex gap-6 border-b border-black py-4 last:border-0">
+            <div className="w-12 h-12 border-2 border-black flex items-center justify-center flex-shrink-0">{item.icon}</div>
             <div>
-              <h3 className="font-bold text-base md:text-lg uppercase">{item.title}</h3>
+              <h3 className="font-bold text-lg uppercase">{item.title}</h3>
               <p className="text-sm">{item.desc}</p>
-              <p className="text-[10px] mt-1 font-bold italic">{item.tip}</p>
+              <p className="text-xs mt-1 font-bold italic">{item.tip}</p>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="mt-8 pt-4 border-t-4 border-black text-center font-bold text-xs md:text-sm uppercase">
+      <div className="mt-8 pt-4 border-t-4 border-black text-center font-bold text-sm uppercase">
         EN CASO DE FALLA TOTAL: UTILICE FRECUENCIAS ANALÓGICAS VÍA RADIO VHF/UHF
-        <div className="mt-6 flex justify-center gap-4 no-print">
-          <button onClick={() => window.print()} className="bg-black text-white px-6 py-2 uppercase text-xs">Imprimir PDF</button>
-          <button onClick={onBack} className="border-2 border-black px-6 py-2 uppercase text-xs">Volver</button>
+        <div className="no-print mt-6 space-x-4">
+            <button onClick={() => window.print()} className="bg-black text-white px-6 py-2 uppercase">Imprimir PDF</button>
+            <button onClick={onBack} className="border-2 border-black px-6 py-2 uppercase">Volver</button>
         </div>
       </div>
     </div>
   </div>
 );
 
-// --- COMPONENTE: MANUAL TÁCTICO (Basado en el HTML proporcionado) ---
+// --- COMPONENTE: MANUAL TÁCTICO (HTML ÍNTEGRO) ---
 const ManualView = ({ onBack }: { onBack: () => void }) => (
-  <div className="bg-[#0e0a07] min-h-screen p-6 md:p-12 text-gray-200 font-sans relative overflow-y-auto tactical-grid">
+  <div className="bg-[#0e0a07] min-h-screen p-6 md:p-12 text-gray-200 font-sans relative overflow-y-auto tactical-bg">
     <div className="scanline"></div>
     <div className="max-w-5xl mx-auto pb-24 relative z-10">
       <div className="no-print fixed bottom-6 right-6 flex gap-3 z-50">
@@ -72,7 +72,7 @@ const ManualView = ({ onBack }: { onBack: () => void }) => (
         <button onClick={onBack} className="bg-gray-800 text-white px-5 py-2.5 font-black text-[10px] uppercase tracking-widest hover:bg-gray-700 transition-all border border-white/10">VOLVER</button>
       </div>
 
-      <header className="mb-16 animate__animated animate__fadeIn">
+      <header className="mb-16">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-8 h-1 bg-orange-500"></div>
           <p className="font-mono text-orange-500 font-bold tracking-[0.4em] text-[9px] uppercase">OPERATIONAL_MANUAL_v3.2</p>
@@ -83,51 +83,50 @@ const ManualView = ({ onBack }: { onBack: () => void }) => (
 
       <div className="grid md:grid-cols-2 gap-8 mb-16">
         <section className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-orange-500 text-white w-7 h-7 flex items-center justify-center font-black text-sm uppercase">01</div>
-            <h2 className="text-2xl font-black uppercase text-white tracking-tighter">Identificación</h2>
-          </div>
-          <div className="bg-white/[0.02] border border-white/10 p-6">
-            <p className="text-xs text-gray-400 mb-4">Al iniciar, ingrese su <span className="text-white font-bold">Callsign (Indicativo)</span>. Este nombre será su identificador único en el mapa y en el registro de audio.</p>
-            <div className="bg-black/40 p-3 border border-white/5 font-mono text-[10px] text-orange-500 uppercase">
-              RECOMENDACIÓN: Use nombres cortos y claros.<br />Ej: "MOVIL-1", "BASE-TUC", "BRIGADA-B".
+            <div className="flex items-center gap-3">
+                <span className="bg-orange-500 text-white w-7 h-7 flex items-center justify-center font-black text-xs">01</span>
+                <h2 className="text-2xl font-black uppercase text-white">Identificación</h2>
             </div>
-          </div>
+            <div className="bg-white/5 border border-white/10 p-6">
+                <p className="text-xs text-gray-400 mb-4">Al iniciar, ingrese su <span className="text-white font-bold">Callsign (Indicativo)</span>. Este nombre será su identificador único en el mapa y en el registro de audio.</p>
+                <div className="bg-black/40 p-3 border border-white/5 font-mono text-[10px] text-orange-500 uppercase">
+                    RECOMENDACIÓN: Use nombres cortos y claros.<br />Ej: "MOVIL-1", "BASE-TUC", "BRIGADA-B".
+                </div>
+            </div>
         </section>
-
         <section className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-orange-500 text-white w-7 h-7 flex items-center justify-center font-black text-sm uppercase">02</div>
-            <h2 className="text-2xl font-black uppercase text-white tracking-tighter">Frecuencias</h2>
-          </div>
-          <div className="bg-white/[0.02] border border-white/10 p-6">
-            <p className="text-xs text-gray-400 mb-4">Seleccione su canal de operación en el <span className="text-white font-bold">Selector de Frecuencias</span>.</p>
-            <ul className="text-[10px] space-y-2 font-mono uppercase">
-              <li className="flex items-center gap-2"><span className="w-2 h-2 bg-emerald-500 rounded-full"></span> Canales Públicos: Acceso libre.</li>
-              <li className="flex items-center gap-2"><span className="w-2 h-2 bg-red-500 rounded-full"></span> Canales Seguros: Requieren llave (PIN).</li>
-            </ul>
-          </div>
+            <div className="flex items-center gap-3">
+                <span className="bg-orange-500 text-white w-7 h-7 flex items-center justify-center font-black text-xs">02</span>
+                <h2 className="text-2xl font-black uppercase text-white">Frecuencias</h2>
+            </div>
+            <div className="bg-white/5 border border-white/10 p-6">
+                <p className="text-xs text-gray-400 mb-4">Seleccione su canal de operación en el <span className="text-white font-bold">Selector de Frecuencias</span>.</p>
+                <ul className="text-[10px] space-y-2 font-mono uppercase">
+                    <li className="flex items-center gap-2"><span className="w-2 h-2 bg-emerald-500 rounded-full"></span> Canales Públicos: Acceso libre.</li>
+                    <li className="flex items-center gap-2"><span className="w-2 h-2 bg-red-500 rounded-full"></span> Canales Seguros: Requieren llave (PIN).</li>
+                </ul>
+            </div>
         </section>
       </div>
 
       <section className="mb-16 space-y-6">
         <div className="flex items-center gap-3">
-          <div className="bg-orange-500 text-white w-7 h-7 flex items-center justify-center font-black text-sm uppercase">03</div>
-          <h2 className="text-3xl font-black uppercase text-white tracking-tighter">Comunicaciones de Voz (PTT)</h2>
+            <span className="bg-orange-500 text-white w-7 h-7 flex items-center justify-center font-black text-xs">03</span>
+            <h2 className="text-3xl font-black uppercase text-white tracking-tighter">Comunicaciones de Voz (PTT)</h2>
         </div>
         <div className="grid md:grid-cols-3 gap-6">
-          <div className="bg-white/[0.02] border border-white/10 p-6 border-l-orange-500 border-l-4">
-            <h4 className="font-black text-orange-500 uppercase text-[11px] mb-3 tracking-widest">TX: Transmitir</h4>
-            <p className="text-[11px] text-gray-400 leading-relaxed">Presione y <span className="text-white font-bold">mantenga</span> el botón central. Espere el sonido de entrada y hable a 15cm del micrófono.</p>
-          </div>
-          <div className="bg-white/[0.02] border border-white/10 p-6 border-l-emerald-500 border-l-4">
-            <h4 className="font-black text-emerald-500 uppercase text-[11px] mb-3 tracking-widest">RX: Recibir</h4>
-            <p className="text-[11px] text-gray-400 leading-relaxed">El audio se reproduce en tiempo real. Un aro naranja en pantalla indica quién está modulando.</p>
-          </div>
-          <div className="bg-white/[0.02] border border-white/10 p-6 border-l-gray-500 border-l-4">
-            <h4 className="font-black text-gray-400 uppercase text-[11px] mb-3 tracking-widest">Simplex</h4>
-            <p className="text-[11px] text-gray-500 leading-relaxed">El sistema es de una vía. No puede transmitir mientras otra unidad está hablando.</p>
-          </div>
+            <div className="bg-white/5 border border-white/10 p-6 border-l-4 border-l-orange-500">
+                <h4 className="font-black text-orange-500 uppercase text-[11px] mb-3">TX: Transmitir</h4>
+                <p className="text-[11px] text-gray-400">Presione y <span className="text-white font-bold">mantenga</span> el botón central. Espere el sonido de entrada y hable a 15cm del micrófono.</p>
+            </div>
+            <div className="bg-white/5 border border-white/10 p-6 border-l-4 border-l-emerald-500">
+                <h4 className="font-black text-emerald-500 uppercase text-[11px] mb-3">RX: Recibir</h4>
+                <p className="text-[11px] text-gray-400">El audio se reproduce en tiempo real. Un aro naranja en pantalla indica quién está modulando.</p>
+            </div>
+            <div className="bg-white/5 border border-white/10 p-6 border-l-4 border-l-gray-500">
+                <h4 className="font-black text-gray-400 uppercase text-[11px] mb-3">Simplex</h4>
+                <p className="text-[11px] text-gray-500">El sistema es de una vía. No puede transmitir mientras otra unidad está hablando.</p>
+            </div>
         </div>
       </section>
 
@@ -137,10 +136,10 @@ const ManualView = ({ onBack }: { onBack: () => void }) => (
       </footer>
     </div>
     <style>{`
-      .tactical-grid {
+      .tactical-bg {
         background-image: 
-          linear-gradient(rgba(249, 115, 22, 0.03) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(249, 115, 22, 0.03) 1px, transparent 1px);
+            linear-gradient(rgba(249, 115, 22, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(249, 115, 22, 0.03) 1px, transparent 1px);
         background-size: 40px 40px;
       }
     `}</style>
@@ -266,23 +265,37 @@ function App() {
   }, [teamMembersRaw, effectiveLocation]);
 
   // --- SINCRONIZACIÓN EN TIEMPO REAL REFORZADA ---
+  
+  // 1. LATIDO DE PRESENCIA INMEDIATO (EVITA EL EFECTO FANTASMA)
+  useEffect(() => {
+    if (!activeChannel || !userName) return;
+
+    const announcePresence = async () => {
+      // Usar última ubicación conocida o centro por defecto si no hay GPS aún
+      const lat = effectiveLocation?.lat || -26.8241;
+      const lng = effectiveLocation?.lng || -65.2226;
+      
+      await supabase.from('locations').upsert({
+        id: DEVICE_ID, 
+        name: userName, 
+        lat, 
+        lng, 
+        accuracy: 0, 
+        role: 'Móvil', 
+        status: 'online', 
+        last_seen: new Date().toISOString(), 
+        channel_id: activeChannel.id
+      });
+      console.log("PRESENCE_HEARTBEAT_SENT");
+    };
+
+    announcePresence();
+  }, [activeChannel, userName]);
+
   const fetchAllData = useCallback(async () => {
     if (!activeChannel || !userName) return;
     
-    // 1. Latido inicial forzado para visibilidad inmediata
-    if (navigator.geolocation && !manualLocation) {
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-            const { latitude, longitude, accuracy } = pos.coords;
-            setUserLocation({ lat: latitude, lng: longitude });
-            await supabase.from('locations').upsert({
-                id: DEVICE_ID, name: userName, lat: latitude, lng: longitude, 
-                accuracy: Math.round(accuracy), role: 'Móvil', status: 'online', 
-                last_seen: new Date().toISOString(), channel_id: activeChannel.id
-            });
-        });
-    }
-
-    // 2. Carga inicial de usuarios (últimas 48h para evitar perder unidades por inactividad breve)
+    // Carga inicial de usuarios (últimas 48h)
     const { data: members } = await supabase
       .from('locations')
       .select('*')
@@ -303,23 +316,23 @@ function App() {
       .order('created_at', { ascending: false })
       .limit(30);
     if (history) setRadioHistory(history);
-  }, [activeChannel, userName, manualLocation]);
+  }, [activeChannel, userName]);
 
   useEffect(() => {
     if (!activeChannel || !userName) return;
 
     fetchAllData();
 
-    // SUSCRIPCIÓN MAESTRA: Sin filtros previos de last_seen para captar todo cambio en el canal
-    const channel = supabase.channel(`unit-sync-v10-${activeChannel.id}`)
+    // SUSCRIPCIÓN MAESTRA SIN FILTROS DE TIEMPO (Captura todo movimiento en el canal)
+    const channel = supabase.channel(`sync-master-v11-${activeChannel.id}`)
       .on('postgres_changes', { event: '*', table: 'locations', schema: 'public' }, (payload: any) => {
         const target = payload.new || payload.old;
         if (!target) return;
         
-        // 1. Ignorarse a sí mismo
+        // Ignorarse a sí mismo
         if (String(target.id).trim() === String(DEVICE_ID).trim()) return;
         
-        // 2. Validar canal (IMPORTANTE: El payload a veces no trae el channel_id en DELETE si no hay replica identity full)
+        // Validar canal del dispositivo remoto
         if (payload.eventType !== 'DELETE' && target.channel_id && String(target.channel_id).trim() !== String(activeChannel.id).trim()) return;
 
         setTeamMembersRaw(prev => {
@@ -333,7 +346,6 @@ function App() {
             lng: target.lng ? Number(target.lng) : undefined 
           } as TeamMember;
 
-          // Si el registro no tiene posición válida en este update, intentamos mantener la anterior
           const idx = prev.findIndex(m => String(m.id).trim() === String(target.id).trim());
           if (idx === -1) {
             return formatted.lat ? [...prev, formatted] : prev;
@@ -359,7 +371,7 @@ function App() {
     return () => { supabase.removeChannel(channel); };
   }, [activeChannel, userName, fetchAllData]);
 
-  // --- WATCHER GPS ---
+  // --- WATCHER GPS DINÁMICO ---
   useEffect(() => {
     if (!activeChannel || !userName || manualLocation) return;
     const sendPos = async (lat: number, lng: number, acc: number) => {
@@ -417,9 +429,7 @@ function App() {
     <div className="flex flex-col md:flex-row h-screen w-screen bg-black overflow-hidden relative text-white">
       <div className="scanline"></div>
       
-      {/* SECCIÓN PRINCIPAL: MAPA */}
       <div className="flex-1 relative overflow-hidden flex flex-col">
-         {/* Navegación Móvil (Tabs) */}
          <div className="md:hidden flex bg-gray-950 border-b border-white/10 z-[1001]">
             <button onClick={() => setMobileTab('map')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest ${mobileTab === 'map' ? 'text-orange-500 bg-orange-500/10' : 'text-gray-500'}`}>Mapa</button>
             <button onClick={() => setMobileTab('team')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest ${mobileTab === 'team' ? 'text-orange-500 bg-orange-500/10' : 'text-gray-500'}`}>Equipo ({teamMembers.length})</button>
@@ -434,7 +444,6 @@ function App() {
                 <button onClick={fetchAllData} className="text-gray-500 hover:text-white transition-colors"><RefreshCw size={12} /></button>
             </div>
 
-            {/* OVERLAYS MÓVILES */}
             <div className={`md:hidden absolute inset-0 z-[1002] bg-gray-950 transition-transform ${mobileTab === 'team' ? 'translate-x-0' : 'translate-x-full'}`}>
                <div className="p-2 border-b border-white/10 flex justify-between items-center bg-black">
                   <span className="text-[10px] font-black uppercase text-orange-500 px-2 tracking-widest">Unidades Activas</span>
@@ -452,7 +461,6 @@ function App() {
             </div>
          </div>
 
-         {/* PANEL LATERAL ESCRITORIO (PC) */}
          <div className="hidden lg:flex flex-col absolute bottom-6 right-6 w-80 bg-black/90 backdrop-blur rounded border border-white/10 shadow-2xl h-[480px] overflow-hidden z-[500]">
             <div className="flex border-b border-white/10 bg-white/5">
               <button onClick={() => setMobileTab('team')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${mobileTab !== 'history' ? 'text-orange-500 bg-orange-500/5' : 'text-gray-500 hover:text-white'}`}>Equipo</button>
@@ -464,7 +472,6 @@ function App() {
          </div>
       </div>
 
-      {/* CONTROL DE RADIO */}
       <div className="flex-none md:w-[400px] bg-gray-950 z-20 border-t md:border-t-0 md:border-l border-white/10">
         <RadioControl 
            connectionState={connectionState} isTalking={isTalking} activeChannelName={activeChannel.name}
