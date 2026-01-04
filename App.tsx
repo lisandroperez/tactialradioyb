@@ -15,7 +15,6 @@ import {
 
 const DEVICE_ID = getDeviceId();
 
-// --- COMPONENTE: GUÍA RÁPIDA (B/W) ---
 const GuideView = ({ onBack }: { onBack: () => void }) => (
   <div className="bg-white min-h-screen p-8 text-black font-mono overflow-y-auto">
     <div className="max-w-4xl mx-auto border-4 border-black p-6">
@@ -31,67 +30,22 @@ const GuideView = ({ onBack }: { onBack: () => void }) => (
       </div>
       <div className="space-y-2">
         {[
-          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3" strokeLinecap="square"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>, title: "01. IDENTIFICACIÓN (CALLSIGN)", desc: "Ingrese su indicativo de radio. Es el nombre que verán los demás en el mapa. Sea breve y use mayúsculas.", tip: "Ejemplo: MOVIL-01, BASE-01, RESCATE-A." },
-          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3" strokeLinecap="square"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>, title: "02. SELECCIÓN DE CANAL", desc: "Toque el canal deseado para entrar. Los canales con candado requieren PIN.", tip: "Si no ve su canal, use el botón (+) para crear una nueva frecuencia." },
-          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3" strokeLinecap="square"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>, title: "03. TRANSMISIÓN (PTT)", desc: "Mantenga presionado el círculo central para hablar. Suelte para escuchar.", tip: "La barra de estado dirá \"TX_TRANSMITIENDO\" durante la modulación." }
+          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3" strokeLinecap="square"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>, title: "01. IDENTIFICACIÓN (CALLSIGN)", desc: "Ingrese su indicativo de radio. Es el nombre que verán los demás en el mapa.", tip: "Ejemplo: MOVIL-01, BASE-01." },
+          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3" strokeLinecap="square"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>, title: "02. SELECCIÓN DE CANAL", desc: "Toque el canal deseado para entrar. Los canales con candado requieren PIN.", tip: "Si no hay canales, cree uno nuevo con el botón (+)." },
+          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3" strokeLinecap="square"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>, title: "03. TRANSMISIÓN (PTT)", desc: "Mantenga presionado el botón central para hablar. Suelte para escuchar.", tip: "TX_TRANSMITIENDO aparecerá en pantalla." }
         ].map((item) => (
           <div key={item.title} className="flex gap-6 border-b border-black py-4 last:border-0">
             <div className="w-12 h-12 border-2 border-black flex items-center justify-center flex-shrink-0">{item.icon}</div>
             <div>
               <h3 className="font-bold text-lg uppercase">{item.title}</h3>
               <p className="text-sm">{item.desc}</p>
-              <p className="text-xs mt-1 font-bold italic">{item.tip}</p>
             </div>
           </div>
         ))}
       </div>
       <div className="mt-8 pt-4 border-t-4 border-black text-center font-bold text-sm uppercase">
-        <button onClick={onBack} className="no-print border-2 border-black px-6 py-2 hover:bg-black hover:text-white transition-all">VOLVER</button>
+        <button onClick={onBack} className="no-print border-2 border-black px-6 py-2 hover:bg-black hover:text-white transition-all">VOLVER AL SERVICIO</button>
       </div>
-    </div>
-  </div>
-);
-
-// --- COMPONENTE: MANUAL TÁCTICO ---
-const ManualView = ({ onBack }: { onBack: () => void }) => (
-  <div className="bg-[#0e0a07] min-h-screen p-6 md:p-12 text-gray-200 font-sans relative overflow-y-auto tactical-bg">
-    <div className="scanline"></div>
-    <div className="max-w-5xl mx-auto pb-24 relative z-10">
-      <div className="no-print fixed bottom-6 right-6 flex gap-3 z-50">
-        <button onClick={onBack} className="bg-gray-800 text-white px-5 py-2.5 font-black text-[10px] uppercase tracking-widest hover:bg-gray-700 transition-all border border-white/10">VOLVER</button>
-      </div>
-      <header className="mb-16">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-8 h-1 bg-orange-500"></div>
-          <p className="font-mono text-orange-500 font-bold tracking-[0.4em] text-[9px] uppercase">OPERATIONAL_MANUAL_v3.2</p>
-        </div>
-        <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-none mb-6 uppercase text-white">GUÍA DE<br />USUARIO</h1>
-      </header>
-      <div className="grid md:grid-cols-2 gap-8 mb-16">
-        <div className="bg-white/5 border border-white/10 p-6">
-          <h2 className="text-xl font-bold text-orange-500 uppercase mb-4">01_IDENTIFICACIÓN</h2>
-          <p className="text-sm text-gray-400">Es obligatorio establecer un Callsign único para ser visible por el resto de la brigada.</p>
-        </div>
-        <div className="bg-white/5 border border-white/10 p-6">
-          <h2 className="text-xl font-bold text-orange-500 uppercase mb-4">02_FRECUENCIAS</h2>
-          <p className="text-sm text-gray-400">Los canales agrupan a las unidades. Asegúrese de estar en la frecuencia correcta.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
-// --- COMPONENTE: LANDING ---
-const LandingView = ({ onEnter, onManual, onGuide }: { onEnter: () => void; onManual: () => void; onGuide: () => void }) => (
-  <div className="overflow-x-hidden relative min-h-screen selection:bg-orange-500 bg-[#0e0a07]">
-    <div className="scanline"></div>
-    <div className="max-w-5xl mx-auto text-center pt-32 px-6">
-        <h1 className="text-7xl md:text-9xl font-black text-white uppercase mb-12 tracking-tighter leading-none">RADIO<br/>UBICACIÓN<br/>MÓVIL</h1>
-        <div className="flex flex-col md:flex-row justify-center gap-6">
-            <button onClick={onEnter} className="bg-orange-600 px-12 py-6 font-black text-white uppercase hover:bg-orange-500 shadow-2xl transition-all">ENTRAR EN SERVICIO</button>
-            <button onClick={onManual} className="bg-gray-800 px-12 py-6 font-black text-white uppercase hover:bg-gray-700 transition-all">MANUAL OPERATIVO</button>
-        </div>
-        <button onClick={onGuide} className="mt-12 text-gray-500 text-[10px] font-bold uppercase tracking-widest hover:text-orange-500 transition-all">Versión Impresa B/W</button>
     </div>
   </div>
 );
@@ -145,12 +99,12 @@ function App() {
     }));
   }, [teamMembersRaw, effectiveLocation]);
 
-  // --- REGISTRO DE PRESENCIA REFORZADO CON ON_CONFLICT ---
   const doCheckIn = useCallback(async (channelId: string, name: string) => {
     if (!name || !channelId) return;
     const lat = userLocationRef.current?.lat || -26.8241;
     const lng = userLocationRef.current?.lng || -65.2226;
     
+    console.log("SYNC_PUSH: Enviando ubicación...");
     const { error } = await supabase.from('locations').upsert({
       id: DEVICE_ID,
       name: name,
@@ -163,19 +117,19 @@ function App() {
       channel_id: channelId
     }, { onConflict: 'id' });
 
-    if (error) console.error("CHECKIN_FAIL", error);
-    else console.log("CHECKIN_OK", name);
+    if (error) console.error("SYNC_ERROR: No se pudo actualizar ubicación.", error);
   }, [isTalking]);
 
   const fetchAllData = useCallback(async () => {
     if (!activeChannel || !userName) return;
     
     try {
+      console.log("SYNC_PULL: Obteniendo datos del canal...");
       const [membersRes, historyRes] = await Promise.all([
         supabase.from('locations')
           .select('*')
           .eq('channel_id', activeChannel.id)
-          .gt('last_seen', new Date(Date.now() - 259200000).toISOString()), // 72h window
+          .gt('last_seen', new Date(Date.now() - 3600000).toISOString()), // Última hora para ver solo activos
         supabase.from('radio_history')
           .select('*')
           .eq('channel_id', activeChannel.id)
@@ -200,37 +154,29 @@ function App() {
     }
   }, [activeChannel, userName]);
 
-  // --- LATIDO (HEARTBEAT) DE PRESENCIA ---
+  // Heartbeat más frecuente (10s) para pruebas
   useEffect(() => {
     if (!activeChannel || !userName || !isIdentified) return;
-    const interval = setInterval(() => {
-      doCheckIn(activeChannel.id, userName);
-    }, 15000); // 15s para mayor reactividad
+    const interval = setInterval(() => doCheckIn(activeChannel.id, userName), 10000);
     return () => clearInterval(interval);
   }, [activeChannel, userName, isIdentified, doCheckIn]);
 
-  // --- SUSCRIPCIÓN MAESTRA CORREGIDA ---
   useEffect(() => {
     if (!activeChannel || !userName || !isIdentified) return;
 
     doCheckIn(activeChannel.id, userName);
     fetchAllData();
 
-    // Suscripción sin filtros server-side para máxima compatibilidad
-    const channel = supabase.channel(`sync-v8-${activeChannel.id}`)
+    const channel = supabase.channel(`sync-v10-${activeChannel.id}`)
       .on('postgres_changes', { event: '*', table: 'locations', schema: 'public' }, (payload) => {
         const target = payload.new || payload.old;
         if (!target) return;
         
         const tid = String(target.id).trim();
-        const myId = String(DEVICE_ID).trim();
+        if (tid === String(DEVICE_ID).trim()) return;
         
-        // Ignorarme
-        if (tid === myId) return;
-        
-        // Filtrado en memoria
-        const targetChannel = String(target.channel_id || '').trim();
-        if (payload.eventType !== 'DELETE' && targetChannel !== String(activeChannel.id).trim()) return;
+        // Filtro manual estricto por canal
+        if (payload.eventType !== 'DELETE' && String(target.channel_id || '') !== String(activeChannel.id)) return;
 
         setTeamMembersRaw(prev => {
           if (payload.eventType === 'DELETE') return prev.filter(m => String(m.id).trim() !== tid);
@@ -250,18 +196,18 @@ function App() {
         });
       })
       .on('postgres_changes', { event: 'INSERT', table: 'radio_history', schema: 'public' }, (payload) => {
-        if (String(payload.new.channel_id).trim() === String(activeChannel.id).trim()) {
+        if (String(payload.new.channel_id) === String(activeChannel.id)) {
           setRadioHistory(prev => [payload.new, ...prev]);
         }
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log(`REALTIME_STATUS: ${status}`);
+        if (status === 'SUBSCRIBED') fetchAllData();
+      });
 
-    return () => { 
-      channel.unsubscribe(); 
-    };
+    return () => { channel.unsubscribe(); };
   }, [activeChannel, userName, isIdentified, doCheckIn, fetchAllData]);
 
-  // GPS WATCHER
   useEffect(() => {
     if (!activeChannel || !userName || manualLocation || !isIdentified) return;
     
@@ -282,48 +228,54 @@ function App() {
         setUserLocation({ lat: latitude, lng: longitude });
         sendPos(latitude, longitude, accuracy);
       },
-      (err) => console.warn("GPS_ERR", err), 
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      null, 
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
     
     return () => navigator.geolocation.clearWatch(watchId);
   }, [isTalking, activeChannel, userName, manualLocation, isOnline, isIdentified]);
 
-  if (currentView === 'guide') return <GuideView onBack={() => setCurrentView('landing')} />;
-  if (currentView === 'manual') return <ManualView onBack={() => setCurrentView('landing')} />;
-  if (currentView === 'landing') return <LandingView onEnter={() => setCurrentView('app')} onManual={() => setCurrentView('manual')} onGuide={() => setCurrentView('guide')} />;
+  if (currentView === 'guide') return <GuideView onBack={() => setCurrentView('app')} />;
+  
+  if (currentView === 'landing') return (
+    <div className="min-h-screen bg-[#0e0a07] text-white flex flex-col items-center justify-center p-6 text-center">
+       <div className="scanline"></div>
+       <h1 className="text-6xl md:text-9xl font-black mb-12 tracking-tighter leading-none animate__animated animate__fadeIn">RADIO<br/>UBICACIÓN</h1>
+       <div className="flex flex-col md:flex-row gap-6">
+          <button onClick={() => setCurrentView('app')} className="bg-orange-600 px-12 py-6 font-black uppercase text-xl hover:bg-orange-500 shadow-2xl transition-all">Entrar en Servicio</button>
+          <button onClick={() => setCurrentView('guide')} className="bg-gray-800 px-12 py-6 font-black uppercase text-xl hover:bg-gray-700 transition-all">Guía Operativa</button>
+       </div>
+    </div>
+  );
 
   if (!isIdentified) return (
-    <div className="h-screen bg-black flex items-center justify-center p-6 font-mono relative overflow-hidden">
+    <div className="h-screen bg-black flex items-center justify-center p-6 font-mono relative">
       <div className="scanline"></div>
-      <div className="w-full max-w-sm bg-gray-900 border border-orange-500/30 p-8 shadow-2xl relative z-10">
-        <h1 className="text-orange-500 font-black text-center mb-8 tracking-widest uppercase">Identificación Radio</h1>
-        <p className="text-[10px] text-gray-500 mb-6 text-center uppercase tracking-widest">Ingrese su indicativo de misión</p>
+      <div className="w-full max-w-sm bg-gray-900 border border-orange-500/30 p-8 shadow-2xl z-10">
+        <h1 className="text-orange-500 font-black text-center mb-8 tracking-widest uppercase text-xl">Identificación</h1>
         <input autoFocus type="text" value={tempName} onChange={e => setTempName(e.target.value.toUpperCase())} 
           onKeyDown={e => e.key === 'Enter' && tempName.length >= 3 && (localStorage.setItem('user_callsign', tempName), setUserName(tempName), setIsIdentified(true))}
           placeholder="CALLSIGN (EJ: MOVIL-1)" className="w-full bg-black border border-gray-800 p-4 text-orange-500 text-center font-bold mb-4 outline-none focus:border-orange-500 uppercase"
         />
-        <button onClick={() => { if(tempName.length >= 3) { localStorage.setItem('user_callsign', tempName); setUserName(tempName); setIsIdentified(true); }}} className="w-full bg-orange-600 text-white font-black py-4 hover:bg-orange-500 transition-colors uppercase">Activar Unidad</button>
+        <button onClick={() => { if(tempName.length >= 3) { localStorage.setItem('user_callsign', tempName); setUserName(tempName); setIsIdentified(true); }}} className="w-full bg-orange-600 text-white font-black py-4 hover:bg-orange-500 transition-colors uppercase">Registrar Unidad</button>
       </div>
     </div>
   );
 
   if (!activeChannel) return (
-    <div className="h-screen bg-black flex items-center justify-center p-6 font-mono relative overflow-hidden">
+    <div className="h-screen bg-black flex items-center justify-center p-6 font-mono">
        <div className="scanline"></div>
-       <div className="w-full max-w-md relative z-10">
-          <button onClick={() => { localStorage.removeItem('user_callsign'); setIsIdentified(false); setUserName(''); }} className="mb-4 text-gray-500 flex items-center gap-2 hover:text-white transition-colors uppercase text-[10px] font-bold tracking-widest"><ChevronLeft size={14} /> Cambiar Callsign</button>
-          <h2 className="text-orange-500 font-bold uppercase text-center mb-8 tracking-widest">Seleccionar Frecuencia</h2>
+       <div className="w-full max-w-md z-10">
+          <button onClick={() => { localStorage.removeItem('user_callsign'); setIsIdentified(false); setUserName(''); }} className="mb-4 text-gray-500 flex items-center gap-2 hover:text-white transition-colors uppercase text-[10px] font-bold"><ChevronLeft size={14} /> Volver</button>
           <ChannelSelector onSelect={ch => setActiveChannel(ch)} />
        </div>
     </div>
   );
 
   return (
-    <div className="flex flex-col md:flex-row h-screen w-screen bg-black overflow-hidden relative text-white">
+    <div className="flex flex-col md:flex-row h-screen w-screen bg-black overflow-hidden relative text-white font-mono">
       <div className="scanline"></div>
       <div className="flex-1 relative overflow-hidden flex flex-col">
-         {/* Tabs Móviles */}
          <div className="md:hidden flex bg-gray-950 border-b border-white/10 z-[1001]">
             <button onClick={() => setMobileTab('map')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest ${mobileTab === 'map' ? 'text-orange-500 bg-orange-500/10' : 'text-gray-500'}`}>Mapa</button>
             <button onClick={() => setMobileTab('team')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest ${mobileTab === 'team' ? 'text-orange-500 bg-orange-500/10' : 'text-gray-500'}`}>Equipo ({teamMembers.length})</button>
@@ -333,11 +285,10 @@ function App() {
          <div className="flex-1 relative">
             <MapDisplay key={activeChannel.id} userLocation={effectiveLocation} teamMembers={teamMembers} accuracy={0} isManualMode={isManualMode} onMapClick={(lat, lng) => { setManualLocation({lat, lng}); setIsManualMode(false); }} />
             <div className="absolute top-4 left-4 z-[2000] bg-black/80 backdrop-blur px-3 py-1 border border-orange-500/30 rounded flex items-center gap-3">
-                <span className="text-xs font-bold text-orange-500 font-mono tracking-widest uppercase">{activeChannel.name}</span>
+                <span className="text-xs font-bold text-orange-500 uppercase tracking-widest">{activeChannel.name}</span>
                 <button onClick={fetchAllData} className="text-gray-500 hover:text-white transition-colors"><RefreshCw size={12} /></button>
             </div>
-
-            {/* Vistas Móviles */}
+            
             <div className={`md:hidden absolute inset-0 z-[1002] bg-gray-950 transition-transform ${mobileTab === 'team' ? 'translate-x-0' : 'translate-x-full'}`}>
                <TeamList members={teamMembers} />
             </div>
@@ -346,7 +297,6 @@ function App() {
             </div>
          </div>
 
-         {/* Panel PC */}
          <div className="hidden lg:flex flex-col absolute bottom-6 right-6 w-80 bg-black/90 backdrop-blur rounded border border-white/10 shadow-2xl h-[480px] overflow-hidden z-[500]">
             <div className="flex border-b border-white/10 bg-white/5">
               <button onClick={() => setMobileTab('team')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${mobileTab !== 'history' ? 'text-orange-500 bg-orange-500/5' : 'text-gray-500 hover:text-white'}`}>Equipo</button>
