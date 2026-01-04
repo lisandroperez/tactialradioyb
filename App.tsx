@@ -15,7 +15,7 @@ import {
 
 const DEVICE_ID = getDeviceId();
 
-// --- COMPONENTE: GUÍA RÁPIDA (B/W) ---
+// --- COMPONENTE: GUÍA RÁPIDA (HTML ORIGINAL B/W) ---
 const GuideView = ({ onBack }: { onBack: () => void }) => (
   <div className="bg-white min-h-screen p-8 text-black font-mono overflow-y-auto">
     <div className="max-w-4xl mx-auto border-4 border-black p-6">
@@ -60,7 +60,7 @@ const GuideView = ({ onBack }: { onBack: () => void }) => (
   </div>
 );
 
-// --- COMPONENTE: MANUAL TÁCTICO ---
+// --- COMPONENTE: MANUAL TÁCTICO (HTML ORIGINAL) ---
 const ManualView = ({ onBack }: { onBack: () => void }) => (
   <div className="bg-[#0e0a07] min-h-screen p-6 md:p-12 text-gray-200 font-sans relative overflow-y-auto tactical-bg">
     <div className="scanline"></div>
@@ -163,7 +163,7 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 
 function App() {
   const [currentView, setCurrentView] = useState<'landing' | 'app' | 'manual' | 'guide'>('landing');
-  const [userName, setUserName] = useState<string>(''); // Forzamos inicio vacío para gatillar identificación
+  const [userName, setUserName] = useState<string>(''); 
   const [activeChannel, setActiveChannel] = useState<Channel | null>(null);
   const [tempName, setTempName] = useState(localStorage.getItem('user_callsign') || '');
   const [isIdentified, setIsIdentified] = useState(false);
@@ -186,7 +186,6 @@ function App() {
 
   useEffect(() => { userLocationRef.current = effectiveLocation; }, [effectiveLocation]);
   
-  // Sincronización de Red
   useEffect(() => {
     const update = () => setIsOnline(navigator.onLine);
     window.addEventListener('online', update);
@@ -202,12 +201,13 @@ function App() {
     }));
   }, [teamMembersRaw, effectiveLocation]);
 
-  // --- REGISTRO DE PRESENCIA INMEDIATO (SOLUCIÓN AL FANTASMA) ---
+  // --- REGISTRO DE PRESENCIA CON REINTENTO ---
   const doCheckIn = useCallback(async (channelId: string, name: string) => {
-    const lat = effectiveLocation?.lat || -26.8241;
-    const lng = effectiveLocation?.lng || -65.2226;
+    if (!name || !channelId) return;
+    const lat = userLocationRef.current?.lat || -26.8241;
+    const lng = userLocationRef.current?.lng || -65.2226;
     
-    await supabase.from('locations').upsert({
+    const { error } = await supabase.from('locations').upsert({
       id: DEVICE_ID,
       name: name,
       lat,
@@ -218,23 +218,32 @@ function App() {
       last_seen: new Date().toISOString(),
       channel_id: channelId
     });
-    console.log("PRESENCIA_ESTABLECIDA_OK");
-  }, [effectiveLocation]);
+    
+    if (error) console.error("CHECKIN_FAIL:", error);
+    else console.log("CHECKIN_SUCCESS:", name);
+  }, []);
 
   const fetchAllData = useCallback(async () => {
     if (!activeChannel || !userName) return;
     
-    // Carga de miembros activos (últimas 24h)
-    const { data: members } = await supabase
+    // Traer todos los activos en las últimas 72h para asegurar visibilidad inicial
+    const { data: members, error } = await supabase
       .from('locations')
       .select('*')
       .eq('channel_id', activeChannel.id)
-      .gt('last_seen', new Date(Date.now() - 86400000).toISOString());
+      .gt('last_seen', new Date(Date.now() - 259200000).toISOString());
     
+    if (error) console.error("FETCH_MEMBERS_FAIL:", error);
+
     if (members) {
       setTeamMembersRaw(members
         .filter(m => String(m.id).trim() !== String(DEVICE_ID).trim())
-        .map(m => ({ ...m, lat: Number(m.lat), lng: Number(m.lng) }))
+        .map(m => ({ 
+          ...m, 
+          lat: Number(m.lat), 
+          lng: Number(m.lng),
+          status: m.status || 'online' 
+        }))
       );
     }
 
@@ -247,27 +256,51 @@ function App() {
     if (history) setRadioHistory(history);
   }, [activeChannel, userName]);
 
-  // SUSCRIPCIÓN MAESTRA
+  // --- SUSCRIPCIÓN MAESTRA CORREGIDA ---
   useEffect(() => {
-    if (!activeChannel || !userName) return;
+    if (!activeChannel || !userName || !isIdentified) return;
 
+    // 1. Forzar presencia al entrar
     doCheckIn(activeChannel.id, userName);
+    // 2. Cargar estado inicial
     fetchAllData();
 
-    const channel = supabase.channel(`sync-v3-${activeChannel.id}`)
+    // 3. Suscribirse a cambios (INSERT, UPDATE, DELETE)
+    const channel = supabase.channel(`sync-v4-${activeChannel.id}`)
       .on('postgres_changes', { event: '*', table: 'locations', schema: 'public' }, (payload: any) => {
         const target = payload.new || payload.old;
-        if (!target || String(target.id).trim() === String(DEVICE_ID).trim()) return;
+        if (!target) return;
+
+        // Limpieza de IDs para comparación segura
+        const targetId = String(target.id).trim();
+        const myId = String(DEVICE_ID).trim();
+        
+        if (targetId === myId) return;
+
+        // Filtro por canal en el cliente (Backup de seguridad)
         if (payload.eventType !== 'DELETE' && target.channel_id && String(target.channel_id).trim() !== String(activeChannel.id).trim()) return;
 
         setTeamMembersRaw(prev => {
-          if (payload.eventType === 'DELETE') return prev.filter(m => String(m.id).trim() !== String(target.id).trim());
-          const formatted = { ...target, lat: Number(target.lat), lng: Number(target.lng) } as TeamMember;
-          const idx = prev.findIndex(m => String(m.id).trim() === String(target.id).trim());
-          if (idx === -1) return [...prev, formatted];
-          const next = [...prev];
-          next[idx] = formatted;
-          return next;
+          if (payload.eventType === 'DELETE') return prev.filter(m => String(m.id).trim() !== targetId);
+          
+          const formatted = { 
+            ...target, 
+            lat: Number(target.lat), 
+            lng: Number(target.lng),
+            status: target.status || 'online'
+          } as TeamMember;
+
+          const idx = prev.findIndex(m => String(m.id).trim() === targetId);
+          
+          if (idx === -1) {
+            // Si es nuevo, añadirlo a la lista
+            return [...prev, formatted];
+          } else {
+            // Si ya existe, actualizarlo
+            const next = [...prev];
+            next[idx] = formatted;
+            return next;
+          }
         });
       })
       .on('postgres_changes', { event: 'INSERT', table: 'radio_history', schema: 'public' }, (payload: any) => {
@@ -275,14 +308,16 @@ function App() {
           setRadioHistory(prev => [payload.new, ...prev]);
         }
       })
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') console.log("REALTIME_SYNC_ACTIVE");
+      });
 
     return () => { supabase.removeChannel(channel); };
-  }, [activeChannel, userName, doCheckIn, fetchAllData]);
+  }, [activeChannel, userName, isIdentified, doCheckIn, fetchAllData]);
 
-  // WATCHER GPS
+  // WATCHER GPS REFORZADO
   useEffect(() => {
-    if (!activeChannel || !userName || manualLocation) return;
+    if (!activeChannel || !userName || manualLocation || !isIdentified) return;
     const sendPos = async (lat: number, lng: number, acc: number) => {
       if (!isOnline) return;
       await supabase.from('locations').upsert({
@@ -299,11 +334,11 @@ function App() {
         setUserLocation({ lat: latitude, lng: longitude });
         sendPos(latitude, longitude, accuracy);
       },
-      null, 
+      (err) => console.warn("GPS_WATCH_ERR:", err), 
       { enableHighAccuracy: true, timeout: 10000 }
     );
     return () => navigator.geolocation.clearWatch(watchId);
-  }, [isTalking, activeChannel, userName, manualLocation, isOnline]);
+  }, [isTalking, activeChannel, userName, manualLocation, isOnline, isIdentified]);
 
   if (currentView === 'guide') return <GuideView onBack={() => setCurrentView('landing')} />;
   if (currentView === 'manual') return <ManualView onBack={() => setCurrentView('landing')} />;
@@ -341,7 +376,6 @@ function App() {
       <div className="scanline"></div>
       
       <div className="flex-1 relative overflow-hidden flex flex-col">
-         {/* Tabs Móviles */}
          <div className="md:hidden flex bg-gray-950 border-b border-white/10 z-[1001]">
             <button onClick={() => setMobileTab('map')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest ${mobileTab === 'map' ? 'text-orange-500 bg-orange-500/10' : 'text-gray-500'}`}>Mapa</button>
             <button onClick={() => setMobileTab('team')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest ${mobileTab === 'team' ? 'text-orange-500 bg-orange-500/10' : 'text-gray-500'}`}>Equipo ({teamMembers.length})</button>
@@ -356,7 +390,6 @@ function App() {
                 <button onClick={fetchAllData} className="text-gray-500 hover:text-white transition-colors"><RefreshCw size={12} /></button>
             </div>
 
-            {/* Vistas Móviles */}
             <div className={`md:hidden absolute inset-0 z-[1002] bg-gray-950 transition-transform ${mobileTab === 'team' ? 'translate-x-0' : 'translate-x-full'}`}>
                <div className="p-2 border-b border-white/10 flex justify-between items-center bg-black">
                   <span className="text-[10px] font-black uppercase text-orange-500 px-2 tracking-widest">Unidades Activas</span>
@@ -374,7 +407,6 @@ function App() {
             </div>
          </div>
 
-         {/* Panel Lateral PC */}
          <div className="hidden lg:flex flex-col absolute bottom-6 right-6 w-80 bg-black/90 backdrop-blur rounded border border-white/10 shadow-2xl h-[480px] overflow-hidden z-[500]">
             <div className="flex border-b border-white/10 bg-white/5">
               <button onClick={() => setMobileTab('team')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${mobileTab !== 'history' ? 'text-orange-500 bg-orange-500/5' : 'text-gray-500 hover:text-white'}`}>Equipo</button>
