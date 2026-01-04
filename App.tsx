@@ -10,12 +10,12 @@ import { TeamMember, ConnectionState, RadioHistory, Channel } from './types';
 import { RadioService } from './services/radioService';
 import { supabase, getDeviceId } from './services/supabase';
 import { 
-  ChevronLeft, X, Printer, Clock, MapPin, Hash, Volume2, Shield, Zap, AlertTriangle, RefreshCw, Power
+  ChevronLeft, X, Printer, Clock, MapPin, Hash, Volume2, Shield, Zap, AlertTriangle, RefreshCw
 } from 'lucide-react';
 
 const DEVICE_ID = getDeviceId();
 
-// --- COMPONENTE: GUÍA RÁPIDA (CONTENIDO ÍNTEGRO B/W) ---
+// --- COMPONENTE: GUÍA RÁPIDA (B/W) ---
 const GuideView = ({ onBack }: { onBack: () => void }) => (
   <div className="bg-white min-h-screen p-8 text-black font-mono overflow-y-auto">
     <div className="max-w-4xl mx-auto border-4 border-black p-6">
@@ -29,7 +29,6 @@ const GuideView = ({ onBack }: { onBack: () => void }) => (
           DOCUMENTO: OP-01-B/W
         </div>
       </div>
-
       <div className="space-y-2">
         {[
           { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3" stroke-linecap="square"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>, title: "01. IDENTIFICACIÓN (CALLSIGN)", desc: "Ingrese su indicativo de radio. Es el nombre que verán los demás en el mapa. Sea breve y use mayúsculas.", tip: "Ejemplo: MOVIL-01, BASE-01, RESCATE-A." },
@@ -40,8 +39,8 @@ const GuideView = ({ onBack }: { onBack: () => void }) => (
           { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3" stroke-linecap="square"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>, title: "06. RESILIENCIA DE SEÑAL", desc: "Si no hay red, la app guarda sus mensajes y alertas en una cola local (Outbox).", tip: "Al recuperar señal, el sistema reintenta el envío automáticamente." },
           { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3" stroke-linecap="square"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, title: "07. HISTORIAL Y AUDITORÍA", desc: "Toque el panel \"LOG AUDIO\" para revisar transmisiones pasadas.", tip: "Puede reproducir el audio o descargarlo en formato .WAV como evidencia." }
         ].map((item, idx) => (
-          <div key={idx} className="instruction-row flex gap-6 border-b border-black py-4 last:border-0">
-            <div className="icon-box w-12 h-12 border-2 border-black flex items-center justify-center flex-shrink-0">{item.icon}</div>
+          <div key={idx} className="flex gap-6 border-b border-black py-4 last:border-0">
+            <div className="w-12 h-12 border-2 border-black flex items-center justify-center flex-shrink-0">{item.icon}</div>
             <div>
               <h3 className="font-bold text-lg uppercase">{item.title}</h3>
               <p className="text-sm">{item.desc}</p>
@@ -50,7 +49,6 @@ const GuideView = ({ onBack }: { onBack: () => void }) => (
           </div>
         ))}
       </div>
-
       <div className="mt-8 pt-4 border-t-4 border-black text-center font-bold text-sm uppercase">
         EN CASO DE FALLA TOTAL: UTILICE FRECUENCIAS ANALÓGICAS VÍA RADIO VHF/UHF
         <div className="no-print mt-6 space-x-4">
@@ -62,7 +60,7 @@ const GuideView = ({ onBack }: { onBack: () => void }) => (
   </div>
 );
 
-// --- COMPONENTE: MANUAL TÁCTICO (CONTENIDO ÍNTEGRO) ---
+// --- COMPONENTE: MANUAL TÁCTICO ---
 const ManualView = ({ onBack }: { onBack: () => void }) => (
   <div className="bg-[#0e0a07] min-h-screen p-6 md:p-12 text-gray-200 font-sans relative overflow-y-auto tactical-bg">
     <div className="scanline"></div>
@@ -71,7 +69,6 @@ const ManualView = ({ onBack }: { onBack: () => void }) => (
         <button onClick={() => window.print()} className="bg-white text-black px-5 py-2.5 font-black text-[10px] uppercase tracking-widest hover:bg-orange-600 hover:text-white transition-all shadow-2xl border border-black/10">IMPRIMIR_PDF</button>
         <button onClick={onBack} className="bg-gray-800 text-white px-5 py-2.5 font-black text-[10px] uppercase tracking-widest hover:bg-gray-700 transition-all border border-white/10">VOLVER</button>
       </div>
-
       <header className="mb-16">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-8 h-1 bg-orange-500"></div>
@@ -80,27 +77,25 @@ const ManualView = ({ onBack }: { onBack: () => void }) => (
         <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-none mb-6 uppercase text-white">GUÍA DE<br />USUARIO</h1>
         <p className="text-gray-500 font-mono text-[10px] uppercase tracking-widest border-t border-white/10 pt-4">Protocolo de Comunicaciones Resilientes para Brigadas</p>
       </header>
-
       <div className="grid md:grid-cols-2 gap-8 mb-16">
         <section className="space-y-4">
             <div className="flex items-center gap-3">
                 <span className="bg-orange-500 text-white w-7 h-7 flex items-center justify-center font-black text-xs" style={{ clipPath: 'polygon(20% 0%, 100% 0, 100% 80%, 80% 100%, 0 100%, 0% 20%)' }}>01</span>
                 <h2 className="text-2xl font-black uppercase text-white tracking-tighter">Identificación</h2>
             </div>
-            <div className="tactical-card bg-white/5 border border-white/10 p-6">
+            <div className="bg-white/5 border border-white/10 p-6">
                 <p className="text-xs text-gray-400 mb-4">Al iniciar, ingrese su <span className="text-white font-bold">Callsign (Indicativo)</span>. Este nombre será su identificador único en el mapa y en el registro de audio.</p>
                 <div className="bg-black/40 p-3 border border-white/5 font-mono text-[10px] text-orange-500 uppercase">
                     RECOMENDACIÓN: Use nombres cortos y claros.<br />Ej: "MOVIL-1", "BASE-TUC", "BRIGADA-B".
                 </div>
             </div>
         </section>
-
         <section className="space-y-4">
             <div className="flex items-center gap-3">
                 <span className="bg-orange-500 text-white w-7 h-7 flex items-center justify-center font-black text-xs" style={{ clipPath: 'polygon(20% 0%, 100% 0, 100% 80%, 80% 100%, 0 100%, 0% 20%)' }}>02</span>
                 <h2 className="text-2xl font-black uppercase text-white tracking-tighter">Frecuencias</h2>
             </div>
-            <div className="tactical-card bg-white/5 border border-white/10 p-6">
+            <div className="bg-white/5 border border-white/10 p-6">
                 <p className="text-xs text-gray-400 mb-4">Seleccione su canal de operación en el <span className="text-white font-bold">Selector de Frecuencias</span>.</p>
                 <ul className="text-[10px] space-y-2 font-mono uppercase">
                     <li className="flex items-center gap-2"><span className="w-2 h-2 bg-emerald-500 rounded-full"></span> Canales Públicos: Acceso libre.</li>
@@ -109,28 +104,6 @@ const ManualView = ({ onBack }: { onBack: () => void }) => (
             </div>
         </section>
       </div>
-
-      <section className="mb-16 space-y-6">
-        <div className="flex items-center gap-3">
-            <span className="bg-orange-500 text-white w-7 h-7 flex items-center justify-center font-black text-xs" style={{ clipPath: 'polygon(20% 0%, 100% 0, 100% 80%, 80% 100%, 0 100%, 0% 20%)' }}>03</span>
-            <h2 className="text-3xl font-black uppercase text-white tracking-tighter">Comunicaciones de Voz (PTT)</h2>
-        </div>
-        <div className="grid md:grid-cols-3 gap-6">
-            <div className="tactical-card bg-white/5 border border-white/10 p-6 border-l-4 border-l-orange-500">
-                <h4 className="font-black text-orange-500 uppercase text-[11px] mb-3">TX: Transmitir</h4>
-                <p className="text-[11px] text-gray-400">Presione y <span className="text-white font-bold">mantenga</span> el botón central. Espere el sonido de entrada y hable a 15cm del micrófono.</p>
-            </div>
-            <div className="tactical-card bg-white/5 border border-white/10 p-6 border-l-4 border-l-emerald-500">
-                <h4 className="font-black text-emerald-500 uppercase text-[11px] mb-3">RX: Recibir</h4>
-                <p className="text-[11px] text-gray-400">El audio se reproduce en tiempo real. Un aro naranja en pantalla indica quién está modulando.</p>
-            </div>
-            <div className="tactical-card bg-white/5 border border-white/10 p-6 border-l-4 border-l-gray-500">
-                <h4 className="font-black text-gray-400 uppercase text-[11px] mb-3">Simplex</h4>
-                <p className="text-[11px] text-gray-500">El sistema es de una vía. No puede transmitir mientras otra unidad está hablando.</p>
-            </div>
-        </div>
-      </section>
-
       <footer className="pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center opacity-30 gap-4">
         <p className="font-mono text-[9px] uppercase font-bold tracking-widest text-white">RADIO_UBICACION_MOVIL // DOC_ID: 001-OP-TECH</p>
         <p className="font-mono text-[9px] uppercase font-bold text-orange-500">FIN DEL PROTOCOLO</p>
@@ -164,7 +137,6 @@ const LandingView = ({ onEnter, onManual, onGuide }: { onEnter: () => void; onMa
             </div>
         </div>
     </nav>
-
     <section className="relative min-h-screen flex items-center justify-center pt-20 px-6 hero-gradient">
         <div className="max-w-5xl mx-auto text-center z-10 animate__animated animate__fadeIn">
             <span className="text-orange-500 text-[10px] md:text-xs font-bold tracking-[0.4em] uppercase mb-10 block opacity-90">INFRAESTRUCTURA DE RESPUESTA RÁPIDA</span>
@@ -177,43 +149,6 @@ const LandingView = ({ onEnter, onManual, onGuide }: { onEnter: () => void; onMa
             </div>
         </div>
     </section>
-
-    <section className="py-24 bg-black border-y border-white/5 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 mb-12">
-            <div className="flex items-center gap-3 mb-2">
-                <div className="w-2 h-2 bg-orange-500 animate-pulse"></div>
-                <span className="text-orange-500 text-[11px] font-black tracking-[0.4em] uppercase">SITUACIÓN_DE_CAMPO</span>
-            </div>
-            <h2 className="text-5xl font-black uppercase tracking-tighter leading-[0.9] text-white">EL DESAFÍO<br/><span className="text-gray-600">DEL TERRENO</span></h2>
-        </div>
-
-        <div className="flex overflow-x-auto snap-x snap-mandatory gap-6 px-6 pb-12 no-scrollbar cursor-grab active:cursor-grabbing">
-            {[
-              { id: "01", title: "Handys con interferencia", desc: "Audio digital cristalino optimizado para entornos de combate e incendios." },
-              { id: "02", title: "Zonas muertas sin datos", desc: "Cuando el 5G falla, el motor conmuta a ráfagas de datos 2G para enviar SOS críticos." },
-              { id: "03", title: "Caos y ruido ambiente", desc: "Monitor de audio visual integrado. Si no pudo escucharlo, el sistema lo transcribe." },
-              { id: "04", title: "Análisis de incidente", desc: "Cada voz y movimiento queda registrado para auditorías críticas post-misión." }
-            ].map((card) => (
-              <div key={card.id} className="flex-none w-[85%] md:w-[45%] lg:w-[25%] snap-center bg-[#0a0a0a] border border-white/5 p-8 relative min-h-[280px] flex flex-col justify-end group hover:border-orange-500 transition-all">
-                  <div className="absolute top-[-10px] right-[-10px] text-[100px] font-black text-white/5 leading-none pointer-events-none">{card.id}</div>
-                  <h4 className="text-white font-black mb-4 uppercase text-2xl leading-[0.85] group-hover:text-orange-500 transition-colors">{card.title}</h4>
-                  <p className="text-gray-500 text-sm leading-snug">{card.desc}</p>
-              </div>
-            ))}
-        </div>
-    </section>
-
-    <footer className="py-32 bg-[#0e0a07] text-center border-t border-white/5">
-        <div className="max-w-4xl mx-auto px-6">
-            <h2 className="text-6xl md:text-8xl font-black mb-12 uppercase tracking-tighter leading-none text-white">
-                Tecnología para <br/>
-                <span className="text-orange-500 italic">SALVAR VIDAS.</span>
-            </h2>
-            <button onClick={onEnter} className="bg-white text-black px-16 py-6 font-black uppercase text-sm tracking-widest hover:bg-orange-600 hover:text-white transition-all transform hover:-translate-y-2 shadow-2xl">
-                DESPLEGAR AHORA
-            </button>
-        </div>
-    </footer>
   </div>
 );
 
@@ -228,14 +163,13 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 
 function App() {
   const [currentView, setCurrentView] = useState<'landing' | 'app' | 'manual' | 'guide'>('landing');
-  const [userName, setUserName] = useState<string>(localStorage.getItem('user_callsign') || '');
+  const [userName, setUserName] = useState<string>(''); // Forzamos inicio vacío para gatillar identificación
   const [activeChannel, setActiveChannel] = useState<Channel | null>(null);
-  const [tempName, setTempName] = useState('');
+  const [tempName, setTempName] = useState(localStorage.getItem('user_callsign') || '');
+  const [isIdentified, setIsIdentified] = useState(false);
   const [connectionState, setConnectionState] = useState<ConnectionState>(ConnectionState.DISCONNECTED);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [isManualMode, setIsManualMode] = useState<boolean>(false);
-  const [manualLocation, setManualLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [teamMembersRaw, setTeamMembersRaw] = useState<TeamMember[]>([]);
   const [radioHistory, setRadioHistory] = useState<RadioHistory[]>([]);
   const [isTalking, setIsTalking] = useState(false);
@@ -243,7 +177,8 @@ function App() {
   const [audioLevel, setAudioLevel] = useState(0);
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
   const [mobileTab, setMobileTab] = useState<'map' | 'team' | 'history'>('map');
-  const [isConnecting, setIsConnecting] = useState(false);
+  const [isManualMode, setIsManualMode] = useState(false);
+  const [manualLocation, setManualLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   const radioRef = useRef<RadioService | null>(null);
   const effectiveLocation = manualLocation || userLocation;
@@ -251,6 +186,7 @@ function App() {
 
   useEffect(() => { userLocationRef.current = effectiveLocation; }, [effectiveLocation]);
   
+  // Sincronización de Red
   useEffect(() => {
     const update = () => setIsOnline(navigator.onLine);
     window.addEventListener('online', update);
@@ -266,27 +202,29 @@ function App() {
     }));
   }, [teamMembersRaw, effectiveLocation]);
 
-  // --- SINCRONIZACIÓN DE PRESENCIA (SOLUCIONA EL ERROR DEL FANTASMA) ---
-  const fetchAllData = useCallback(async () => {
-    if (!activeChannel || !userName) return;
-    
-    // 1. Registro de entrada forzado (Heartbeat)
-    const initialLat = effectiveLocation?.lat || -26.8241;
-    const initialLng = effectiveLocation?.lng || -65.2226;
+  // --- REGISTRO DE PRESENCIA INMEDIATO (SOLUCIÓN AL FANTASMA) ---
+  const doCheckIn = useCallback(async (channelId: string, name: string) => {
+    const lat = effectiveLocation?.lat || -26.8241;
+    const lng = effectiveLocation?.lng || -65.2226;
     
     await supabase.from('locations').upsert({
       id: DEVICE_ID,
-      name: userName,
-      lat: initialLat,
-      lng: initialLng,
+      name: name,
+      lat,
+      lng,
       accuracy: 0,
       role: 'Móvil',
       status: 'online',
       last_seen: new Date().toISOString(),
-      channel_id: activeChannel.id
+      channel_id: channelId
     });
+    console.log("PRESENCIA_ESTABLECIDA_OK");
+  }, [effectiveLocation]);
 
-    // 2. Carga inicial de usuarios (últimas 24h)
+  const fetchAllData = useCallback(async () => {
+    if (!activeChannel || !userName) return;
+    
+    // Carga de miembros activos (últimas 24h)
     const { data: members } = await supabase
       .from('locations')
       .select('*')
@@ -300,7 +238,6 @@ function App() {
       );
     }
 
-    // 3. Carga inicial de historial
     const { data: history } = await supabase
       .from('radio_history')
       .select('*')
@@ -308,43 +245,28 @@ function App() {
       .order('created_at', { ascending: false })
       .limit(30);
     if (history) setRadioHistory(history);
-  }, [activeChannel, userName, effectiveLocation]);
+  }, [activeChannel, userName]);
 
+  // SUSCRIPCIÓN MAESTRA
   useEffect(() => {
     if (!activeChannel || !userName) return;
 
-    setIsConnecting(true);
-    fetchAllData().then(() => setIsConnecting(false));
+    doCheckIn(activeChannel.id, userName);
+    fetchAllData();
 
-    // SUSCRIPCIÓN MAESTRA SIN FILTROS DE TIEMPO
-    const channel = supabase.channel(`sync-service-v12-${activeChannel.id}`)
+    const channel = supabase.channel(`sync-v3-${activeChannel.id}`)
       .on('postgres_changes', { event: '*', table: 'locations', schema: 'public' }, (payload: any) => {
         const target = payload.new || payload.old;
         if (!target || String(target.id).trim() === String(DEVICE_ID).trim()) return;
-        
-        // Solo actualizar si pertenece a este canal
         if (payload.eventType !== 'DELETE' && target.channel_id && String(target.channel_id).trim() !== String(activeChannel.id).trim()) return;
 
         setTeamMembersRaw(prev => {
-          if (payload.eventType === 'DELETE') {
-            return prev.filter(m => String(m.id).trim() !== String(target.id).trim());
-          }
-          const formatted = { 
-            ...target, 
-            lat: target.lat ? Number(target.lat) : undefined, 
-            lng: target.lng ? Number(target.lng) : undefined 
-          } as TeamMember;
-
+          if (payload.eventType === 'DELETE') return prev.filter(m => String(m.id).trim() !== String(target.id).trim());
+          const formatted = { ...target, lat: Number(target.lat), lng: Number(target.lng) } as TeamMember;
           const idx = prev.findIndex(m => String(m.id).trim() === String(target.id).trim());
-          if (idx === -1) return formatted.lat ? [...prev, formatted] : prev;
-          
+          if (idx === -1) return [...prev, formatted];
           const next = [...prev];
-          next[idx] = { 
-            ...next[idx], 
-            ...formatted, 
-            lat: formatted.lat ?? next[idx].lat, 
-            lng: formatted.lng ?? next[idx].lng 
-          };
+          next[idx] = formatted;
           return next;
         });
       })
@@ -356,9 +278,9 @@ function App() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [activeChannel, userName, fetchAllData]);
+  }, [activeChannel, userName, doCheckIn, fetchAllData]);
 
-  // --- WATCHER GPS DINÁMICO ---
+  // WATCHER GPS
   useEffect(() => {
     if (!activeChannel || !userName || manualLocation) return;
     const sendPos = async (lat: number, lng: number, acc: number) => {
@@ -387,16 +309,18 @@ function App() {
   if (currentView === 'manual') return <ManualView onBack={() => setCurrentView('landing')} />;
   if (currentView === 'landing') return <LandingView onEnter={() => setCurrentView('app')} onManual={() => setCurrentView('manual')} onGuide={() => setCurrentView('guide')} />;
 
-  if (!userName) return (
+  // PANTALLA DE LOGUEO / IDENTIFICACIÓN (FORZADA)
+  if (!isIdentified) return (
     <div className="h-screen bg-black flex items-center justify-center p-6 font-mono relative overflow-hidden">
       <div className="scanline"></div>
       <div className="w-full max-w-sm bg-gray-900 border border-orange-500/30 p-8 shadow-2xl relative z-10">
         <h1 className="text-orange-500 font-black text-center mb-8 tracking-widest uppercase">Identificación Radio</h1>
+        <p className="text-[10px] text-gray-500 mb-6 text-center uppercase">Ingrese su indicativo de misión para ser visible en la red.</p>
         <input autoFocus type="text" value={tempName} onChange={e => setTempName(e.target.value.toUpperCase())} 
-          onKeyDown={e => e.key === 'Enter' && tempName.length >= 3 && (localStorage.setItem('user_callsign', tempName), setUserName(tempName))}
+          onKeyDown={e => e.key === 'Enter' && tempName.length >= 3 && (localStorage.setItem('user_callsign', tempName), setUserName(tempName), setIsIdentified(true))}
           placeholder="CALLSIGN (EJ: MOVIL-1)" className="w-full bg-black border border-gray-800 p-4 text-orange-500 text-center font-bold mb-4 outline-none focus:border-orange-500 uppercase"
         />
-        <button onClick={() => { if(tempName.length >= 3) { localStorage.setItem('user_callsign', tempName); setUserName(tempName); }}} className="w-full bg-orange-600 text-white font-black py-4 hover:bg-orange-500 transition-colors uppercase">Entrar en servicio</button>
+        <button onClick={() => { if(tempName.length >= 3) { localStorage.setItem('user_callsign', tempName); setUserName(tempName); setIsIdentified(true); }}} className="w-full bg-orange-600 text-white font-black py-4 hover:bg-orange-500 transition-colors uppercase">Establecer Callsign</button>
       </div>
     </div>
   );
@@ -405,18 +329,10 @@ function App() {
     <div className="h-screen bg-black flex items-center justify-center p-6 font-mono relative overflow-hidden">
        <div className="scanline"></div>
        <div className="w-full max-w-md relative z-10">
-          <button onClick={() => setCurrentView('landing')} className="mb-4 text-gray-500 flex items-center gap-2 hover:text-white transition-colors uppercase text-[10px] font-bold tracking-widest"><ChevronLeft size={14} /> Volver</button>
-          <h2 className="text-orange-500 font-bold uppercase text-center mb-8 tracking-widest">Seleccionar Canal</h2>
+          <button onClick={() => setIsIdentified(false)} className="mb-4 text-gray-500 flex items-center gap-2 hover:text-white transition-colors uppercase text-[10px] font-bold tracking-widest"><ChevronLeft size={14} /> Cambiar Callsign</button>
+          <h2 className="text-orange-500 font-bold uppercase text-center mb-8 tracking-widest">Seleccionar Frecuencia</h2>
           <ChannelSelector onSelect={ch => setActiveChannel(ch)} />
        </div>
-    </div>
-  );
-
-  if (isConnecting) return (
-    <div className="h-screen bg-black flex flex-col items-center justify-center font-mono">
-       <div className="scanline"></div>
-       <RefreshCw size={48} className="text-orange-500 animate-spin mb-4" />
-       <p className="text-orange-500 font-black tracking-[0.2em] uppercase animate-pulse">Sincronizando con la Red...</p>
     </div>
   );
 
@@ -425,6 +341,7 @@ function App() {
       <div className="scanline"></div>
       
       <div className="flex-1 relative overflow-hidden flex flex-col">
+         {/* Tabs Móviles */}
          <div className="md:hidden flex bg-gray-950 border-b border-white/10 z-[1001]">
             <button onClick={() => setMobileTab('map')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest ${mobileTab === 'map' ? 'text-orange-500 bg-orange-500/10' : 'text-gray-500'}`}>Mapa</button>
             <button onClick={() => setMobileTab('team')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest ${mobileTab === 'team' ? 'text-orange-500 bg-orange-500/10' : 'text-gray-500'}`}>Equipo ({teamMembers.length})</button>
@@ -439,6 +356,7 @@ function App() {
                 <button onClick={fetchAllData} className="text-gray-500 hover:text-white transition-colors"><RefreshCw size={12} /></button>
             </div>
 
+            {/* Vistas Móviles */}
             <div className={`md:hidden absolute inset-0 z-[1002] bg-gray-950 transition-transform ${mobileTab === 'team' ? 'translate-x-0' : 'translate-x-full'}`}>
                <div className="p-2 border-b border-white/10 flex justify-between items-center bg-black">
                   <span className="text-[10px] font-black uppercase text-orange-500 px-2 tracking-widest">Unidades Activas</span>
@@ -456,6 +374,7 @@ function App() {
             </div>
          </div>
 
+         {/* Panel Lateral PC */}
          <div className="hidden lg:flex flex-col absolute bottom-6 right-6 w-80 bg-black/90 backdrop-blur rounded border border-white/10 shadow-2xl h-[480px] overflow-hidden z-[500]">
             <div className="flex border-b border-white/10 bg-white/5">
               <button onClick={() => setMobileTab('team')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${mobileTab !== 'history' ? 'text-orange-500 bg-orange-500/5' : 'text-gray-500 hover:text-white'}`}>Equipo</button>
