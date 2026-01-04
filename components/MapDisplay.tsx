@@ -1,6 +1,6 @@
 
-import React, { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle, useMap, useMapEvents } from 'react-leaflet';
+import React, { useEffect, memo } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { TeamMember } from '../types';
 
@@ -13,6 +13,7 @@ const TUCUMAN_BOUNDS: L.LatLngBoundsExpression = [
 const iconUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png';
 const shadowUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png';
 
+// Método recomendado para corregir iconos de Leaflet sin hacks de prototipo
 L.Icon.Default.mergeOptions({ 
   iconUrl, 
   shadowUrl,
@@ -22,7 +23,7 @@ L.Icon.Default.mergeOptions({
 interface MapDisplayProps {
   userLocation: { lat: number; lng: number } | null;
   teamMembers: TeamMember[];
-  accuracy: number;
+  accuracy?: number;
   isManualMode?: boolean;
   onMapClick?: (lat: number, lng: number) => void;
 }
@@ -30,7 +31,9 @@ interface MapDisplayProps {
 const MapController = ({ center }: { center: { lat: number; lng: number } | null }) => {
   const map = useMap();
   useEffect(() => {
-    map.whenReady(() => map.invalidateSize());
+    map.whenReady(() => {
+      setTimeout(() => map.invalidateSize(), 200);
+    });
   }, [map]);
 
   useEffect(() => {
@@ -60,7 +63,7 @@ const USER_ICON_NORMAL = createTacticalIcon('#10b981', true, false);
 const USER_ICON_MANUAL = createTacticalIcon('#f97316', true, true);
 const TEAM_ICON = createTacticalIcon('#f97316');
 
-export const MapDisplay: React.FC<MapDisplayProps> = ({ userLocation, teamMembers, accuracy, isManualMode = false, onMapClick }) => {
+export const MapDisplay: React.FC<MapDisplayProps> = memo(({ userLocation, teamMembers, accuracy = 0, isManualMode = false, onMapClick }) => {
   const userIcon = isManualMode ? USER_ICON_MANUAL : USER_ICON_NORMAL;
 
   return (
@@ -75,7 +78,7 @@ export const MapDisplay: React.FC<MapDisplayProps> = ({ userLocation, teamMember
         doubleClickZoom={false}
       >
         <TileLayer
-          attribution='&copy; OpenStreetMap contributors'
+          attribution='&copy; OpenStreetMap'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           className="map-tiles-grayscale"
         />
@@ -111,4 +114,4 @@ export const MapDisplay: React.FC<MapDisplayProps> = ({ userLocation, teamMember
       </MapContainer>
     </div>
   );
-};
+});
