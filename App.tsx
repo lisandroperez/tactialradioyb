@@ -47,6 +47,7 @@ function App() {
   const [showMobileOverlay, setShowMobileOverlay] = useState(false);
 
   const radioRef = useRef<RadioService | null>(null);
+  const syncChannelRef = useRef<any>(null);
   
   const effectiveLocation = manualLocation || userLocation;
   const userLocationRef = useRef<{ lat: number; lng: number } | null>(null);
@@ -54,16 +55,6 @@ function App() {
   useEffect(() => {
     userLocationRef.current = effectiveLocation;
   }, [effectiveLocation]);
-
-  useEffect(() => {
-    const handleGlobalMouseUp = () => { if (isTalking) handleTalkEnd(); };
-    window.addEventListener('mouseup', handleGlobalMouseUp);
-    window.addEventListener('touchend', handleGlobalMouseUp);
-    return () => {
-      window.removeEventListener('mouseup', handleGlobalMouseUp);
-      window.removeEventListener('touchend', handleGlobalMouseUp);
-    };
-  }, [isTalking]);
 
   const teamMembers = useMemo(() => {
     if (!effectiveLocation) return teamMembersRaw;
@@ -73,11 +64,31 @@ function App() {
     }));
   }, [teamMembersRaw, effectiveLocation]);
 
-  // Función unificada para reportar ubicación/presencia
+  // Función para normalizar y actualizar un miembro del equipo en el estado local
+  const updateMemberInState = useCallback((item: any) => {
+    if (!item || item.id === DEVICE_ID) return;
+    
+    setTeamMembersRaw(prev => {
+      const normalizedItem = { 
+        ...item, 
+        lat: Number(item.lat), 
+        lng: Number(item.lng),
+        status: item.status || 'online'
+      } as TeamMember;
+
+      const index = prev.findIndex(m => m.id === item.id);
+      if (index === -1) return [...prev, normalizedItem];
+      const next = [...prev]; 
+      next[index] = normalizedItem; 
+      return next;
+    });
+  }, []);
+
+  // Función unificada para reportar ubicación/presencia (DB + Broadcast)
   const reportPresence = useCallback(async () => {
     if (!activeChannel || !isNameSet || !effectiveLocation) return;
     
-    await supabase.from('locations').upsert({
+    const presenceData = {
       id: DEVICE_ID, 
       name: userName, 
       lat: effectiveLocation.lat, 
@@ -87,10 +98,22 @@ function App() {
       status: isTalking ? 'talking' : 'online', 
       last_seen: new Date().toISOString(),
       channel_id: activeChannel.id
-    });
+    };
+
+    // 1. Guardar en DB para persistencia
+    await supabase.from('locations').upsert(presenceData);
+
+    // 2. Emitir vía Broadcast para actualización inmediata en otros clientes
+    if (syncChannelRef.current) {
+      syncChannelRef.current.send({
+        type: 'broadcast',
+        event: 'presence-sync',
+        payload: presenceData
+      });
+    }
   }, [activeChannel, isNameSet, effectiveLocation, userName, manualLocation, locationAccuracy, isTalking]);
 
-  // Heartbeat de seguridad: reportar presencia cada 30s pase lo que pase
+  // Heartbeat cada 30s
   useEffect(() => {
     if (!activeChannel || !isNameSet) return;
     const interval = setInterval(reportPresence, 30000);
@@ -101,10 +124,6 @@ function App() {
     if (!activeChannel || !isNameSet) return;
 
     const fetchData = async () => {
-      setRadioHistory([]);
-      setTeamMembersRaw([]);
-
-      // Ampliamos el umbral a 24 horas para que las unidades fijas no desaparezcan
       const yesterday = new Date(Date.now() - 86400000).toISOString();
       
       const { data: members } = await supabase
@@ -116,7 +135,7 @@ function App() {
       if (members) {
         setTeamMembersRaw(members
           .filter(m => m.id !== DEVICE_ID)
-          .map(m => ({ ...m, lat: Number(m.lat), lng: Number(m.lng) })) // Asegurar números
+          .map(m => ({ ...m, lat: Number(m.lat), lng: Number(m.lng) }))
         );
       }
 
@@ -124,47 +143,57 @@ function App() {
         .from('radio_history')
         .select('*')
         .eq('channel_id', activeChannel.id)
-        .gt('created_at', yesterday)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(20);
       if (history) setRadioHistory(history);
     };
 
     fetchData();
 
-    // Suscripción más robusta sin filtro de servidor para evitar pérdidas
-    const channel = supabase.channel(`sync-v2-${activeChannel.id}`)
-      .on('postgres_changes', { 
-        event: '*', 
-        table: 'locations', 
-        schema: 'public'
-      }, (payload: any) => {
-        const item = payload.new || payload.old;
-        if (!item || item.channel_id !== activeChannel.id || item.id === DEVICE_ID) return;
-
-        setTeamMembersRaw(prev => {
-          if (payload.eventType === 'DELETE') return prev.filter(m => m.id !== item.id);
-          
-          const normalizedItem = { ...item, lat: Number(item.lat), lng: Number(item.lng) };
-          const index = prev.findIndex(m => m.id === item.id);
-          if (index === -1) return [...prev, normalizedItem];
-          const next = [...prev]; 
-          next[index] = normalizedItem; 
-          return next;
-        });
-      })
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        table: 'radio_history', 
-        schema: 'public'
-      }, (payload: any) => {
-        if (payload.new && payload.new.channel_id === activeChannel.id) {
-          setRadioHistory(prev => [payload.new, ...prev]);
-        }
-      })
-      .subscribe();
+    // Suscripción Realtime + Broadcast
+    const channel = supabase.channel(`sync-v3-${activeChannel.id}`, {
+      config: { broadcast: { ack: false, self: false } }
+    })
+    .on('postgres_changes', { 
+      event: '*', 
+      table: 'locations', 
+      schema: 'public'
+    }, (payload: any) => {
+      const item = payload.new || payload.old;
+      // Si no viene channel_id en el payload (Replica Identity Default), confiamos en que si estaba en nuestra lista, es del canal
+      if (!item || item.id === DEVICE_ID) return;
+      if (item.channel_id && item.channel_id !== activeChannel.id) return;
+      
+      if (payload.eventType === 'DELETE') {
+        setTeamMembersRaw(prev => prev.filter(m => m.id !== item.id));
+      } else {
+        updateMemberInState(item);
+      }
+    })
+    .on('postgres_changes', { 
+      event: 'INSERT', 
+      table: 'radio_history', 
+      schema: 'public'
+    }, (payload: any) => {
+      if (payload.new && payload.new.channel_id === activeChannel.id) {
+        setRadioHistory(prev => [payload.new, ...prev]);
+      }
+    })
+    .on('broadcast', { event: 'presence-sync' }, (payload) => {
+      // Sincronización ultrarrápida vía broadcast
+      if (payload.payload && payload.payload.channel_id === activeChannel.id) {
+        updateMemberInState(payload.payload);
+      }
+    })
+    .subscribe();
     
-    return () => { supabase.removeChannel(channel); };
-  }, [activeChannel, isNameSet]);
+    syncChannelRef.current = channel;
+    
+    return () => { 
+      supabase.removeChannel(channel); 
+      syncChannelRef.current = null;
+    };
+  }, [activeChannel, isNameSet, updateMemberInState]);
 
   useEffect(() => {
     if (!activeChannel || !isNameSet || !navigator.geolocation || manualLocation) return;
@@ -193,7 +222,7 @@ function App() {
     setSystemLog("UBICACIÓN_FIJADA");
 
     // Forzamos el reporte inmediato con la nueva ubicación manual
-    await supabase.from('locations').upsert({
+    const presenceData = {
       id: DEVICE_ID, 
       name: userName, 
       lat: lat, 
@@ -203,7 +232,18 @@ function App() {
       status: isTalking ? 'talking' : 'online', 
       last_seen: new Date().toISOString(),
       channel_id: activeChannel.id
-    });
+    };
+
+    await supabase.from('locations').upsert(presenceData);
+    
+    // Avisar inmediatamente a otros
+    if (syncChannelRef.current) {
+      syncChannelRef.current.send({
+        type: 'broadcast',
+        event: 'presence-sync',
+        payload: presenceData
+      });
+    }
   };
 
   const toggleManualMode = () => {
@@ -242,7 +282,7 @@ function App() {
     if (radioRef.current && connectionState === ConnectionState.CONNECTED) {
       setIsTalking(true);
       radioRef.current.startTransmission();
-      reportPresence(); // Reportar cambio de estado a 'talking'
+      reportPresence();
     }
   };
 
@@ -250,7 +290,7 @@ function App() {
     if (radioRef.current) {
       radioRef.current.stopTransmission();
       setIsTalking(false);
-      reportPresence(); // Reportar retorno a 'online'
+      reportPresence();
     }
   };
 
@@ -341,6 +381,7 @@ function App() {
                 <Hash size={10} className="inline mr-1" /> {activeChannel.name}
               </span>
             </div>
+            <div className="bg-black/60 px-2 py-1 rounded text-[8px] font-mono text-gray-500">{systemLog}</div>
          </div>
 
          <div className="absolute top-4 right-4 z-[2000] md:hidden">
