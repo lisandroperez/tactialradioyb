@@ -18,7 +18,7 @@ import {
 
 const DEVICE_ID = getDeviceId();
 
-// --- VISTA DEL MANUAL TÁCTICO ---
+// --- VISTA DEL MANUAL TÁCTICO INTEGRADA ---
 const ManualView = ({ onBack }: { onBack: () => void }) => {
   return (
     <div className="bg-[#0e0a07] min-h-screen p-6 md:p-12 text-gray-200 selection:bg-orange-500 font-sans relative overflow-y-auto">
@@ -94,7 +94,7 @@ const ManualView = ({ onBack }: { onBack: () => void }) => {
   );
 };
 
-// --- VISTA DE GUÍA RÁPIDA (B/W) ---
+// --- VISTA DE GUÍA RÁPIDA INTEGRADA ---
 const GuideView = ({ onBack }: { onBack: () => void }) => {
   return (
     <div className="bg-white min-h-screen p-8 text-black font-mono relative overflow-y-auto">
@@ -137,13 +137,13 @@ const GuideView = ({ onBack }: { onBack: () => void }) => {
   );
 };
 
-// --- COMPONENTE LANDING COMPLETO (RESTAURADO 100%) ---
+// --- COMPONENTE LANDING COMPLETO (RESTAURADO) ---
 const LandingView = ({ onEnter, onManual, onGuide }: { onEnter: () => void; onManual: () => void; onGuide: () => void }) => {
   return (
     <div className="overflow-x-hidden relative min-h-screen selection:bg-orange-500 bg-[#0e0a07]">
       <div className="scanline"></div>
 
-      {/* Navegación Superior Derecha */}
+      {/* Navegación Superior */}
       <nav className="fixed w-full top-0 left-0 z-[100] bg-[#0e0a07]/90 backdrop-blur-md border-b border-white/5">
           <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
               <div className="flex items-center gap-2">
@@ -153,7 +153,7 @@ const LandingView = ({ onEnter, onManual, onGuide }: { onEnter: () => void; onMa
               <div className="flex items-center gap-6">
                   <button onClick={onGuide} className="hidden md:block text-[10px] text-orange-500 hover:underline font-bold uppercase tracking-widest transition-all">GUÍA_IMPRESIÓN_B/W</button>
                   <button onClick={onManual} className="hidden md:block text-[10px] text-gray-500 hover:text-white font-bold uppercase tracking-widest transition-all">MANUAL_INTERACTIVO</button>
-                  <button onClick={onEnter} className="text-[10px] font-bold text-orange-500 border border-orange-500/30 px-4 py-1.5 hover:bg-orange-600 hover:text-white transition-all uppercase">ENTRAR_APP ></button>
+                  <button onClick={onEnter} className="text-[10px] font-bold text-orange-500 border border-orange-500/30 px-4 py-1.5 hover:bg-orange-600 hover:text-white transition-all uppercase">ENTRAR_APP &gt;</button>
               </div>
           </div>
       </nav>
@@ -254,8 +254,8 @@ const LandingView = ({ onEnter, onManual, onGuide }: { onEnter: () => void; onMa
                   La tecnología al servicio <br/>
                   <span className="text-orange-500 italic">DE LA VIDA.</span>
               </h2>
-              <p className="text-gray-400 mb-16 italic text-lg leading-relaxed max-w-2xl mx-auto">
-                  "Esta aplicación es gratuita para todas las entidades oficiales y grupos de respuesta. Nuestro compromiso es que ningún rescatista se quede incomunicado."
+              <p className="text-gray-400 mb-16 italic text-lg leading-relaxed max-w-2xl mx-auto italic">
+                  &quot;Esta aplicación es gratuita para todas las entidades oficiales y grupos de respuesta. Nuestro compromiso es que ningún rescatista se quede incomunicado.&quot;
               </p>
               
               <div className="flex justify-center mb-24">
@@ -477,7 +477,7 @@ function App() {
   const handleTalkStart = () => { if (radioRef.current) { setIsTalking(true); radioRef.current.startTransmission(); } };
   const handleTalkEnd = () => { if (radioRef.current) { radioRef.current.stopTransmission(); setIsTalking(false); } };
 
-  // Router de Vistas Interno (No requiere archivos físicos .html)
+  // Router de Vistas Interno
   if (currentView === 'manual') return <ManualView onBack={() => setCurrentView('landing')} />;
   if (currentView === 'guia') return <GuideView onBack={() => setCurrentView('landing')} />;
   if (currentView === 'landing') return (
