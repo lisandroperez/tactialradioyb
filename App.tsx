@@ -46,7 +46,7 @@ const GuideView = ({ onBack }: { onBack: () => void }) => (
         ))}
       </div>
       <div className="mt-8 pt-4 border-t-4 border-black text-center font-bold text-sm uppercase">
-        <button onClick={onBack} className="no-print border-2 border-black px-6 py-2">VOLVER</button>
+        <button onClick={onBack} className="no-print border-2 border-black px-6 py-2 hover:bg-black hover:text-white transition-all">VOLVER</button>
       </div>
     </div>
   </div>
@@ -107,8 +107,8 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 
 function App() {
   const [currentView, setCurrentView] = useState<'landing' | 'app' | 'manual' | 'guide'>('landing');
-  const [userName, setUserName] = useState<string>(''); 
-  const [isIdentified, setIsIdentified] = useState(false);
+  const [userName, setUserName] = useState<string>(localStorage.getItem('user_callsign') || ''); 
+  const [isIdentified, setIsIdentified] = useState(!!localStorage.getItem('user_callsign'));
   const [activeChannel, setActiveChannel] = useState<Channel | null>(null);
   const [tempName, setTempName] = useState(localStorage.getItem('user_callsign') || '');
   const [connectionState, setConnectionState] = useState<ConnectionState>(ConnectionState.DISCONNECTED);
@@ -145,38 +145,52 @@ function App() {
     }));
   }, [teamMembersRaw, effectiveLocation]);
 
-  // --- REGISTRO DE PRESENCIA ---
+  // --- REGISTRO DE PRESENCIA REFORZADO ---
   const doCheckIn = useCallback(async (channelId: string, name: string) => {
     if (!name || !channelId) return;
     const lat = userLocationRef.current?.lat || -26.8241;
     const lng = userLocationRef.current?.lng || -65.2226;
     
-    await supabase.from('locations').upsert({
+    const { error } = await supabase.from('locations').upsert({
       id: DEVICE_ID,
       name: name,
       lat,
       lng,
       accuracy: 0,
       role: 'Móvil',
-      status: 'online',
+      status: isTalking ? 'talking' : 'online',
       last_seen: new Date().toISOString(),
       channel_id: channelId
     }, { onConflict: 'id' });
-  }, []);
+
+    if (error) console.error("CHECKIN_FAIL", error);
+  }, [isTalking]);
 
   const fetchAllData = useCallback(async () => {
     if (!activeChannel || !userName) return;
     
     try {
       const [membersRes, historyRes] = await Promise.all([
-        supabase.from('locations').select('*').eq('channel_id', activeChannel.id).gt('last_seen', new Date(Date.now() - 259200000).toISOString()),
-        supabase.from('radio_history').select('*').eq('channel_id', activeChannel.id).order('created_at', { ascending: false }).limit(30)
+        supabase.from('locations')
+          .select('*')
+          .eq('channel_id', activeChannel.id)
+          .gt('last_seen', new Date(Date.now() - 259200000).toISOString()), // 72h window
+        supabase.from('radio_history')
+          .select('*')
+          .eq('channel_id', activeChannel.id)
+          .order('created_at', { ascending: false })
+          .limit(30)
       ]);
 
       if (membersRes.data) {
         setTeamMembersRaw(membersRes.data
           .filter(m => String(m.id).trim() !== String(DEVICE_ID).trim())
-          .map(m => ({ ...m, lat: Number(m.lat), lng: Number(m.lng) }))
+          .map(m => ({ 
+            ...m, 
+            lat: Number(m.lat), 
+            lng: Number(m.lng),
+            status: m.status || 'online'
+          }))
         );
       }
       if (historyRes.data) setRadioHistory(historyRes.data);
@@ -185,6 +199,15 @@ function App() {
     }
   }, [activeChannel, userName]);
 
+  // --- LATIDO (HEARTBEAT) DE PRESENCIA CADA 30S ---
+  useEffect(() => {
+    if (!activeChannel || !userName || !isIdentified) return;
+    const interval = setInterval(() => {
+      doCheckIn(activeChannel.id, userName);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [activeChannel, userName, isIdentified, doCheckIn]);
+
   // --- SUSCRIPCIÓN MAESTRA ---
   useEffect(() => {
     if (!activeChannel || !userName || !isIdentified) return;
@@ -192,13 +215,21 @@ function App() {
     doCheckIn(activeChannel.id, userName);
     fetchAllData();
 
-    const channel = supabase.channel(`sync-v6-${activeChannel.id}`)
+    // Suscripción robusta sin filtros de canal del lado servidor para evitar problemas de compatibilidad
+    const channel = supabase.channel(`sync-v7-${activeChannel.id}`)
       .on('postgres_changes', { event: '*', table: 'locations', schema: 'public' }, (payload) => {
         const target = payload.new || payload.old;
         if (!target) return;
         
         const tid = String(target.id).trim();
-        if (tid === String(DEVICE_ID).trim()) return;
+        const myId = String(DEVICE_ID).trim();
+        
+        // Ignorarme a mí mismo
+        if (tid === myId) return;
+        
+        // Filtrar canal en memoria por seguridad
+        const targetChannel = String(target.channel_id || '').trim();
+        if (payload.eventType !== 'DELETE' && targetChannel !== String(activeChannel.id).trim()) return;
 
         setTeamMembersRaw(prev => {
           if (payload.eventType === 'DELETE') return prev.filter(m => String(m.id).trim() !== tid);
@@ -222,16 +253,19 @@ function App() {
           setRadioHistory(prev => [payload.new, ...prev]);
         }
       })
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') console.log("REALTIME_ONLINE");
+      });
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { 
+      supabase.removeChannel(channel); 
+    };
   }, [activeChannel, userName, isIdentified, doCheckIn, fetchAllData]);
 
   // GPS WATCHER
   useEffect(() => {
     if (!activeChannel || !userName || manualLocation || !isIdentified) return;
     
-    let watchId: number;
     const sendPos = async (lat: number, lng: number, acc: number) => {
       if (!isOnline) return;
       await supabase.from('locations').upsert({
@@ -243,18 +277,25 @@ function App() {
       }, { onConflict: 'id' });
     };
 
-    watchId = navigator.geolocation.watchPosition(
+    const watchId = navigator.geolocation.watchPosition(
       (pos) => {
         const { latitude, longitude, accuracy } = pos.coords;
         setUserLocation({ lat: latitude, lng: longitude });
         sendPos(latitude, longitude, accuracy);
       },
-      null, 
-      { enableHighAccuracy: true, timeout: 10000 }
+      (err) => console.warn("GPS_ERR", err), 
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
     
     return () => navigator.geolocation.clearWatch(watchId);
   }, [isTalking, activeChannel, userName, manualLocation, isOnline, isIdentified]);
+
+  // Cleanup Radio on Unmount
+  useEffect(() => {
+    return () => {
+      if (radioRef.current) radioRef.current.disconnect();
+    };
+  }, []);
 
   if (currentView === 'guide') return <GuideView onBack={() => setCurrentView('landing')} />;
   if (currentView === 'manual') return <ManualView onBack={() => setCurrentView('landing')} />;
@@ -265,6 +306,7 @@ function App() {
       <div className="scanline"></div>
       <div className="w-full max-w-sm bg-gray-900 border border-orange-500/30 p-8 shadow-2xl relative z-10">
         <h1 className="text-orange-500 font-black text-center mb-8 tracking-widest uppercase">Identificación Radio</h1>
+        <p className="text-[10px] text-gray-500 mb-6 text-center uppercase">Ingrese su indicativo de misión.</p>
         <input autoFocus type="text" value={tempName} onChange={e => setTempName(e.target.value.toUpperCase())} 
           onKeyDown={e => e.key === 'Enter' && tempName.length >= 3 && (localStorage.setItem('user_callsign', tempName), setUserName(tempName), setIsIdentified(true))}
           placeholder="CALLSIGN (EJ: MOVIL-1)" className="w-full bg-black border border-gray-800 p-4 text-orange-500 text-center font-bold mb-4 outline-none focus:border-orange-500 uppercase"
@@ -278,7 +320,7 @@ function App() {
     <div className="h-screen bg-black flex items-center justify-center p-6 font-mono relative overflow-hidden">
        <div className="scanline"></div>
        <div className="w-full max-w-md relative z-10">
-          <button onClick={() => setIsIdentified(false)} className="mb-4 text-gray-500 flex items-center gap-2 hover:text-white transition-colors uppercase text-[10px] font-bold tracking-widest"><ChevronLeft size={14} /> Cambiar Callsign</button>
+          <button onClick={() => { localStorage.removeItem('user_callsign'); setIsIdentified(false); }} className="mb-4 text-gray-500 flex items-center gap-2 hover:text-white transition-colors uppercase text-[10px] font-bold tracking-widest"><ChevronLeft size={14} /> Cambiar Callsign</button>
           <h2 className="text-orange-500 font-bold uppercase text-center mb-8 tracking-widest">Seleccionar Frecuencia</h2>
           <ChannelSelector onSelect={ch => setActiveChannel(ch)} />
        </div>
@@ -297,7 +339,7 @@ function App() {
          </div>
 
          <div className="flex-1 relative">
-            <MapDisplay userLocation={effectiveLocation} teamMembers={teamMembers} accuracy={0} isManualMode={isManualMode} onMapClick={(lat, lng) => { setManualLocation({lat, lng}); setIsManualMode(false); }} />
+            <MapDisplay key={activeChannel.id} userLocation={effectiveLocation} teamMembers={teamMembers} accuracy={0} isManualMode={isManualMode} onMapClick={(lat, lng) => { setManualLocation({lat, lng}); setIsManualMode(false); }} />
             <div className="absolute top-4 left-4 z-[2000] bg-black/80 backdrop-blur px-3 py-1 border border-orange-500/30 rounded flex items-center gap-3">
                 <span className="text-xs font-bold text-orange-500 font-mono tracking-widest uppercase">{activeChannel.name}</span>
                 <button onClick={fetchAllData} className="text-gray-500 hover:text-white transition-colors"><RefreshCw size={12} /></button>
@@ -330,7 +372,8 @@ function App() {
            onTalkStart={() => { if (radioRef.current) { setIsTalking(true); radioRef.current.startTransmission(); } }} 
            onTalkEnd={() => { if (radioRef.current) { radioRef.current.stopTransmission(); setIsTalking(false); } }} 
            lastTranscript={remoteTalker} onConnect={() => {
-              setConnectionState(ConnectionState.CONNECTED);
+              setConnectionState(ConnectionState.CONNECTING);
+              if (radioRef.current) radioRef.current.disconnect();
               radioRef.current = new RadioService({
                 userId: DEVICE_ID, userName, channelId: activeChannel.id,
                 getUserLocation: () => userLocationRef.current,
@@ -338,6 +381,7 @@ function App() {
                 onIncomingStreamStart: (n) => setRemoteTalker(n),
                 onIncomingStreamEnd: () => setRemoteTalker(null)
               });
+              setConnectionState(ConnectionState.CONNECTED);
            }} 
            onDisconnect={() => { if(radioRef.current) radioRef.current.disconnect(); radioRef.current = null; setConnectionState(ConnectionState.DISCONNECTED); }} 
            onQSY={() => { if(radioRef.current) radioRef.current.disconnect(); setActiveChannel(null); }}
