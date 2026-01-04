@@ -137,13 +137,12 @@ const GuideView = ({ onBack }: { onBack: () => void }) => {
   );
 };
 
-// --- COMPONENTE LANDING COMPLETO (RESTAURADO) ---
+// --- COMPONENTE LANDING COMPLETO ---
 const LandingView = ({ onEnter, onManual, onGuide }: { onEnter: () => void; onManual: () => void; onGuide: () => void }) => {
   return (
     <div className="overflow-x-hidden relative min-h-screen selection:bg-orange-500 bg-[#0e0a07]">
       <div className="scanline"></div>
 
-      {/* Navegación Superior */}
       <nav className="fixed w-full top-0 left-0 z-[100] bg-[#0e0a07]/90 backdrop-blur-md border-b border-white/5">
           <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
               <div className="flex items-center gap-2">
@@ -158,7 +157,6 @@ const LandingView = ({ onEnter, onManual, onGuide }: { onEnter: () => void; onMa
           </div>
       </nav>
 
-      {/* HERO SECTION */}
       <section className="relative min-h-screen flex items-center justify-center pt-20 px-6 hero-gradient">
           <div className="max-w-5xl mx-auto text-center z-10 animate__animated animate__fadeIn">
               <span className="text-[#f97316] text-[10px] md:text-xs font-bold tracking-[0.4em] uppercase mb-10 block opacity-90">INFRAESTRUCTURA DE RESPUESTA RÁPIDA</span>
@@ -172,7 +170,6 @@ const LandingView = ({ onEnter, onManual, onGuide }: { onEnter: () => void; onMa
           </div>
       </section>
 
-      {/* EL DESAFÍO DEL TERRENO (CARRUSEL) */}
       <section className="py-24 bg-black border-y border-white/5 relative overflow-hidden">
           <div className="max-w-7xl mx-auto px-6 mb-12">
               <div className="flex items-center gap-3 mb-2">
@@ -204,13 +201,8 @@ const LandingView = ({ onEnter, onManual, onGuide }: { onEnter: () => void; onMa
                   <p className="text-gray-500 text-sm leading-snug">Cada voz, cada movimiento. Todo el despliegue queda logueado para auditorías críticas post-misión.</p>
               </div>
           </div>
-          
-          <div className="md:hidden text-center mt-4">
-              <p className="text-[8px] text-gray-600 uppercase tracking-widest animate-pulse font-bold">Deslizar para escanear desafíos</p>
-          </div>
       </section>
 
-      {/* EQUIPAMIENTO DIGITAL (TARJETAS) */}
       <section className="py-32 bg-zinc-950">
           <div className="max-w-7xl mx-auto px-6">
               <div className="text-center mb-24">
@@ -231,42 +223,23 @@ const LandingView = ({ onEnter, onManual, onGuide }: { onEnter: () => void; onMa
                       <h3 className="text-orange-500 font-black mb-4 uppercase text-xl">Protocolo SMS 2G</h3>
                       <p className="text-gray-400 leading-relaxed text-sm">Exclusivo sistema de alertas vía SMS cuando fallan los datos móviles. Envío de coordenadas críticas.</p>
                   </div>
-                  <div className="bg-white/[0.02] border border-white/5 p-10 rounded-sm hover:border-orange-500 transition-all">
-                      <h3 className="text-orange-500 font-black mb-4 uppercase text-xl">Log de Auditoría</h3>
-                      <p className="text-gray-400 leading-relaxed text-sm">Historial completo de transmisiones con audio descargable. Fundamental para el análisis post-incidente.</p>
-                  </div>
-                  <div className="bg-white/[0.02] border border-white/5 p-10 rounded-sm hover:border-orange-500 transition-all">
-                      <h3 className="text-orange-500 font-black mb-4 uppercase text-xl">Canales por Equipo</h3>
-                      <p className="text-gray-400 leading-relaxed text-sm">Cifrado de canales privados para evitar filtraciones. Cada equipo opera en su propia frecuencia.</p>
-                  </div>
-                  <div className="bg-white/[0.02] border border-white/5 p-10 rounded-sm hover:border-orange-500 transition-all">
-                      <h3 className="text-orange-500 font-black mb-4 uppercase text-xl">Modo Táctico Fijo</h3>
-                      <p className="text-gray-400 leading-relaxed text-sm">Permite establecer coordenadas manuales exactas para Puestos de Comando sin depender del GPS dinámico.</p>
-                  </div>
               </div>
           </div>
       </section>
 
-      {/* FOOTER */}
       <footer className="py-32 bg-[#0e0a07] text-center border-t border-white/5 relative overflow-hidden">
           <div className="max-w-4xl mx-auto px-6 z-10 relative">
               <h2 className="text-6xl md:text-8xl font-black mb-12 uppercase tracking-tighter leading-none text-white">
                   La tecnología al servicio <br/>
                   <span className="text-orange-500 italic">DE LA VIDA.</span>
               </h2>
-              <p className="text-gray-400 mb-16 italic text-lg leading-relaxed max-w-2xl mx-auto italic">
-                  &quot;Esta aplicación es gratuita para todas las entidades oficiales y grupos de respuesta. Nuestro compromiso es que ningún rescatista se quede incomunicado.&quot;
+              <p className="text-gray-400 mb-16 italic text-lg leading-relaxed max-w-2xl mx-auto">
+                  &quot;Esta aplicación es gratuita para todas las entidades oficiales y grupos de respuesta.&quot;
               </p>
-              
               <div className="flex justify-center mb-24">
                   <button onClick={onEnter} className="bg-white text-black px-16 py-6 font-black uppercase text-sm tracking-widest hover:bg-orange-600 hover:text-white transition-all transform hover:-translate-y-2 shadow-2xl">
                       DESPLEGAR AHORA
                   </button>
-              </div>
-
-              <div className="opacity-20 flex flex-col items-center gap-4 border-t border-white/10 pt-12">
-                  <p className="text-[10px] text-gray-400 uppercase tracking-[0.4em] font-bold">RADIO_UBICACION_MOVIL // MISSION_CRITICAL_v3.2_STABLE</p>
-                  <p className="text-[8px] text-gray-600 uppercase">Protocolo de Respuesta Rápida para Brigadas de Emergencia</p>
               </div>
           </div>
       </footer>
@@ -389,7 +362,14 @@ function App() {
         .select('*')
         .eq('channel_id', activeChannel.id)
         .gt('last_seen', new Date(Date.now() - 3600000).toISOString()); 
-      if (members) setTeamMembersRaw(members.filter(m => m.id !== DEVICE_ID));
+      
+      if (members) {
+        setTeamMembersRaw(members.filter(m => m.id !== DEVICE_ID).map(m => ({
+           ...m,
+           lat: Number(m.lat),
+           lng: Number(m.lng)
+        })));
+      }
 
       const { data: history } = await supabase
         .from('radio_history')
@@ -402,15 +382,44 @@ function App() {
 
     fetchData();
 
+    // --- FIX: MEJORADO EL MANEJO DE ACTUALIZACIONES EN TIEMPO REAL ---
     const channel = supabase.channel(`sync-${activeChannel.id}`)
       .on('postgres_changes', { event: '*', table: 'locations', schema: 'public', filter: `channel_id=eq.${activeChannel.id}` }, (payload: any) => {
-        if (payload.new && payload.new.id !== DEVICE_ID) {
-          setTeamMembersRaw(prev => {
-            const index = prev.findIndex(m => m.id === payload.new.id);
-            if (index === -1) return [...prev, payload.new];
-            const next = [...prev]; next[index] = payload.new; return next;
-          });
-        }
+        const { eventType, new: newRecord, old: oldRecord } = payload;
+
+        setTeamMembersRaw(prev => {
+          const targetId = newRecord?.id || oldRecord?.id;
+          if (targetId === DEVICE_ID) return prev; // Ignorar mi propia ubicación
+
+          if (eventType === 'DELETE') {
+            return prev.filter(m => m.id !== targetId);
+          }
+
+          const index = prev.findIndex(m => m.id === targetId);
+          const formattedRecord = {
+            ...newRecord,
+            lat: newRecord.lat ? Number(newRecord.lat) : undefined,
+            lng: newRecord.lng ? Number(newRecord.lng) : undefined
+          };
+
+          if (index === -1) {
+            // Solo añadir si tiene coordenadas válidas
+            if (formattedRecord.lat !== undefined) {
+              return [...prev, formattedRecord as TeamMember];
+            }
+            return prev;
+          }
+
+          const next = [...prev];
+          // IMPORTANTE: Mezclamos (Merge) los datos para no perder la latitud si solo cambió el status
+          next[index] = { 
+            ...next[index], 
+            ...formattedRecord,
+            lat: formattedRecord.lat ?? next[index].lat,
+            lng: formattedRecord.lng ?? next[index].lng
+          } as TeamMember;
+          return next;
+        });
       })
       .on('postgres_changes', { event: 'INSERT', table: 'radio_history', schema: 'public', filter: `channel_id=eq.${activeChannel.id}` }, (payload: any) => {
         setRadioHistory(prev => [payload.new, ...prev]);
@@ -477,7 +486,6 @@ function App() {
   const handleTalkStart = () => { if (radioRef.current) { setIsTalking(true); radioRef.current.startTransmission(); } };
   const handleTalkEnd = () => { if (radioRef.current) { radioRef.current.stopTransmission(); setIsTalking(false); } };
 
-  // Router de Vistas Interno
   if (currentView === 'manual') return <ManualView onBack={() => setCurrentView('landing')} />;
   if (currentView === 'guia') return <GuideView onBack={() => setCurrentView('landing')} />;
   if (currentView === 'landing') return (
