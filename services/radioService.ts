@@ -11,10 +11,11 @@ interface RadioOptions {
   onAudioBuffer: (buffer: AudioBuffer, senderId: string) => void;
   onIncomingStreamStart: (senderName: string) => void;
   onIncomingStreamEnd: () => void;
+  onConnectionChange?: (status: 'CONNECTED' | 'DISCONNECTED' | 'RECONNECTING') => void;
 }
 
 export class RadioService {
-  private channel: RealtimeChannel;
+  private channel: RealtimeChannel | null = null;
   private inputAudioContext: AudioContext | null = null;
   private outputAudioContext: AudioContext | null = null;
   private processor: ScriptProcessorNode | null = null;
@@ -29,10 +30,17 @@ export class RadioService {
   private noiseThreshold: number = 0.045; 
   private holdTime: number = 300; 
   private lastActiveTime: number = 0;
+  private reconnectInterval: any = null;
 
   constructor(options: RadioOptions) {
     this.options = options;
-    this.channel = supabase.channel(`radio-ch-${options.channelId}`, {
+    this.connect();
+  }
+
+  private connect() {
+    if (this.channel) supabase.removeChannel(this.channel);
+
+    this.channel = supabase.channel(`radio-ch-${this.options.channelId}`, {
       config: { broadcast: { ack: false, self: false } }
     });
     
@@ -42,8 +50,42 @@ export class RadioService {
           this.handleIncomingAudio(payload.payload);
         }
       })
-      .subscribe();
-      
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log("RADIO_LINK_ESTABLISHED");
+          if (this.options.onConnectionChange) this.options.onConnectionChange('CONNECTED');
+          clearInterval(this.reconnectInterval);
+          this.reconnectInterval = null;
+        } else if (status === 'CHANNEL_ERROR' || status === 'CLOSED') {
+          console.warn("RADIO_LINK_LOST");
+          if (this.options.onConnectionChange) this.options.onConnectionChange('RECONNECTING');
+          this.attemptReconnect();
+        }
+      });
+  }
+
+  private attemptReconnect() {
+    if (this.reconnectInterval) return;
+    this.reconnectInterval = setInterval(() => {
+      console.log("RETRYING_RADIO_LINK...");
+      this.connect();
+    }, 5000);
+  }
+
+  /**
+   * Desbloquea el audio para iOS. 
+   * DEBE llamarse desde un evento de click del usuario.
+   */
+  public async unlockAudio() {
+    await this.initAudioContexts();
+    // Enviar un buffer vacío para "despertar" el hardware de audio en iOS
+    if (this.outputAudioContext) {
+      const silentBuffer = this.outputAudioContext.createBuffer(1, 1, this.sampleRate);
+      const source = this.outputAudioContext.createBufferSource();
+      source.buffer = silentBuffer;
+      source.connect(this.outputAudioContext.destination);
+      source.start(0);
+    }
     this.initMicrophone();
   }
 
@@ -54,11 +96,14 @@ export class RadioService {
     if (!this.outputAudioContext) {
       this.outputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: this.sampleRate });
     }
+    
     if (this.inputAudioContext.state === 'suspended') await this.inputAudioContext.resume();
     if (this.outputAudioContext.state === 'suspended') await this.outputAudioContext.resume();
   }
 
   private async initMicrophone() {
+    if (this.stream) return; // Ya inicializado
+
     try {
       await this.initAudioContexts();
       this.stream = await navigator.mediaDevices.getUserMedia({ 
@@ -89,16 +134,18 @@ export class RadioService {
           return;
         }
 
-        const pcm = createPcmBlob(inputData);
-        this.channel.send({
-          type: 'broadcast',
-          event: 'audio-packet',
-          payload: {
-            senderId: this.options.userId,
-            senderName: this.options.userName,
-            data: pcm.data
-          }
-        });
+        if (this.channel) {
+          const pcm = createPcmBlob(inputData);
+          this.channel.send({
+            type: 'broadcast',
+            event: 'audio-packet',
+            payload: {
+              senderId: this.options.userId,
+              senderName: this.options.userName,
+              data: pcm.data
+            }
+          });
+        }
       };
 
       this.source.connect(this.processor);
@@ -177,11 +224,12 @@ export class RadioService {
 
   public async disconnect() {
     this.isTransmitting = false;
+    clearInterval(this.reconnectInterval);
     if (this.source) this.source.disconnect();
     if (this.processor) this.processor.disconnect();
     if (this.stream) this.stream.getTracks().forEach(t => t.stop());
     if (this.inputAudioContext) await this.inputAudioContext.close();
     if (this.outputAudioContext) await this.outputAudioContext.close();
-    supabase.removeChannel(this.channel);
+    if (this.channel) supabase.removeChannel(this.channel);
   }
 }
