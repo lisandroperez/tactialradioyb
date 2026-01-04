@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { MapDisplay } from './components/MapDisplay';
 import { RadioControl } from './components/RadioControl';
@@ -47,7 +48,6 @@ function App() {
 
   const radioRef = useRef<RadioService | null>(null);
   
-  // La ubicación efectiva es la manual si existe, sino la del GPS.
   const effectiveLocation = manualLocation || userLocation;
   const userLocationRef = useRef<{ lat: number; lng: number } | null>(null);
 
@@ -73,6 +73,30 @@ function App() {
     }));
   }, [teamMembersRaw, effectiveLocation]);
 
+  // Función unificada para reportar ubicación/presencia
+  const reportPresence = useCallback(async () => {
+    if (!activeChannel || !isNameSet || !effectiveLocation) return;
+    
+    await supabase.from('locations').upsert({
+      id: DEVICE_ID, 
+      name: userName, 
+      lat: effectiveLocation.lat, 
+      lng: effectiveLocation.lng, 
+      accuracy: manualLocation ? 0 : Math.round(locationAccuracy),
+      role: manualLocation ? 'Unidad Fija' : (locationAccuracy > 200 ? 'PC / Base' : 'Móvil'), 
+      status: isTalking ? 'talking' : 'online', 
+      last_seen: new Date().toISOString(),
+      channel_id: activeChannel.id
+    });
+  }, [activeChannel, isNameSet, effectiveLocation, userName, manualLocation, locationAccuracy, isTalking]);
+
+  // Heartbeat de seguridad: reportar presencia cada 30s pase lo que pase
+  useEffect(() => {
+    if (!activeChannel || !isNameSet) return;
+    const interval = setInterval(reportPresence, 30000);
+    return () => clearInterval(interval);
+  }, [reportPresence, activeChannel, isNameSet]);
+
   useEffect(() => {
     if (!activeChannel || !isNameSet) return;
 
@@ -80,14 +104,21 @@ function App() {
       setRadioHistory([]);
       setTeamMembersRaw([]);
 
+      // Ampliamos el umbral a 24 horas para que las unidades fijas no desaparezcan
       const yesterday = new Date(Date.now() - 86400000).toISOString();
       
       const { data: members } = await supabase
         .from('locations')
         .select('*')
         .eq('channel_id', activeChannel.id)
-        .gt('last_seen', new Date(Date.now() - 3600000).toISOString()); 
-      if (members) setTeamMembersRaw(members.filter(m => m.id !== DEVICE_ID));
+        .gt('last_seen', yesterday); 
+        
+      if (members) {
+        setTeamMembersRaw(members
+          .filter(m => m.id !== DEVICE_ID)
+          .map(m => ({ ...m, lat: Number(m.lat), lng: Number(m.lng) })) // Asegurar números
+        );
+      }
 
       const { data: history } = await supabase
         .from('radio_history')
@@ -100,30 +131,35 @@ function App() {
 
     fetchData();
 
-    const channel = supabase.channel(`sync-${activeChannel.id}`)
+    // Suscripción más robusta sin filtro de servidor para evitar pérdidas
+    const channel = supabase.channel(`sync-v2-${activeChannel.id}`)
       .on('postgres_changes', { 
         event: '*', 
         table: 'locations', 
-        schema: 'public', 
-        filter: `channel_id=eq.${activeChannel.id}` 
+        schema: 'public'
       }, (payload: any) => {
-        if (payload.new && payload.new.id !== DEVICE_ID) {
-          setTeamMembersRaw(prev => {
-            const index = prev.findIndex(m => m.id === payload.new.id);
-            if (index === -1) return [...prev, payload.new];
-            const next = [...prev]; 
-            next[index] = payload.new; 
-            return next;
-          });
-        }
+        const item = payload.new || payload.old;
+        if (!item || item.channel_id !== activeChannel.id || item.id === DEVICE_ID) return;
+
+        setTeamMembersRaw(prev => {
+          if (payload.eventType === 'DELETE') return prev.filter(m => m.id !== item.id);
+          
+          const normalizedItem = { ...item, lat: Number(item.lat), lng: Number(item.lng) };
+          const index = prev.findIndex(m => m.id === item.id);
+          if (index === -1) return [...prev, normalizedItem];
+          const next = [...prev]; 
+          next[index] = normalizedItem; 
+          return next;
+        });
       })
       .on('postgres_changes', { 
         event: 'INSERT', 
         table: 'radio_history', 
-        schema: 'public', 
-        filter: `channel_id=eq.${activeChannel.id}` 
+        schema: 'public'
       }, (payload: any) => {
-        setRadioHistory(prev => [payload.new, ...prev]);
+        if (payload.new && payload.new.channel_id === activeChannel.id) {
+          setRadioHistory(prev => [payload.new, ...prev]);
+        }
       })
       .subscribe();
     
@@ -133,24 +169,12 @@ function App() {
   useEffect(() => {
     if (!activeChannel || !isNameSet || !navigator.geolocation || manualLocation) return;
     
-    const watchId = navigator.geolocation.watchPosition(async (pos) => {
+    const watchId = navigator.geolocation.watchPosition((pos) => {
       const { latitude, longitude, accuracy } = pos.coords;
       setUserLocation({ lat: latitude, lng: longitude });
       setLocationAccuracy(accuracy);
-      
       setSystemLog(accuracy > 200 ? `GPS_INEXACTO (±${accuracy.toFixed(0)}m)` : `GPS_OK (±${accuracy.toFixed(0)}m)`);
-      
-      await supabase.from('locations').upsert({
-        id: DEVICE_ID, 
-        name: userName, 
-        lat: latitude, 
-        lng: longitude, 
-        accuracy: Math.round(accuracy),
-        role: accuracy > 200 ? 'Unidad PC' : 'Unidad Móvil', 
-        status: isTalking ? 'talking' : 'online', 
-        last_seen: new Date().toISOString(),
-        channel_id: activeChannel.id
-      });
+      reportPresence();
     }, (err) => setSystemLog(`GPS_ERR: ${err.code}`), { 
       enableHighAccuracy: true,
       timeout: 10000,
@@ -158,25 +182,24 @@ function App() {
     });
 
     return () => navigator.geolocation.clearWatch(watchId);
-  }, [isTalking, activeChannel, isNameSet, userName, manualLocation]);
+  }, [activeChannel, isNameSet, manualLocation, reportPresence]);
 
   const handleMapClick = async (lat: number, lng: number) => {
     if (!isManualMode || !activeChannel) return;
     
-    // Apagamos el modo manual INMEDIATAMENTE para que sea 'one-shot'
     setIsManualMode(false);
-    
     setManualLocation({ lat, lng });
     setLocationAccuracy(0);
     setSystemLog("UBICACIÓN_FIJADA");
 
+    // Forzamos el reporte inmediato con la nueva ubicación manual
     await supabase.from('locations').upsert({
       id: DEVICE_ID, 
       name: userName, 
       lat: lat, 
       lng: lng, 
       accuracy: 0,
-      role: 'Unidad Fija / Estacionaria', 
+      role: 'Unidad Fija', 
       status: isTalking ? 'talking' : 'online', 
       last_seen: new Date().toISOString(),
       channel_id: activeChannel.id
@@ -219,6 +242,7 @@ function App() {
     if (radioRef.current && connectionState === ConnectionState.CONNECTED) {
       setIsTalking(true);
       radioRef.current.startTransmission();
+      reportPresence(); // Reportar cambio de estado a 'talking'
     }
   };
 
@@ -226,6 +250,7 @@ function App() {
     if (radioRef.current) {
       radioRef.current.stopTransmission();
       setIsTalking(false);
+      reportPresence(); // Reportar retorno a 'online'
     }
   };
 
@@ -294,7 +319,6 @@ function App() {
   return (
     <div className="flex flex-col md:flex-row h-[100dvh] w-screen bg-black overflow-hidden relative text-white font-sans">
       
-      {/* Banner de Calibración sobre el mapa */}
       {isManualMode && (
         <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[3000] bg-orange-600 text-white font-black px-6 py-3 rounded-full shadow-2xl animate-pulse flex items-center gap-3 border-2 border-white uppercase text-xs tracking-widest">
            <Settings2 size={16} /> Toque el mapa para fijar su posición
@@ -310,7 +334,6 @@ function App() {
            onMapClick={handleMapClick}
          />
          
-         {/* Indicadores Fijos Arriba Izquierda */}
          <div className="absolute top-4 left-4 z-[2000] flex flex-col gap-2 pointer-events-none">
             <div className="bg-black/80 backdrop-blur px-3 py-1 border border-orange-500/30 rounded shadow-lg">
               <span className="text-[9px] text-orange-500/50 block font-mono">FRECUENCIA</span>
@@ -320,14 +343,12 @@ function App() {
             </div>
          </div>
 
-         {/* Menú Móvil */}
          <div className="absolute top-4 right-4 z-[2000] md:hidden">
             <button onClick={() => setShowMobileOverlay(!showMobileOverlay)} className="w-12 h-12 bg-black/80 border-2 border-white/20 rounded-full flex items-center justify-center text-white shadow-xl">
               {showMobileOverlay ? <X size={24} /> : <List size={24} />}
             </button>
          </div>
 
-         {/* Paneles Tácticos (Escritorio) */}
          <div className="hidden md:flex flex-col absolute bottom-6 left-6 w-80 bg-black/90 backdrop-blur rounded border border-white/10 shadow-2xl h-[400px] overflow-hidden z-[500]">
             <div className="flex border-b border-white/10 bg-white/5">
               <button onClick={() => setActiveTab('team')} className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest transition-colors ${activeTab === 'team' ? 'text-orange-500 border-b-2 border-orange-500 bg-orange-500/5' : 'text-gray-500'}`}>Unidades</button>
@@ -338,7 +359,6 @@ function App() {
             </div>
          </div>
 
-         {/* Overlay Móvil */}
          {showMobileOverlay && (
            <div className="md:hidden absolute inset-0 z-[2001] bg-gray-950 flex flex-col">
               <div className="flex justify-between items-center p-4 border-b border-white/10 bg-black">
@@ -355,7 +375,6 @@ function App() {
          )}
       </div>
       
-      {/* Barra de Radio (SIDEBAR) */}
       <div className="flex-none md:w-[400px] h-auto md:h-full bg-gray-950 z-20 shadow-[-10px_0_30px_rgba(0,0,0,0.5)] border-l border-white/5">
         <RadioControl 
            connectionState={connectionState} isTalking={isTalking} activeChannelName={activeChannel.name}
