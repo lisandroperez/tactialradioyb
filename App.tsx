@@ -10,12 +10,12 @@ import { TeamMember, ConnectionState, RadioHistory, Channel } from './types';
 import { RadioService } from './services/radioService';
 import { supabase, getDeviceId } from './services/supabase';
 import { 
-  ChevronLeft, X, Printer, Clock, MapPin, Hash, Volume2, Shield, Zap, AlertTriangle, RefreshCw
+  ChevronLeft, X, RefreshCw
 } from 'lucide-react';
 
 const DEVICE_ID = getDeviceId();
 
-// --- COMPONENTE: GUÍA RÁPIDA (HTML ORIGINAL B/W) ---
+// --- COMPONENTE: GUÍA RÁPIDA (B/W - ATRIBUTOS CORREGIDOS) ---
 const GuideView = ({ onBack }: { onBack: () => void }) => (
   <div className="bg-white min-h-screen p-8 text-black font-mono overflow-y-auto">
     <div className="max-w-4xl mx-auto border-4 border-black p-6">
@@ -31,15 +31,15 @@ const GuideView = ({ onBack }: { onBack: () => void }) => (
       </div>
       <div className="space-y-2">
         {[
-          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3" stroke-linecap="square"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>, title: "01. IDENTIFICACIÓN (CALLSIGN)", desc: "Ingrese su indicativo de radio. Es el nombre que verán los demás en el mapa. Sea breve y use mayúsculas.", tip: "Ejemplo: MOVIL-01, BASE-01, RESCATE-A." },
-          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3" stroke-linecap="square"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>, title: "02. SELECCIÓN DE CANAL", desc: "Toque el canal deseado para entrar. Los canales con candado requieren PIN.", tip: "Si no ve su canal, use el botón (+) para crear una nueva frecuencia." },
-          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3" stroke-linecap="square"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>, title: "03. TRANSMISIÓN (PTT)", desc: "Mantenga presionado el círculo central para hablar. Suelte para escuchar.", tip: "La barra de estado dirá \"TX_TRANSMITIENDO\" durante la modulación." },
-          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3" stroke-linecap="square"><circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/></svg>, title: "04. GPS FIJO (BASE / PC)", desc: "Para unidades estáticas: Toque el icono de la MIRA, luego toque el mapa donde está ubicado.", tip: "Esto anula el GPS dinámico y fija su unidad en una coordenada exacta." },
-          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3" stroke-linecap="square"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>, title: "05. ALERTA SOS (PRIORIDAD)", desc: "Presione el triángulo rojo en emergencias. Seleccione el tipo de incidente y envíe el SMS.", tip: "Funciona sin datos de internet. Envía sus coordenadas vía red celular tradicional." },
-          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3" stroke-linecap="square"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>, title: "06. RESILIENCIA DE SEÑAL", desc: "Si no hay red, la app guarda sus mensajes y alertas en una cola local (Outbox).", tip: "Al recuperar señal, el sistema reintenta el envío automáticamente." },
-          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3" stroke-linecap="square"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, title: "07. HISTORIAL Y AUDITORÍA", desc: "Toque el panel \"LOG AUDIO\" para revisar transmisiones pasadas.", tip: "Puede reproducir el audio o descargarlo en formato .WAV como evidencia." }
+          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3" strokeLinecap="square"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>, title: "01. IDENTIFICACIÓN (CALLSIGN)", desc: "Ingrese su indicativo de radio. Es el nombre que verán los demás en el mapa. Sea breve y use mayúsculas.", tip: "Ejemplo: MOVIL-01, BASE-01, RESCATE-A." },
+          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3" strokeLinecap="square"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>, title: "02. SELECCIÓN DE CANAL", desc: "Toque el canal deseado para entrar. Los canales con candado requieren PIN.", tip: "Si no ve su canal, use el botón (+) para crear una nueva frecuencia." },
+          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3" strokeLinecap="square"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>, title: "03. TRANSMISIÓN (PTT)", desc: "Mantenga presionado el círculo central para hablar. Suelte para escuchar.", tip: "La barra de estado dirá \"TX_TRANSMITIENDO\" durante la modulación." },
+          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3" strokeLinecap="square"><circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/></svg>, title: "04. GPS FIJO (BASE / PC)", desc: "Para unidades estáticas: Toque el icono de la MIRA, luego toque el mapa donde está ubicado.", tip: "Esto anula el GPS dinámico y fija su unidad en una coordenada exacta." },
+          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3" strokeLinecap="square"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>, title: "05. ALERTA SOS (PRIORIDAD)", desc: "Presione el triángulo rojo en emergencias. Seleccione el tipo de incidente y envíe el SMS.", tip: "Funciona sin datos de internet. Envía sus coordenadas vía red celular tradicional." },
+          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3" strokeLinecap="square"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>, title: "06. RESILIENCIA DE SEÑAL", desc: "Si no hay red, la app guarda sus mensajes y alertas en una cola local (Outbox).", tip: "Al recuperar señal, el sistema reintenta el envío automáticamente." },
+          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3" strokeLinecap="square"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, title: "07. HISTORIAL Y AUDITORÍA", desc: "Toque el panel \"LOG AUDIO\" para revisar transmisiones pasadas.", tip: "Puede reproducir el audio o descargarlo en formato .WAV como evidencia." }
         ].map((item, idx) => (
-          <div key={idx} className="flex gap-6 border-b border-black py-4 last:border-0">
+          <div key={item.title} className="flex gap-6 border-b border-black py-4 last:border-0">
             <div className="w-12 h-12 border-2 border-black flex items-center justify-center flex-shrink-0">{item.icon}</div>
             <div>
               <h3 className="font-bold text-lg uppercase">{item.title}</h3>
@@ -60,7 +60,7 @@ const GuideView = ({ onBack }: { onBack: () => void }) => (
   </div>
 );
 
-// --- COMPONENTE: MANUAL TÁCTICO (HTML ORIGINAL) ---
+// --- COMPONENTE: MANUAL TÁCTICO (ATRIBUTOS CORREGIDOS) ---
 const ManualView = ({ onBack }: { onBack: () => void }) => (
   <div className="bg-[#0e0a07] min-h-screen p-6 md:p-12 text-gray-200 font-sans relative overflow-y-auto tactical-bg">
     <div className="scanline"></div>
@@ -201,7 +201,7 @@ function App() {
     }));
   }, [teamMembersRaw, effectiveLocation]);
 
-  // --- REGISTRO DE PRESENCIA CON REINTENTO ---
+  // --- CHECK-IN REFORZADO CON ON_CONFLICT ---
   const doCheckIn = useCallback(async (channelId: string, name: string) => {
     if (!name || !channelId) return;
     const lat = userLocationRef.current?.lat || -26.8241;
@@ -217,7 +217,7 @@ function App() {
       status: 'online',
       last_seen: new Date().toISOString(),
       channel_id: channelId
-    });
+    }, { onConflict: 'id' });
     
     if (error) console.error("CHECKIN_FAIL:", error);
     else console.log("CHECKIN_SUCCESS:", name);
@@ -226,58 +226,48 @@ function App() {
   const fetchAllData = useCallback(async () => {
     if (!activeChannel || !userName) return;
     
-    // Traer todos los activos en las últimas 72h para asegurar visibilidad inicial
-    const { data: members, error } = await supabase
-      .from('locations')
-      .select('*')
-      .eq('channel_id', activeChannel.id)
-      .gt('last_seen', new Date(Date.now() - 259200000).toISOString());
-    
-    if (error) console.error("FETCH_MEMBERS_FAIL:", error);
+    // Promise.all para cargar todo simultáneamente
+    try {
+      const [membersRes, historyRes] = await Promise.all([
+        supabase.from('locations').select('*').eq('channel_id', activeChannel.id).gt('last_seen', new Date(Date.now() - 259200000).toISOString()),
+        supabase.from('radio_history').select('*').eq('channel_id', activeChannel.id).order('created_at', { ascending: false }).limit(30)
+      ]);
 
-    if (members) {
-      setTeamMembersRaw(members
-        .filter(m => String(m.id).trim() !== String(DEVICE_ID).trim())
-        .map(m => ({ 
-          ...m, 
-          lat: Number(m.lat), 
-          lng: Number(m.lng),
-          status: m.status || 'online' 
-        }))
-      );
+      if (membersRes.data) {
+        setTeamMembersRaw(membersRes.data
+          .filter(m => String(m.id).trim() !== String(DEVICE_ID).trim())
+          .map(m => ({ 
+            ...m, 
+            lat: Number(m.lat), 
+            lng: Number(m.lng),
+            status: m.status || 'online' 
+          }))
+        );
+      }
+      if (historyRes.data) setRadioHistory(historyRes.data);
+    } catch (err) {
+      console.error("DATA_FETCH_ERR:", err);
     }
-
-    const { data: history } = await supabase
-      .from('radio_history')
-      .select('*')
-      .eq('channel_id', activeChannel.id)
-      .order('created_at', { ascending: false })
-      .limit(30);
-    if (history) setRadioHistory(history);
   }, [activeChannel, userName]);
 
-  // --- SUSCRIPCIÓN MAESTRA CORREGIDA ---
+  // --- SUSCRIPCIÓN MAESTRA CON CLEANUP ---
   useEffect(() => {
     if (!activeChannel || !userName || !isIdentified) return;
 
-    // 1. Forzar presencia al entrar
     doCheckIn(activeChannel.id, userName);
-    // 2. Cargar estado inicial
     fetchAllData();
 
-    // 3. Suscribirse a cambios (INSERT, UPDATE, DELETE)
-    const channel = supabase.channel(`sync-v4-${activeChannel.id}`)
-      .on('postgres_changes', { event: '*', table: 'locations', schema: 'public' }, (payload: any) => {
+    const channel = supabase.channel(`sync-v5-${activeChannel.id}`)
+      .on('postgres_changes', { event: '*', table: 'locations', schema: 'public' }, (payload) => {
         const target = payload.new || payload.old;
         if (!target) return;
 
-        // Limpieza de IDs para comparación segura
         const targetId = String(target.id).trim();
         const myId = String(DEVICE_ID).trim();
         
         if (targetId === myId) return;
 
-        // Filtro por canal en el cliente (Backup de seguridad)
+        // Backup filter
         if (payload.eventType !== 'DELETE' && target.channel_id && String(target.channel_id).trim() !== String(activeChannel.id).trim()) return;
 
         setTeamMembersRaw(prev => {
@@ -291,33 +281,29 @@ function App() {
           } as TeamMember;
 
           const idx = prev.findIndex(m => String(m.id).trim() === targetId);
-          
-          if (idx === -1) {
-            // Si es nuevo, añadirlo a la lista
-            return [...prev, formatted];
-          } else {
-            // Si ya existe, actualizarlo
-            const next = [...prev];
-            next[idx] = formatted;
-            return next;
-          }
+          if (idx === -1) return [...prev, formatted];
+          const next = [...prev];
+          next[idx] = formatted;
+          return next;
         });
       })
-      .on('postgres_changes', { event: 'INSERT', table: 'radio_history', schema: 'public' }, (payload: any) => {
+      .on('postgres_changes', { event: 'INSERT', table: 'radio_history', schema: 'public' }, (payload) => {
         if (String(payload.new.channel_id).trim() === String(activeChannel.id).trim()) {
           setRadioHistory(prev => [payload.new, ...prev]);
         }
       })
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') console.log("REALTIME_SYNC_ACTIVE");
-      });
+      .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { 
+      supabase.removeChannel(channel); 
+    };
   }, [activeChannel, userName, isIdentified, doCheckIn, fetchAllData]);
 
-  // WATCHER GPS REFORZADO
+  // GPS WATCHER CLEANUP
   useEffect(() => {
     if (!activeChannel || !userName || manualLocation || !isIdentified) return;
+    
+    let watchId: number;
     const sendPos = async (lat: number, lng: number, acc: number) => {
       if (!isOnline) return;
       await supabase.from('locations').upsert({
@@ -326,25 +312,33 @@ function App() {
         status: isTalking ? 'talking' : 'online', 
         last_seen: new Date().toISOString(), 
         channel_id: activeChannel.id
-      });
+      }, { onConflict: 'id' });
     };
-    const watchId = navigator.geolocation.watchPosition(
+
+    watchId = navigator.geolocation.watchPosition(
       (pos) => {
         const { latitude, longitude, accuracy } = pos.coords;
         setUserLocation({ lat: latitude, lng: longitude });
         sendPos(latitude, longitude, accuracy);
       },
-      (err) => console.warn("GPS_WATCH_ERR:", err), 
+      (err) => console.warn("GPS_ERR:", err), 
       { enableHighAccuracy: true, timeout: 10000 }
     );
+    
     return () => navigator.geolocation.clearWatch(watchId);
   }, [isTalking, activeChannel, userName, manualLocation, isOnline, isIdentified]);
+
+  // Radio Service Cleanup
+  useEffect(() => {
+    return () => {
+      if (radioRef.current) radioRef.current.disconnect();
+    };
+  }, []);
 
   if (currentView === 'guide') return <GuideView onBack={() => setCurrentView('landing')} />;
   if (currentView === 'manual') return <ManualView onBack={() => setCurrentView('landing')} />;
   if (currentView === 'landing') return <LandingView onEnter={() => setCurrentView('app')} onManual={() => setCurrentView('manual')} onGuide={() => setCurrentView('guide')} />;
 
-  // PANTALLA DE LOGUEO / IDENTIFICACIÓN (FORZADA)
   if (!isIdentified) return (
     <div className="h-screen bg-black flex items-center justify-center p-6 font-mono relative overflow-hidden">
       <div className="scanline"></div>
@@ -374,7 +368,6 @@ function App() {
   return (
     <div className="flex flex-col md:flex-row h-screen w-screen bg-black overflow-hidden relative text-white">
       <div className="scanline"></div>
-      
       <div className="flex-1 relative overflow-hidden flex flex-col">
          <div className="md:hidden flex bg-gray-950 border-b border-white/10 z-[1001]">
             <button onClick={() => setMobileTab('map')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest ${mobileTab === 'map' ? 'text-orange-500 bg-orange-500/10' : 'text-gray-500'}`}>Mapa</button>
@@ -384,26 +377,9 @@ function App() {
 
          <div className="flex-1 relative">
             <MapDisplay userLocation={effectiveLocation} teamMembers={teamMembers} accuracy={0} isManualMode={isManualMode} onMapClick={(lat, lng) => { setManualLocation({lat, lng}); setIsManualMode(false); }} />
-            
             <div className="absolute top-4 left-4 z-[2000] bg-black/80 backdrop-blur px-3 py-1 border border-orange-500/30 rounded flex items-center gap-3">
                 <span className="text-xs font-bold text-orange-500 font-mono tracking-widest uppercase">{activeChannel.name}</span>
                 <button onClick={fetchAllData} className="text-gray-500 hover:text-white transition-colors"><RefreshCw size={12} /></button>
-            </div>
-
-            <div className={`md:hidden absolute inset-0 z-[1002] bg-gray-950 transition-transform ${mobileTab === 'team' ? 'translate-x-0' : 'translate-x-full'}`}>
-               <div className="p-2 border-b border-white/10 flex justify-between items-center bg-black">
-                  <span className="text-[10px] font-black uppercase text-orange-500 px-2 tracking-widest">Unidades Activas</span>
-                  <button onClick={() => setMobileTab('map')} className="p-2 text-gray-400"><X size={20} /></button>
-               </div>
-               <TeamList members={teamMembers} />
-            </div>
-            
-            <div className={`md:hidden absolute inset-0 z-[1002] bg-gray-950 transition-transform ${mobileTab === 'history' ? 'translate-x-0' : 'translate-x-full'}`}>
-               <div className="p-2 border-b border-white/10 flex justify-between items-center bg-black">
-                  <span className="text-[10px] font-black uppercase text-orange-500 px-2 tracking-widest">Registro de Audio</span>
-                  <button onClick={() => setMobileTab('map')} className="p-2 text-gray-400"><X size={20} /></button>
-               </div>
-               <HistoryPanel history={radioHistory} activeChannel={activeChannel} />
             </div>
          </div>
 
