@@ -11,12 +11,12 @@ import { RadioService } from './services/radioService';
 import { supabase, getDeviceId } from './services/supabase';
 import { 
   Home, Radio as RadioIcon, CloudUpload, CloudOff, 
-  ChevronLeft, Users, Clock, RefreshCw, ChevronRight
+  ChevronLeft, Users, Clock, RefreshCw, ChevronRight, X
 } from 'lucide-react';
 
 const DEVICE_ID = getDeviceId();
 
-// --- VISTA DEL MANUAL TÁCTICO INTEGRADA ---
+// --- VISTA DEL MANUAL TÁCTICO ---
 const ManualView = ({ onBack }: { onBack: () => void }) => {
   return (
     <div className="bg-[#0e0a07] min-h-screen p-6 md:p-12 text-gray-200 font-sans relative overflow-y-auto">
@@ -28,15 +28,13 @@ const ManualView = ({ onBack }: { onBack: () => void }) => {
                 <ChevronLeft size={14} /> VOLVER
             </button>
         </div>
-
-        <header className="mb-16">
-          <div className="flex items-center gap-3 mb-4">
+        <header className="mb-16 text-center md:text-left">
+          <div className="flex items-center justify-center md:justify-start gap-3 mb-4">
             <div className="w-8 h-1 bg-orange-500"></div>
             <p className="mono text-orange-500 font-bold tracking-[0.4em] text-[9px] uppercase">OPERATIONAL_MANUAL_v3.2</p>
           </div>
           <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-none mb-6 uppercase text-white">GUÍA DE<br />USUARIO</h1>
         </header>
-
         <div className="grid md:grid-cols-2 gap-8 mb-16">
           <section className="bg-white/5 border border-white/10 p-6">
             <h2 className="text-2xl font-black uppercase text-white mb-4">01. Identificación</h2>
@@ -52,12 +50,11 @@ const ManualView = ({ onBack }: { onBack: () => void }) => {
   );
 };
 
-// --- COMPONENTE LANDING COMPLETO (RESTAURADO) ---
+// --- LANDING VIEW ---
 const LandingView = ({ onEnter, onManual }: { onEnter: () => void; onManual: () => void }) => {
   return (
     <div className="overflow-x-hidden relative min-h-screen selection:bg-orange-500 bg-[#0e0a07]">
       <div className="scanline"></div>
-
       <nav className="fixed w-full top-0 left-0 z-[100] bg-[#0e0a07]/90 backdrop-blur-md border-b border-white/5">
           <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
               <div className="flex items-center gap-2">
@@ -77,7 +74,7 @@ const LandingView = ({ onEnter, onManual }: { onEnter: () => void; onManual: () 
               <h1 className="hero-title text-7xl md:text-9xl lg:text-[150px] text-white uppercase mb-12 leading-[0.82] font-black tracking-tighter">
                   RADIO<br/>UBICACIÓN<br/>MÓVIL
               </h1>
-              <p className="text-white text-xl md:text-3xl font-bold tracking-tight uppercase mb-16 opacity-90 leading-tight">VOZ Y GPS CUANDO LOS DATOS FALLAN.</p>
+              <p className="text-white text-xl md:text-3xl font-bold tracking-tight uppercase mb-16 opacity-90 leading-tight">VOZ Y GPS CARTOGRÁFICO CUANDO LOS DATOS FALLAN.</p>
               <div className="flex justify-center">
                   <button onClick={onEnter} className="btn-ptt px-16 py-6 rounded-sm font-black text-sm md:text-lg tracking-[0.15em] uppercase text-white shadow-2xl transition-all">ENTRAR EN SERVICIO</button>
               </div>
@@ -109,6 +106,11 @@ const LandingView = ({ onEnter, onManual }: { onEnter: () => void; onManual: () 
                   <h4 className="text-white font-black mb-4 uppercase text-2xl leading-[0.85] group-hover:text-orange-500 transition-colors">Caos y ruido<br/>ambiente</h4>
                   <p className="text-gray-500 text-sm leading-snug">Monitor de audio visual integrado. Si no pudiste escucharlo, el sistema lo transcribe en pantalla.</p>
               </div>
+              <div className="flex-none w-[85%] md:w-[45%] lg:w-[25%] snap-center bg-[#0a0a0a] border border-white/5 p-8 relative min-h-[280px] flex flex-col justify-end group hover:border-orange-500 transition-all">
+                  <div className="absolute top-[-10px] right-[-10px] text-[100px] font-black text-white/5 leading-none pointer-events-none">04</div>
+                  <h4 className="text-white font-black mb-4 uppercase text-2xl leading-[0.85] group-hover:text-orange-500 transition-colors">Análisis de<br/>incidente</h4>
+                  <p className="text-gray-500 text-sm leading-snug">Cada voz y movimiento queda registrado para auditorías críticas post-misión. Historial resiliente total.</p>
+              </div>
           </div>
       </section>
 
@@ -118,18 +120,17 @@ const LandingView = ({ onEnter, onManual }: { onEnter: () => void; onManual: () 
                   <span className="text-orange-500 text-[11px] font-black tracking-[0.4em] uppercase">EQUIPAMIENTO DIGITAL</span>
                   <h2 className="text-5xl md:text-6xl font-black mt-2 tracking-tighter uppercase leading-none text-white">Tecnología de<br/>Misión Crítica</h2>
               </div>
-              
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                   <div className="bg-white/[0.02] border border-white/5 p-10 rounded-sm hover:border-orange-500 transition-all">
                       <h3 className="text-orange-500 font-black mb-4 uppercase text-xl">Radio PTT Profesional</h3>
                       <p className="text-gray-400 leading-relaxed text-sm">Audio nítido optimizado para voz. Comunicación simplex que emula un Handy digital.</p>
                   </div>
                   <div className="bg-white/[0.02] border border-white/5 p-10 rounded-sm hover:border-orange-500 transition-all">
-                      <h3 className="text-orange-500 font-black mb-4 uppercase text-xl">GPS en Tiempo Real</h3>
-                      <p className="text-gray-400 leading-relaxed text-sm">Visualización cartográfica de todas las unidades activas. Cálculo de telemetría de precisión.</p>
+                      <h3 className="text-orange-500 font-black mb-4 uppercase text-xl">GPS Cartográfico</h3>
+                      <p className="text-gray-400 leading-relaxed text-sm">Visualización táctica de todas las unidades activas sobre cartografía digital offline-ready.</p>
                   </div>
                   <div className="bg-white/[0.02] border border-white/5 p-10 rounded-sm hover:border-orange-500 transition-all">
-                      <h3 className="text-orange-500 font-black mb-4 uppercase text-xl">Protocolo SMS 2G</h3>
+                      <h3 className="text-orange-500 font-black mb-4 uppercase text-xl">Protocolo SOS 2G</h3>
                       <p className="text-gray-400 leading-relaxed text-sm">Exclusivo sistema de alertas vía SMS cuando fallan los datos móviles. Envío de coordenadas críticas.</p>
                   </div>
               </div>
@@ -165,14 +166,11 @@ function App() {
   const [userName, setUserName] = useState<string>(localStorage.getItem('user_callsign') || '');
   const [activeChannel, setActiveChannel] = useState<Channel | null>(null);
   const [tempName, setTempName] = useState('');
-  
   const [connectionState, setConnectionState] = useState<ConnectionState>(ConnectionState.DISCONNECTED);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isManualMode, setIsManualMode] = useState<boolean>(false);
   const [manualLocation, setManualLocation] = useState<{ lat: number; lng: number } | null>(null);
-
   const [teamMembersRaw, setTeamMembersRaw] = useState<TeamMember[]>([]);
   const [radioHistory, setRadioHistory] = useState<RadioHistory[]>([]);
   const [isTalking, setIsTalking] = useState(false);
@@ -185,10 +183,7 @@ function App() {
   const effectiveLocation = manualLocation || userLocation;
   const userLocationRef = useRef<{ lat: number; lng: number } | null>(null);
 
-  useEffect(() => {
-    userLocationRef.current = effectiveLocation;
-  }, [effectiveLocation]);
-
+  useEffect(() => { userLocationRef.current = effectiveLocation; }, [effectiveLocation]);
   useEffect(() => {
     const update = () => setIsOnline(navigator.onLine);
     window.addEventListener('online', update);
@@ -206,34 +201,13 @@ function App() {
 
   // --- SINCRONIZACIÓN Y TIEMPO REAL REFORZADA ---
   const fetchAllData = useCallback(async () => {
-    if (!activeChannel) return;
+    if (!activeChannel || !userName) return;
     
-    // 1. Cargar Usuarios Actuales
-    const { data: members } = await supabase
-      .from('locations')
-      .select('*')
-      .eq('channel_id', activeChannel.id)
-      .gt('last_seen', new Date(Date.now() - 3600000).toISOString());
-    
-    if (members) {
-      setTeamMembersRaw(members.filter(m => String(m.id) !== String(DEVICE_ID)).map(m => ({
-        ...m, lat: Number(m.lat), lng: Number(m.lng)
-      })));
-    }
-
-    // 2. Cargar Historial Reciente
-    const { data: history } = await supabase
-      .from('radio_history')
-      .select('*')
-      .eq('channel_id', activeChannel.id)
-      .order('created_at', { ascending: false })
-      .limit(50);
-    if (history) setRadioHistory(history);
-
-    // 3. Heartbeat inicial para que otros me vean al entrar
+    // 1. Latido inicial para aparecer en los mapas de otros
     if (navigator.geolocation && !manualLocation) {
         navigator.geolocation.getCurrentPosition(async (pos) => {
             const { latitude, longitude, accuracy } = pos.coords;
+            setUserLocation({ lat: latitude, lng: longitude });
             await supabase.from('locations').upsert({
                 id: DEVICE_ID, name: userName, lat: latitude, lng: longitude, 
                 accuracy: Math.round(accuracy), role: 'Móvil', status: 'online', 
@@ -241,6 +215,28 @@ function App() {
             });
         });
     }
+
+    // 2. Cargar Usuarios Actuales
+    const { data: members } = await supabase
+      .from('locations')
+      .select('*')
+      .eq('channel_id', activeChannel.id)
+      .gt('last_seen', new Date(Date.now() - 43200000).toISOString()); // Últimas 12 horas
+    
+    if (members) {
+      setTeamMembersRaw(members.filter(m => String(m.id) !== String(DEVICE_ID)).map(m => ({
+        ...m, lat: Number(m.lat), lng: Number(m.lng)
+      })));
+    }
+
+    // 3. Cargar Historial Reciente
+    const { data: history } = await supabase
+      .from('radio_history')
+      .select('*')
+      .eq('channel_id', activeChannel.id)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    if (history) setRadioHistory(history);
   }, [activeChannel, userName, manualLocation]);
 
   useEffect(() => {
@@ -248,19 +244,17 @@ function App() {
 
     fetchAllData();
 
-    // Suscripción de tiempo real con filtrado en cliente para evitar fallos de base de datos
-    const channel = supabase.channel(`sync-v6-${activeChannel.id}`)
+    const channel = supabase.channel(`sync-v7-${activeChannel.id}`)
       .on('postgres_changes', { event: '*', table: 'locations', schema: 'public' }, (payload: any) => {
         const { eventType, new: newRec, old: oldRec } = payload;
         const target = newRec || oldRec;
         
-        // CORRECCIÓN CRÍTICA: Ignorar si soy yo o de otro canal
         if (!target || String(target.id) === String(DEVICE_ID)) return;
+        // Comparación flexible de ID de canal
         if (target.channel_id && String(target.channel_id) !== String(activeChannel.id)) return;
 
         setTeamMembersRaw(prev => {
           if (eventType === 'DELETE') return prev.filter(m => String(m.id) !== String(target.id));
-          
           const idx = prev.findIndex(m => String(m.id) === String(target.id));
           const formatted = {
             ...target,
@@ -268,12 +262,8 @@ function App() {
             lng: target.lng ? Number(target.lng) : undefined
           };
 
-          if (idx === -1) {
-            return formatted.lat ? [...prev, formatted as TeamMember] : prev;
-          }
-
+          if (idx === -1) return formatted.lat ? [...prev, formatted as TeamMember] : prev;
           const next = [...prev];
-          // Fusión de datos para no perder la posición si solo cambió el status
           next[idx] = { 
             ...next[idx], 
             ...formatted,
@@ -293,10 +283,9 @@ function App() {
     return () => { supabase.removeChannel(channel); };
   }, [activeChannel, userName, fetchAllData]);
 
-  // --- LOCALIZACIÓN DINÁMICA ---
+  // --- WATCHER GPS ---
   useEffect(() => {
     if (!activeChannel || !userName || manualLocation) return;
-    
     const sendPos = async (lat: number, lng: number, acc: number) => {
       if (!isOnline) return;
       await supabase.from('locations').upsert({
@@ -307,7 +296,6 @@ function App() {
         channel_id: activeChannel.id
       });
     };
-
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
         const { latitude, longitude, accuracy } = pos.coords;
@@ -317,7 +305,6 @@ function App() {
       null, 
       { enableHighAccuracy: true, timeout: 10000 }
     );
-
     return () => navigator.geolocation.clearWatch(watchId);
   }, [isTalking, activeChannel, userName, manualLocation, isOnline]);
 
@@ -329,13 +316,11 @@ function App() {
       <div className="scanline"></div>
       <div className="w-full max-w-sm bg-gray-900 border border-orange-500/30 p-8 shadow-2xl relative z-10">
         <h1 className="text-orange-500 font-black text-center mb-8 tracking-widest uppercase">Identificación Radio</h1>
-        <input 
-          autoFocus type="text" value={tempName} onChange={e => setTempName(e.target.value.toUpperCase())} 
+        <input autoFocus type="text" value={tempName} onChange={e => setTempName(e.target.value.toUpperCase())} 
           onKeyDown={e => e.key === 'Enter' && tempName.length >= 3 && (localStorage.setItem('user_callsign', tempName), setUserName(tempName))}
-          placeholder="CALLSIGN (EJ: MOVIL-1)" 
-          className="w-full bg-black border border-gray-800 p-4 text-orange-500 text-center font-bold mb-4 outline-none focus:border-orange-500"
+          placeholder="CALLSIGN (EJ: MOVIL-1)" className="w-full bg-black border border-gray-800 p-4 text-orange-500 text-center font-bold mb-4 outline-none focus:border-orange-500"
         />
-        <button onClick={() => { if(tempName.length >= 3) { localStorage.setItem('user_callsign', tempName); setUserName(tempName); }}} className="w-full bg-orange-600 text-white font-black py-4 hover:bg-orange-500 transition-colors">ENTRAR</button>
+        <button onClick={() => { if(tempName.length >= 3) { localStorage.setItem('user_callsign', tempName); setUserName(tempName); }}} className="w-full bg-orange-600 text-white font-black py-4 hover:bg-orange-500 transition-colors uppercase">Entrar en servicio</button>
       </div>
     </div>
   );
@@ -344,7 +329,7 @@ function App() {
     <div className="h-screen bg-black flex items-center justify-center p-6 font-mono relative overflow-hidden">
        <div className="scanline"></div>
        <div className="w-full max-w-md relative z-10">
-          <h2 className="text-orange-500 font-bold uppercase text-center mb-8">Seleccionar Canal</h2>
+          <h2 className="text-orange-500 font-bold uppercase text-center mb-8 tracking-widest">Seleccionar Canal</h2>
           <ChannelSelector onSelect={ch => setActiveChannel(ch)} />
        </div>
     </div>
@@ -364,25 +349,36 @@ function App() {
          </div>
 
          <div className="flex-1 relative">
-            {mobileTab === 'map' && (
-              <>
-                <MapDisplay userLocation={effectiveLocation} teamMembers={teamMembers} accuracy={0} isManualMode={isManualMode} onMapClick={(lat, lng) => { setManualLocation({lat, lng}); setIsManualMode(false); }} />
-                <div className="absolute top-4 left-4 z-[2000] bg-black/80 backdrop-blur px-3 py-1 border border-orange-500/30 rounded flex items-center gap-3">
-                    <span className="text-xs font-bold text-orange-500 font-mono tracking-widest">{activeChannel.name}</span>
-                    <button onClick={fetchAllData} className="text-gray-500 hover:text-white transition-colors"><RefreshCw size={12} /></button>
-                </div>
-              </>
-            )}
-            {/* Listas visibles en móvil cuando se seleccionan sus pestañas */}
-            {mobileTab === 'team' && <div className="h-full bg-gray-950 absolute inset-0 z-[1002]"><TeamList members={teamMembers} /></div>}
-            {mobileTab === 'history' && <div className="h-full bg-gray-950 absolute inset-0 z-[1002]"><HistoryPanel history={radioHistory} activeChannel={activeChannel} /></div>}
+            <MapDisplay userLocation={effectiveLocation} teamMembers={teamMembers} accuracy={0} isManualMode={isManualMode} onMapClick={(lat, lng) => { setManualLocation({lat, lng}); setIsManualMode(false); }} />
+            
+            <div className="absolute top-4 left-4 z-[2000] bg-black/80 backdrop-blur px-3 py-1 border border-orange-500/30 rounded flex items-center gap-3">
+                <span className="text-xs font-bold text-orange-500 font-mono tracking-widest uppercase">{activeChannel.name}</span>
+                <button onClick={fetchAllData} className="text-gray-500 hover:text-white transition-colors"><RefreshCw size={12} /></button>
+            </div>
+
+            {/* VISTAS QUE SOLO TOMAN TODA LA PANTALLA EN MÓVILES */}
+            <div className={`md:hidden absolute inset-0 z-[1002] bg-gray-950 transition-transform ${mobileTab === 'team' ? 'translate-x-0' : 'translate-x-full'}`}>
+               <div className="p-2 border-b border-white/10 flex justify-between items-center bg-black">
+                  <span className="text-[10px] font-black uppercase text-orange-500 px-2 tracking-widest">Unidades en Frecuencia</span>
+                  <button onClick={() => setMobileTab('map')} className="p-2 text-gray-400"><X size={20} /></button>
+               </div>
+               <TeamList members={teamMembers} />
+            </div>
+            
+            <div className={`md:hidden absolute inset-0 z-[1002] bg-gray-950 transition-transform ${mobileTab === 'history' ? 'translate-x-0' : 'translate-x-full'}`}>
+               <div className="p-2 border-b border-white/10 flex justify-between items-center bg-black">
+                  <span className="text-[10px] font-black uppercase text-orange-500 px-2 tracking-widest">Historial de Audio</span>
+                  <button onClick={() => setMobileTab('map')} className="p-2 text-gray-400"><X size={20} /></button>
+               </div>
+               <HistoryPanel history={radioHistory} activeChannel={activeChannel} />
+            </div>
          </div>
 
-         {/* Paneles laterales fijos solo en Escritorio (lg) */}
-         <div className="hidden lg:flex flex-col absolute bottom-6 right-6 w-85 bg-black/90 backdrop-blur rounded border border-white/10 shadow-2xl h-[480px] overflow-hidden z-[500]">
+         {/* Paneles laterales fijos solo en Escritorio (PC) */}
+         <div className="hidden lg:flex flex-col absolute bottom-6 right-6 w-80 bg-black/90 backdrop-blur rounded border border-white/10 shadow-2xl h-[480px] overflow-hidden z-[500]">
             <div className="flex border-b border-white/10 bg-white/5">
-              <button onClick={() => setMobileTab('team')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${mobileTab !== 'history' ? 'text-orange-500 bg-orange-500/5' : 'text-gray-500 hover:text-white'}`}>Unidades Activas</button>
-              <button onClick={() => setMobileTab('history')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${mobileTab === 'history' ? 'text-orange-500 bg-orange-500/5' : 'text-gray-500 hover:text-white'}`}>Registro Audio</button>
+              <button onClick={() => setMobileTab('team')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${mobileTab !== 'history' ? 'text-orange-500 bg-orange-500/5' : 'text-gray-500 hover:text-white'}`}>Unidades</button>
+              <button onClick={() => setMobileTab('history')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${mobileTab === 'history' ? 'text-orange-500 bg-orange-500/5' : 'text-gray-500 hover:text-white'}`}>Log Audio</button>
             </div>
             <div className="flex-1 overflow-hidden">
               {mobileTab !== 'history' ? <TeamList members={teamMembers} /> : <HistoryPanel history={radioHistory} activeChannel={activeChannel} />}
@@ -390,7 +386,7 @@ function App() {
          </div>
       </div>
 
-      {/* CONTROL DE RADIO (Lateral Derecho / Inferior Móvil) */}
+      {/* CONTROL DE RADIO */}
       <div className="flex-none md:w-[400px] bg-gray-950 z-20 border-t md:border-t-0 md:border-l border-white/10 shadow-[-10px_0_30px_rgba(0,0,0,0.5)]">
         <RadioControl 
            connectionState={connectionState} isTalking={isTalking} activeChannelName={activeChannel.name}
@@ -413,7 +409,6 @@ function App() {
            isManualMode={isManualMode} onToggleManual={() => setIsManualMode(!isManualMode)}
         />
       </div>
-      
       <EmergencyModal isOpen={showEmergencyModal} onClose={() => setShowEmergencyModal(false)} location={effectiveLocation} userName={userName} channelId={activeChannel.id} />
     </div>
   );
