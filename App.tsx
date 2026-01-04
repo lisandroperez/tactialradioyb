@@ -145,7 +145,7 @@ function App() {
     }));
   }, [teamMembersRaw, effectiveLocation]);
 
-  // --- REGISTRO DE PRESENCIA REFORZADO ---
+  // --- REGISTRO DE PRESENCIA REFORZADO CON ON_CONFLICT ---
   const doCheckIn = useCallback(async (channelId: string, name: string) => {
     if (!name || !channelId) return;
     const lat = userLocationRef.current?.lat || -26.8241;
@@ -164,6 +164,7 @@ function App() {
     }, { onConflict: 'id' });
 
     if (error) console.error("CHECKIN_FAIL", error);
+    else console.log("CHECKIN_OK", name);
   }, [isTalking]);
 
   const fetchAllData = useCallback(async () => {
@@ -199,24 +200,24 @@ function App() {
     }
   }, [activeChannel, userName]);
 
-  // --- LATIDO (HEARTBEAT) DE PRESENCIA CADA 30S ---
+  // --- LATIDO (HEARTBEAT) DE PRESENCIA ---
   useEffect(() => {
     if (!activeChannel || !userName || !isIdentified) return;
     const interval = setInterval(() => {
       doCheckIn(activeChannel.id, userName);
-    }, 30000);
+    }, 15000); // 15s para mayor reactividad
     return () => clearInterval(interval);
   }, [activeChannel, userName, isIdentified, doCheckIn]);
 
-  // --- SUSCRIPCIÓN MAESTRA ---
+  // --- SUSCRIPCIÓN MAESTRA CORREGIDA ---
   useEffect(() => {
     if (!activeChannel || !userName || !isIdentified) return;
 
     doCheckIn(activeChannel.id, userName);
     fetchAllData();
 
-    // Suscripción robusta sin filtros de canal del lado servidor para evitar problemas de compatibilidad
-    const channel = supabase.channel(`sync-v7-${activeChannel.id}`)
+    // Suscripción sin filtros server-side para máxima compatibilidad
+    const channel = supabase.channel(`sync-v8-${activeChannel.id}`)
       .on('postgres_changes', { event: '*', table: 'locations', schema: 'public' }, (payload) => {
         const target = payload.new || payload.old;
         if (!target) return;
@@ -224,10 +225,10 @@ function App() {
         const tid = String(target.id).trim();
         const myId = String(DEVICE_ID).trim();
         
-        // Ignorarme a mí mismo
+        // Ignorarme
         if (tid === myId) return;
         
-        // Filtrar canal en memoria por seguridad
+        // Filtrado en memoria
         const targetChannel = String(target.channel_id || '').trim();
         if (payload.eventType !== 'DELETE' && targetChannel !== String(activeChannel.id).trim()) return;
 
@@ -253,12 +254,10 @@ function App() {
           setRadioHistory(prev => [payload.new, ...prev]);
         }
       })
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') console.log("REALTIME_ONLINE");
-      });
+      .subscribe();
 
     return () => { 
-      supabase.removeChannel(channel); 
+      channel.unsubscribe(); 
     };
   }, [activeChannel, userName, isIdentified, doCheckIn, fetchAllData]);
 
@@ -290,13 +289,6 @@ function App() {
     return () => navigator.geolocation.clearWatch(watchId);
   }, [isTalking, activeChannel, userName, manualLocation, isOnline, isIdentified]);
 
-  // Cleanup Radio on Unmount
-  useEffect(() => {
-    return () => {
-      if (radioRef.current) radioRef.current.disconnect();
-    };
-  }, []);
-
   if (currentView === 'guide') return <GuideView onBack={() => setCurrentView('landing')} />;
   if (currentView === 'manual') return <ManualView onBack={() => setCurrentView('landing')} />;
   if (currentView === 'landing') return <LandingView onEnter={() => setCurrentView('app')} onManual={() => setCurrentView('manual')} onGuide={() => setCurrentView('guide')} />;
@@ -306,12 +298,12 @@ function App() {
       <div className="scanline"></div>
       <div className="w-full max-w-sm bg-gray-900 border border-orange-500/30 p-8 shadow-2xl relative z-10">
         <h1 className="text-orange-500 font-black text-center mb-8 tracking-widest uppercase">Identificación Radio</h1>
-        <p className="text-[10px] text-gray-500 mb-6 text-center uppercase">Ingrese su indicativo de misión.</p>
+        <p className="text-[10px] text-gray-500 mb-6 text-center uppercase tracking-widest">Ingrese su indicativo de misión</p>
         <input autoFocus type="text" value={tempName} onChange={e => setTempName(e.target.value.toUpperCase())} 
           onKeyDown={e => e.key === 'Enter' && tempName.length >= 3 && (localStorage.setItem('user_callsign', tempName), setUserName(tempName), setIsIdentified(true))}
           placeholder="CALLSIGN (EJ: MOVIL-1)" className="w-full bg-black border border-gray-800 p-4 text-orange-500 text-center font-bold mb-4 outline-none focus:border-orange-500 uppercase"
         />
-        <button onClick={() => { if(tempName.length >= 3) { localStorage.setItem('user_callsign', tempName); setUserName(tempName); setIsIdentified(true); }}} className="w-full bg-orange-600 text-white font-black py-4 hover:bg-orange-500 transition-colors uppercase">Entrar en Servicio</button>
+        <button onClick={() => { if(tempName.length >= 3) { localStorage.setItem('user_callsign', tempName); setUserName(tempName); setIsIdentified(true); }}} className="w-full bg-orange-600 text-white font-black py-4 hover:bg-orange-500 transition-colors uppercase">Activar Unidad</button>
       </div>
     </div>
   );
@@ -320,7 +312,7 @@ function App() {
     <div className="h-screen bg-black flex items-center justify-center p-6 font-mono relative overflow-hidden">
        <div className="scanline"></div>
        <div className="w-full max-w-md relative z-10">
-          <button onClick={() => { localStorage.removeItem('user_callsign'); setIsIdentified(false); }} className="mb-4 text-gray-500 flex items-center gap-2 hover:text-white transition-colors uppercase text-[10px] font-bold tracking-widest"><ChevronLeft size={14} /> Cambiar Callsign</button>
+          <button onClick={() => { localStorage.removeItem('user_callsign'); setIsIdentified(false); setUserName(''); }} className="mb-4 text-gray-500 flex items-center gap-2 hover:text-white transition-colors uppercase text-[10px] font-bold tracking-widest"><ChevronLeft size={14} /> Cambiar Callsign</button>
           <h2 className="text-orange-500 font-bold uppercase text-center mb-8 tracking-widest">Seleccionar Frecuencia</h2>
           <ChannelSelector onSelect={ch => setActiveChannel(ch)} />
        </div>
