@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'tactical-v2';
+const CACHE_NAME = 'tactical-radio-v3';
 const ASSETS = [
   '/',
   '/index.html',
@@ -26,9 +26,10 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // Estrategia: Network First, falling back to cache
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
+    fetch(event.request).catch(() => {
+      return caches.match(event.request);
     })
   );
 });
