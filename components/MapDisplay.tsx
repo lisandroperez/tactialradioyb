@@ -13,7 +13,7 @@ const TUCUMAN_BOUNDS: L.LatLngBoundsExpression = [
 const iconUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png';
 const shadowUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png';
 
-// Método recomendado para corregir iconos de Leaflet sin hacks de prototipo
+// Método oficial recomendado para Leaflet >= 1.9
 L.Icon.Default.mergeOptions({ 
   iconUrl, 
   shadowUrl,
