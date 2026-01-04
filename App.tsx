@@ -50,7 +50,7 @@ const ManualView = ({ onBack }: { onBack: () => void }) => {
   );
 };
 
-// --- LANDING VIEW COMPLETO CON OPCIÓN 04 ---
+// --- LANDING VIEW ---
 const LandingView = ({ onEnter, onManual }: { onEnter: () => void; onManual: () => void }) => {
   return (
     <div className="overflow-x-hidden relative min-h-screen selection:bg-orange-500 bg-[#0e0a07]">
@@ -74,7 +74,7 @@ const LandingView = ({ onEnter, onManual }: { onEnter: () => void; onManual: () 
               <h1 className="hero-title text-7xl md:text-9xl lg:text-[150px] text-white uppercase mb-12 leading-[0.82] font-black tracking-tighter">
                   RADIO<br/>UBICACIÓN<br/>MÓVIL
               </h1>
-              <p className="text-white text-xl md:text-3xl font-bold tracking-tight uppercase mb-16 opacity-90 leading-tight">VOZ Y GPS CARTOGRÁFICO CUANDO LOS DATOS FALLAN.</p>
+              <p className="text-white text-xl md:text-3xl font-bold tracking-tight uppercase mb-16 opacity-90 leading-tight">VOZ Y GPS EN TIEMPO REAL CUANDO LOS DATOS FALLAN.</p>
               <div className="flex justify-center">
                   <button onClick={onEnter} className="btn-ptt px-16 py-6 rounded-sm font-black text-sm md:text-lg tracking-[0.15em] uppercase text-white shadow-2xl transition-all">ENTRAR EN SERVICIO</button>
               </div>
@@ -126,7 +126,7 @@ const LandingView = ({ onEnter, onManual }: { onEnter: () => void; onManual: () 
                       <p className="text-gray-400 leading-relaxed text-sm">Audio nítido optimizado para voz. Comunicación simplex que emula un Handy digital.</p>
                   </div>
                   <div className="bg-white/[0.02] border border-white/5 p-10 rounded-sm hover:border-orange-500 transition-all">
-                      <h3 className="text-orange-500 font-black mb-4 uppercase text-xl">GPS Cartográfico</h3>
+                      <h3 className="text-orange-500 font-black mb-4 uppercase text-xl">GPS en Tiempo Real</h3>
                       <p className="text-gray-400 leading-relaxed text-sm">Visualización táctica de todas las unidades activas sobre cartografía digital offline-ready.</p>
                   </div>
                   <div className="bg-white/[0.02] border border-white/5 p-10 rounded-sm hover:border-orange-500 transition-all">
@@ -203,7 +203,7 @@ function App() {
   const fetchAllData = useCallback(async () => {
     if (!activeChannel || !userName) return;
     
-    // 1. Latido inicial para aparecer en los mapas de otros inmediatamente
+    // Heartbeat inicial agresivo
     if (navigator.geolocation && !manualLocation) {
         navigator.geolocation.getCurrentPosition(async (pos) => {
             const { latitude, longitude, accuracy } = pos.coords;
@@ -216,20 +216,26 @@ function App() {
         });
     }
 
-    // 2. Cargar Usuarios Actuales (Últimas 12 horas)
+    // Cargar Usuarios (Últimas 24 horas para asegurar detección)
     const { data: members } = await supabase
       .from('locations')
       .select('*')
       .eq('channel_id', activeChannel.id)
-      .gt('last_seen', new Date(Date.now() - 43200000).toISOString());
+      .gt('last_seen', new Date(Date.now() - 86400000).toISOString());
     
     if (members) {
-      setTeamMembersRaw(members.filter(m => String(m.id) !== String(DEVICE_ID)).map(m => ({
-        ...m, lat: Number(m.lat), lng: Number(m.lng)
-      })));
+      // Filtrar a mi mismo y formatear lat/lng
+      const otherMembers = members
+        .filter(m => String(m.id).trim() !== String(DEVICE_ID).trim())
+        .map(m => ({
+          ...m, 
+          lat: Number(m.lat), 
+          lng: Number(m.lng)
+        }));
+      setTeamMembersRaw(otherMembers as TeamMember[]);
     }
 
-    // 3. Cargar Historial Reciente
+    // Cargar Historial
     const { data: history } = await supabase
       .from('radio_history')
       .select('*')
@@ -244,25 +250,31 @@ function App() {
 
     fetchAllData();
 
-    // Suscripción con comparaciones de ID robustas
-    const channel = supabase.channel(`sync-v8-${activeChannel.id}`)
+    // Suscripción de tiempo real con filtrado manual en cliente para máxima fiabilidad
+    const channel = supabase.channel(`sync-v9-${activeChannel.id}`)
       .on('postgres_changes', { event: '*', table: 'locations', schema: 'public' }, (payload: any) => {
         const { eventType, new: newRec, old: oldRec } = payload;
         const target = newRec || oldRec;
         
-        if (!target || String(target.id) === String(DEVICE_ID)) return;
-        if (target.channel_id && String(target.channel_id) !== String(activeChannel.id)) return;
+        // CORRECCIÓN: Ignorar si soy yo o de otro canal
+        if (!target) return;
+        if (String(target.id).trim() === String(DEVICE_ID).trim()) return;
+        if (target.channel_id && String(target.channel_id).trim() !== String(activeChannel.id).trim()) return;
 
         setTeamMembersRaw(prev => {
-          if (eventType === 'DELETE') return prev.filter(m => String(m.id) !== String(target.id));
-          const idx = prev.findIndex(m => String(m.id) === String(target.id));
+          if (eventType === 'DELETE') return prev.filter(m => String(m.id).trim() !== String(target.id).trim());
+          
+          const idx = prev.findIndex(m => String(m.id).trim() === String(target.id).trim());
           const formatted = {
             ...target,
             lat: target.lat ? Number(target.lat) : undefined,
             lng: target.lng ? Number(target.lng) : undefined
           };
 
-          if (idx === -1) return formatted.lat ? [...prev, formatted as TeamMember] : prev;
+          if (idx === -1) {
+            return formatted.lat ? [...prev, formatted as TeamMember] : prev;
+          }
+
           const next = [...prev];
           next[idx] = { 
             ...next[idx], 
@@ -274,7 +286,7 @@ function App() {
         });
       })
       .on('postgres_changes', { event: 'INSERT', table: 'radio_history', schema: 'public' }, (payload: any) => {
-        if (String(payload.new.channel_id) === String(activeChannel.id)) {
+        if (String(payload.new.channel_id).trim() === String(activeChannel.id).trim()) {
           setRadioHistory(prev => [payload.new, ...prev]);
         }
       })
