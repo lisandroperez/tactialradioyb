@@ -10,75 +10,261 @@ import { TeamMember, ConnectionState, RadioHistory, Channel } from './types';
 import { RadioService } from './services/radioService';
 import { supabase, getDeviceId } from './services/supabase';
 import { outbox, OutboxItemType, OutboxStatus } from './services/outboxService';
-import { BookOpen, Printer, Home, Radio as RadioIcon, CloudUpload, CloudOff } from 'lucide-react';
+import { 
+  BookOpen, Printer, Home, Radio as RadioIcon, CloudUpload, CloudOff, 
+  ChevronLeft, MapPin, Activity, AlertTriangle, Send, Users, 
+  Clock, Hash, Volume2, Play, Download, ShieldCheck, List, X
+} from 'lucide-react';
 
 const DEVICE_ID = getDeviceId();
 
-// --- COMPONENTE LANDING CON NAVEGACIÓN SUPERIOR ---
-const LandingView = ({ onEnter }: { onEnter: () => void }) => {
+// --- VISTA DEL MANUAL TÁCTICO (Integrada para evitar 404) ---
+const ManualView = ({ onBack }: { onBack: () => void }) => {
   return (
-    <div className="overflow-x-hidden relative min-h-screen selection:bg-orange-500 bg-[#0a0a0a]">
+    <div className="bg-[#0e0a07] min-h-screen p-6 md:p-12 text-gray-200 selection:bg-orange-500 font-sans relative overflow-y-auto">
+      <div className="scanline"></div>
+      <div className="max-w-5xl mx-auto pb-24">
+        <button onClick={onBack} className="fixed bottom-6 right-6 z-[100] bg-orange-600 text-white px-6 py-3 font-black text-[10px] uppercase tracking-widest hover:bg-orange-500 transition-all shadow-2xl flex items-center gap-2">
+           <ChevronLeft size={16} /> VOLVER_AL_INICIO
+        </button>
+
+        <header className="mb-16 animate__animated animate__fadeIn">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-1 bg-orange-500"></div>
+            <p className="mono text-orange-500 font-bold tracking-[0.4em] text-[9px] uppercase">OPERATIONAL_MANUAL_v3.2</p>
+          </div>
+          <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-none mb-6 uppercase text-white">GUÍA DE<br />USUARIO</h1>
+          <p className="text-gray-500 font-mono text-[10px] uppercase tracking-widest border-t border-white/10 pt-4">Protocolo de Comunicaciones Resilientes para Brigadas</p>
+        </header>
+
+        <div className="grid md:grid-cols-2 gap-8 mb-16">
+          <section className="space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="w-8 h-8 bg-orange-500 text-white flex items-center justify-center font-black text-sm">01</span>
+              <h2 className="text-2xl font-black uppercase text-white">Identificación</h2>
+            </div>
+            <div className="bg-white/5 border border-white/10 p-6">
+              <p className="text-xs text-gray-400 mb-4">Al iniciar, ingrese su <span className="text-white font-bold">Callsign (Indicativo)</span>. Este nombre será su identificador único en el mapa y en el registro de audio.</p>
+              <div className="bg-black/40 p-3 border border-white/5 font-mono text-[10px] text-orange-500">
+                RECOMENDACIÓN: Use nombres cortos y claros.<br />Ej: "MOVIL-1", "BASE-TUC", "BRIGADA-B".
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="w-8 h-8 bg-orange-500 text-white flex items-center justify-center font-black text-sm">02</span>
+              <h2 className="text-2xl font-black uppercase text-white">Frecuencias</h2>
+            </div>
+            <div className="bg-white/5 border border-white/10 p-6">
+              <p className="text-xs text-gray-400 mb-4">Seleccione su canal de operación en el <span className="text-white font-bold">Selector de Frecuencias</span>.</p>
+              <ul className="text-[10px] space-y-2 font-mono uppercase text-gray-400">
+                <li className="flex items-center gap-2"><span className="w-2 h-2 bg-emerald-500 rounded-full"></span> Canales Públicos: Acceso libre.</li>
+                <li className="flex items-center gap-2"><span className="w-2 h-2 bg-red-500 rounded-full"></span> Canales Seguros: Requieren llave (PIN).</li>
+              </ul>
+            </div>
+          </section>
+        </div>
+
+        <section className="mb-16 space-y-6">
+          <div className="flex items-center gap-3">
+            <span className="w-8 h-8 bg-orange-500 text-white flex items-center justify-center font-black text-sm">03</span>
+            <h2 className="text-3xl font-black uppercase text-white">Voz y PTT</h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="bg-white/5 border border-white/10 p-6 border-l-4 border-l-orange-500">
+              <h4 className="font-black text-orange-500 uppercase text-[11px] mb-3">TX: Transmitir</h4>
+              <p className="text-[11px] text-gray-400">Mantenga el botón central. Espere el tono y hable claro.</p>
+            </div>
+            <div className="bg-white/5 border border-white/10 p-6 border-l-4 border-l-emerald-500">
+              <h4 className="font-black text-emerald-500 uppercase text-[11px] mb-3">RX: Recibir</h4>
+              <p className="text-[11px] text-gray-400">El audio se reproduce automáticamente. No requiere acción.</p>
+            </div>
+            <div className="bg-white/5 border border-white/10 p-6 border-l-4 border-l-gray-500">
+              <h4 className="font-black text-gray-400 uppercase text-[11px] mb-3">Historial</h4>
+              <p className="text-[11px] text-gray-500">Todo queda grabado en el Log de Audio para auditoría.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+};
+
+// --- VISTA DE GUÍA RÁPIDA (Integrada para evitar 404) ---
+const GuideView = ({ onBack }: { onBack: () => void }) => {
+  return (
+    <div className="bg-white min-h-screen p-8 text-black font-mono relative overflow-y-auto">
+      <div className="max-w-4xl mx-auto pb-20">
+        <button onClick={onBack} className="fixed bottom-6 right-6 bg-black text-white px-8 py-3 uppercase font-bold text-xs shadow-xl z-[100]">VOLVER</button>
+        
+        <div className="border-4 border-black p-6 mb-12 flex justify-between items-center">
+            <div>
+                <h1 className="text-4xl font-black uppercase leading-none">GUÍA RÁPIDA DE OPERACIÓN</h1>
+                <p className="text-sm font-bold mt-2">SISTEMA: RADIO UBICACIÓN MÓVIL (v3.2)</p>
+            </div>
+            <div className="text-right font-bold text-[10px] hidden sm:block">
+                PROTOCOLO: OP-01-B/W<br/>ESTADO: CRÍTICO
+            </div>
+        </div>
+
+        <div className="divide-y-2 divide-black">
+          {[
+            { id: "01", title: "IDENTIFICACIÓN", desc: "Ingrese su CALLSIGN táctico. Use mayúsculas y números (Ej: ALPHA-01)." },
+            { id: "02", title: "FRECUENCIA", desc: "Seleccione un canal activo. Si es privado, necesitará el PIN de brigada." },
+            { id: "03", title: "PUSH TO TALK", desc: "Presione y mantenga para hablar. Suelte inmediatamente al terminar." },
+            { id: "04", title: "MODO TARGET", desc: "Toque la mira y luego el mapa para fijar su ubicación si es una unidad base." },
+            { id: "05", title: "ALERTA SOS", desc: "Use el triángulo rojo para emergencias. Prepara un SMS con sus coordenadas." },
+          ].map(item => (
+            <div key={item.id} className="py-8 flex gap-8">
+              <div className="w-14 h-14 border-4 border-black flex items-center justify-center font-black text-2xl flex-shrink-0">{item.id}</div>
+              <div className="flex-1">
+                <h3 className="font-black text-xl uppercase mb-2">{item.title}</h3>
+                <p className="text-sm leading-tight font-bold">{item.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-12 pt-6 border-t-4 border-black text-center font-black text-lg uppercase">
+            EN CASO DE FALLA: USE RADIO ANALÓGICA VHF/UHF
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- COMPONENTE LANDING COMPLETO (RESTAURADO) ---
+const LandingView = ({ onEnter, onManual, onGuide }: { onEnter: () => void; onManual: () => void; onGuide: () => void }) => {
+  return (
+    <div className="overflow-x-hidden relative min-h-screen selection:bg-orange-500 bg-[#0e0a07]">
       <div className="scanline"></div>
 
       {/* Navegación Superior Derecha */}
-      <nav className="fixed w-full top-0 left-0 z-[100] bg-black/80 border-b border-white/5 backdrop-blur-xl">
+      <nav className="fixed w-full top-0 left-0 z-[100] bg-[#0e0a07]/90 backdrop-blur-md border-b border-white/5">
           <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-orange-600 rounded flex items-center justify-center font-black text-white shadow-lg">R</div>
-                  <span className="mono font-extrabold tracking-tighter text-sm md:text-lg uppercase text-white">RADIO_UBICACIÓN</span>
+              <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-orange-600 rounded-sm flex items-center justify-center font-black text-white text-[10px]">R</div>
+                  <span className="font-bold tracking-tighter text-sm uppercase text-white">RADIO_UBICACIÓN</span>
               </div>
-              <div className="flex items-center gap-4 md:gap-8">
-                  {/* Estos enlaces cargan las páginas HTML estáticas que ya tienes */}
-                  <a 
-                    href="manual.html" 
-                    className="flex items-center gap-1.5 mono text-[10px] text-gray-400 hover:text-white font-bold uppercase tracking-widest transition-all"
-                  >
-                    <BookOpen size={14} /> <span className="hidden sm:inline">MANUAL</span>
-                  </a>
-                  <a 
-                    href="guia_rapida.html" 
-                    className="flex items-center gap-1.5 mono text-[10px] text-orange-500 hover:underline font-bold uppercase tracking-widest transition-all"
-                  >
-                    <Printer size={14} /> <span className="hidden sm:inline">GUÍA_IMPRESIÓN</span>
-                  </a>
-                  {/* Este botón activa la entrada a la App de React */}
-                  <button 
-                    onClick={onEnter} 
-                    className="mono text-[10px] font-bold text-white bg-orange-600 px-4 py-2 hover:bg-orange-500 transition-all uppercase shadow-[0_0_15px_rgba(249,115,22,0.3)]"
-                  >
-                      ACCESO_SISTEMA &gt;
-                  </button>
+              <div className="flex items-center gap-6">
+                  <button onClick={onGuide} className="hidden md:block text-[10px] text-orange-500 hover:underline font-bold uppercase tracking-widest transition-all">GUÍA_IMPRESIÓN_B/W</button>
+                  <button onClick={onManual} className="hidden md:block text-[10px] text-gray-500 hover:text-white font-bold uppercase tracking-widest transition-all">MANUAL_INTERACTIVO</button>
+                  <button onClick={onEnter} className="text-[10px] font-bold text-orange-500 border border-orange-500/30 px-4 py-1.5 hover:bg-orange-600 hover:text-white transition-all uppercase">ENTRAR_APP ></button>
               </div>
           </div>
       </nav>
 
-      <section className="relative min-h-screen flex items-center justify-center hero-gradient pt-20 px-6">
-          <div className="max-w-6xl mx-auto text-center z-10">
-              <div className="animate__animated animate__fadeIn">
-                  <span className="mono text-orange-500 text-xs font-bold tracking-[0.4em] uppercase mb-10 block opacity-90">INFRAESTRUCTURA TÁCTICA DE CAMPO</span>
-                  <h1 className="hero-title text-7xl md:text-9xl lg:text-[150px] text-white uppercase mb-12">
-                      RADIO<br/>UBICACIÓN<br/>MÓVIL
-                  </h1>
-                  <p className="text-white text-xl md:text-3xl max-w-3xl mx-auto mb-16 font-bold leading-tight uppercase tracking-tight opacity-90">
-                      Voz simplex y GPS para brigadas de emergencia.
-                  </p>
-                  <div className="flex justify-center gap-4">
-                      {/* El botón central también dispara el onEnter */}
-                      <button onClick={onEnter} className="btn-ptt px-16 py-6 rounded-sm font-black text-sm md:text-lg tracking-[0.15em] uppercase text-white shadow-2xl transition-all hover:scale-105 active:scale-95">
-                          DESPLEGAR UNIDAD
-                      </button>
+      {/* HERO SECTION */}
+      <section className="relative min-h-screen flex items-center justify-center pt-20 px-6 hero-gradient">
+          <div className="max-w-5xl mx-auto text-center z-10 animate__animated animate__fadeIn">
+              <span className="text-[#f97316] text-[10px] md:text-xs font-bold tracking-[0.4em] uppercase mb-10 block opacity-90">INFRAESTRUCTURA DE RESPUESTA RÁPIDA</span>
+              <h1 className="hero-title text-7xl md:text-9xl lg:text-[150px] text-white uppercase mb-12 leading-[0.82] font-black tracking-tighter">
+                  RADIO<br/>UBICACIÓN<br/>MÓVIL
+              </h1>
+              <p className="text-white text-xl md:text-3xl font-bold tracking-tight uppercase mb-16 opacity-90 leading-tight">VOZ Y GPS CUANDO LOS DATOS FALLAN.</p>
+              <div className="flex justify-center">
+                  <button onClick={onEnter} className="btn-tactical bg-[#f97316] px-16 py-6 rounded-sm font-black text-sm md:text-lg tracking-[0.15em] uppercase text-white shadow-2xl transition-all hover:scale-105 active:scale-95">ENTRAR EN SERVICIO</button>
+              </div>
+          </div>
+      </section>
+
+      {/* EL DESAFÍO DEL TERRENO (CARRUSEL RESTAURADO) */}
+      <section className="py-24 bg-black border-y border-white/5 relative overflow-hidden">
+          <div className="max-w-7xl mx-auto px-6 mb-12">
+              <div className="flex items-center gap-3 mb-2">
+                  <div className="w-2 h-2 bg-orange-500 animate-pulse"></div>
+                  <span className="text-orange-500 text-[11px] font-black tracking-[0.4em] uppercase">SITUACIÓN_DE_CAMPO</span>
+              </div>
+              <h2 className="text-5xl font-black uppercase tracking-tighter leading-[0.9] text-white">EL DESAFÍO<br/><span className="text-gray-600">DEL TERRENO</span></h2>
+          </div>
+
+          <div className="flex overflow-x-auto snap-x snap-mandatory gap-6 px-6 pb-12 no-scrollbar cursor-grab active:cursor-grabbing">
+              <div className="flex-none w-[85%] md:w-[45%] lg:w-[25%] snap-center bg-[#0a0a0a] border border-white/5 p-8 relative min-h-[280px] flex flex-col justify-end group hover:border-orange-500 transition-all">
+                  <div className="absolute top-[-10px] right-[-10px] text-[100px] font-black text-white/5 leading-none pointer-events-none">01</div>
+                  <h4 className="text-white font-black mb-4 uppercase text-2xl leading-[0.85] group-hover:text-orange-500 transition-colors">Handys con<br/>interferencia</h4>
+                  <p className="text-gray-500 text-sm leading-snug">Eliminamos el ruido analógico. Audio digital cristalino optimizado para entornos de combate e incendios.</p>
+              </div>
+              <div className="flex-none w-[85%] md:w-[45%] lg:w-[25%] snap-center bg-[#0a0a0a] border border-white/5 p-8 relative min-h-[280px] flex flex-col justify-end group hover:border-orange-500 transition-all">
+                  <div className="absolute top-[-10px] right-[-10px] text-[100px] font-black text-white/5 leading-none pointer-events-none">02</div>
+                  <h4 className="text-white font-black mb-4 uppercase text-2xl leading-[0.85] group-hover:text-orange-500 transition-colors">Zonas muertas<br/>sin datos</h4>
+                  <p className="text-gray-500 text-sm leading-snug">Cuando el 5G falla, nuestro motor conmuta a ráfagas de datos 2G para enviar coordenadas SOS críticas.</p>
+              </div>
+              <div className="flex-none w-[85%] md:w-[45%] lg:w-[25%] snap-center bg-[#0a0a0a] border border-white/5 p-8 relative min-h-[280px] flex flex-col justify-end group hover:border-orange-500 transition-all">
+                  <div className="absolute top-[-10px] right-[-10px] text-[100px] font-black text-white/5 leading-none pointer-events-none">03</div>
+                  <h4 className="text-white font-black mb-4 uppercase text-2xl leading-[0.85] group-hover:text-orange-500 transition-colors">Caos y ruido<br/>ambiente</h4>
+                  <p className="text-gray-500 text-sm leading-snug">Monitor de audio visual integrado. Si no pudiste escucharlo, el sistema lo transcribe en pantalla. Protocolo: Visual_RX</p>
+              </div>
+              <div className="flex-none w-[85%] md:w-[45%] lg:w-[25%] snap-center bg-[#0a0a0a] border border-white/5 p-8 relative min-h-[280px] flex flex-col justify-end group hover:border-orange-500 transition-all">
+                  <div className="absolute top-[-10px] right-[-10px] text-[100px] font-black text-white/5 leading-none pointer-events-none">04</div>
+                  <h4 className="text-white font-black mb-4 uppercase text-2xl leading-[0.85] group-hover:text-orange-500 transition-colors">Análisis de<br/>incidente</h4>
+                  <p className="text-gray-500 text-sm leading-snug">Cada voz, cada movimiento. Todo el despliegue queda logueado para auditorías críticas post-misión.</p>
+              </div>
+          </div>
+          
+          <div className="md:hidden text-center mt-4">
+              <p className="text-[8px] text-gray-600 uppercase tracking-widest animate-pulse font-bold">Deslizar para escanear desafíos</p>
+          </div>
+      </section>
+
+      {/* EQUIPAMIENTO DIGITAL (TARJETAS RESTAURADAS) */}
+      <section className="py-32 bg-zinc-950">
+          <div className="max-w-7xl mx-auto px-6">
+              <div className="text-center mb-24">
+                  <span className="text-orange-500 text-[11px] font-black tracking-[0.4em] uppercase">EQUIPAMIENTO DIGITAL</span>
+                  <h2 className="text-5xl md:text-6xl font-black mt-2 tracking-tighter uppercase leading-none text-white">Tecnología de<br/>Misión Crítica</h2>
+              </div>
+              
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  <div className="bg-white/[0.02] border border-white/5 p-10 rounded-sm hover:border-orange-500 transition-all">
+                      <h3 className="text-orange-500 font-black mb-4 uppercase text-xl">Radio PTT Profesional</h3>
+                      <p className="text-gray-400 leading-relaxed text-sm">Audio nítido optimizado para voz. Comunicación simplex que emula un Handy pero con la claridad del entorno digital.</p>
+                  </div>
+                  <div className="bg-white/[0.02] border border-white/5 p-10 rounded-sm hover:border-orange-500 transition-all">
+                      <h3 className="text-orange-500 font-black mb-4 uppercase text-xl">GPS en Tiempo Real</h3>
+                      <p className="text-gray-400 leading-relaxed text-sm">Visualización cartográfica de todas las unidades activas. Cálculo de distancia y telemetría de precisión para logística.</p>
+                  </div>
+                  <div className="bg-white/[0.02] border border-white/5 p-10 rounded-sm hover:border-orange-500 transition-all">
+                      <h3 className="text-orange-500 font-black mb-4 uppercase text-xl">Protocolo SMS 2G</h3>
+                      <p className="text-gray-400 leading-relaxed text-sm">Exclusivo sistema de alertas vía SMS cuando fallan los datos móviles. Envío de coordenadas críticas bajo cualquier señal.</p>
+                  </div>
+                  <div className="bg-white/[0.02] border border-white/5 p-10 rounded-sm hover:border-orange-500 transition-all">
+                      <h3 className="text-orange-500 font-black mb-4 uppercase text-xl">Log de Auditoría</h3>
+                      <p className="text-gray-400 leading-relaxed text-sm">Historial completo de transmisiones con audio descargable. Fundamental para el análisis post-incidente y legal.</p>
+                  </div>
+                  <div className="bg-white/[0.02] border border-white/5 p-10 rounded-sm hover:border-orange-500 transition-all">
+                      <h3 className="text-orange-500 font-black mb-4 uppercase text-xl">Canales por Equipo</h3>
+                      <p className="text-gray-400 leading-relaxed text-sm">Cifrado de canales privados para evitar filtraciones. Cada equipo opera en su propia frecuencia segura.</p>
+                  </div>
+                  <div className="bg-white/[0.02] border border-white/5 p-10 rounded-sm hover:border-orange-500 transition-all">
+                      <h3 className="text-orange-500 font-black mb-4 uppercase text-xl">Modo Táctico Fijo</h3>
+                      <p className="text-gray-400 leading-relaxed text-sm">Permite establecer coordenadas manuales exactas para Puestos de Comando o unidades estáticas sin depender del GPS.</p>
                   </div>
               </div>
           </div>
       </section>
 
-      <footer className="py-20 bg-black/50 text-center border-t border-white/5 relative overflow-hidden">
-          <div className="max-w-4xl mx-auto px-6 relative z-10">
-              <div className="flex justify-center gap-8 mb-8 opacity-50">
-                <a href="manual.html" className="mono text-[10px] text-white uppercase hover:text-orange-500 transition-colors">Documentación Técnica</a>
-                <a href="guia_rapida.html" className="mono text-[10px] text-white uppercase hover:text-orange-500 transition-colors">Protocolo Impreso</a>
+      {/* FOOTER RESTAURADO */}
+      <footer className="py-32 bg-[#0e0a07] text-center border-t border-white/5 relative overflow-hidden">
+          <div className="max-w-4xl mx-auto px-6 z-10 relative">
+              <h2 className="text-6xl md:text-8xl font-black mb-12 uppercase tracking-tighter leading-none text-white">
+                  La tecnología al servicio <br/>
+                  <span className="text-orange-500 italic">DE LA VIDA.</span>
+              </h2>
+              <p className="text-gray-400 mb-16 italic text-lg leading-relaxed max-w-2xl mx-auto italic">
+                  "Esta aplicación es gratuita para todas las entidades oficiales y grupos de respuesta. Nuestro compromiso es que ningún rescatista se quede incomunicado."
+              </p>
+              
+              <div className="flex justify-center mb-24">
+                  <button onClick={onEnter} className="bg-white text-black px-16 py-6 font-black uppercase text-sm tracking-widest hover:bg-orange-600 hover:text-white transition-all transform hover:-translate-y-2 shadow-2xl">
+                      DESPLEGAR AHORA
+                  </button>
               </div>
-              <p className="text-[10px] text-gray-600 uppercase mono tracking-widest">Versión 3.2.0 STABLE // Resiliencia de Campo Activada</p>
+
+              <div className="opacity-20 flex flex-col items-center gap-4 border-t border-white/10 pt-12">
+                  <p className="text-[10px] text-gray-400 uppercase tracking-[0.4em] font-bold">RADIO_UBICACION_MOVIL // MISSION_CRITICAL_v3.2_STABLE</p>
+                  <p className="text-[8px] text-gray-600 uppercase">Protocolo de Respuesta Rápida para Brigadas de Emergencia</p>
+              </div>
           </div>
       </footer>
     </div>
@@ -95,7 +281,7 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 }
 
 function App() {
-  const [currentView, setCurrentView] = useState<'landing' | 'app'>('landing');
+  const [currentView, setCurrentView] = useState<'landing' | 'app' | 'manual' | 'guia'>('landing');
   const [userName, setUserName] = useState<string>(localStorage.getItem('user_callsign') || '');
   const [activeChannel, setActiveChannel] = useState<Channel | null>(null);
   const [tempName, setTempName] = useState('');
@@ -139,43 +325,39 @@ function App() {
   const processOutbox = useCallback(async () => {
     if (!navigator.onLine) return;
 
-    try {
-      const pending = await outbox.getPendingItems();
-      setPendingSync(pending.length);
+    const pending = await outbox.getPendingItems();
+    setPendingSync(pending.length);
 
-      if (pending.length === 0) return;
+    if (pending.length === 0) return;
 
-      for (const item of pending) {
-        if (item.id === undefined) continue;
+    for (const item of pending) {
+      if (item.id === undefined) continue;
+      
+      try {
+        await outbox.updateStatus(item.id, OutboxStatus.SENDING);
         
-        try {
-          await outbox.updateStatus(item.id, OutboxStatus.SENDING);
-          
-          if (item.type === OutboxItemType.SOS) {
-            await supabase.from('radio_history').insert({
-              sender_name: item.payload.sender_name,
-              lat: item.payload.lat,
-              lng: item.payload.lng,
-              audio_data: '[SOS_ALERT_SMS_FIRED]',
-              channel_id: item.payload.channel_id
-            });
-          } else if (item.type === OutboxItemType.VOICE) {
-            await supabase.from('radio_history').insert(item.payload);
-          }
-
-          await outbox.updateStatus(item.id, OutboxStatus.SENT);
-        } catch (e) {
-          await outbox.updateStatus(item.id, OutboxStatus.PENDING, true);
-          break; 
+        if (item.type === OutboxItemType.SOS) {
+          await supabase.from('radio_history').insert({
+            sender_name: item.payload.sender_name,
+            lat: item.payload.lat,
+            lng: item.payload.lng,
+            audio_data: '[SOS_ALERT_SMS_FIRED]',
+            channel_id: item.payload.channel_id
+          });
+        } else if (item.type === OutboxItemType.VOICE) {
+          await supabase.from('radio_history').insert(item.payload);
         }
-      }
 
-      await outbox.deleteSentItems();
-      const finalPending = await outbox.getPendingItems();
-      setPendingSync(finalPending.length);
-    } catch (e) {
-      console.error("SYNC_ERROR", e);
+        await outbox.updateStatus(item.id, OutboxStatus.SENT);
+      } catch (e) {
+        await outbox.updateStatus(item.id, OutboxStatus.PENDING, true);
+        break; 
+      }
     }
+
+    await outbox.deleteSentItems();
+    const finalPending = await outbox.getPendingItems();
+    setPendingSync(finalPending.length);
   }, []);
 
   useEffect(() => {
@@ -262,7 +444,7 @@ function App() {
     if (navigator.onLine) {
       await supabase.from('locations').upsert({
         id: DEVICE_ID, name: userName, lat: lat, lng: lng, accuracy: 0,
-        role: 'Unidad Fija / PC', status: isTalking ? 'talking' : 'online', 
+        role: 'Unidad Fija / Estacionaria', status: isTalking ? 'talking' : 'online', 
         last_seen: new Date().toISOString(), channel_id: activeChannel.id
       });
     }
@@ -292,11 +474,21 @@ function App() {
   const handleTalkStart = () => { if (radioRef.current) { setIsTalking(true); radioRef.current.startTransmission(); } };
   const handleTalkEnd = () => { if (radioRef.current) { radioRef.current.stopTransmission(); setIsTalking(false); } };
 
-  if (currentView === 'landing') return <LandingView onEnter={() => setCurrentView('app')} />;
+  // Router de Vistas
+  if (currentView === 'manual') return <ManualView onBack={() => setCurrentView('landing')} />;
+  if (currentView === 'guia') return <GuideView onBack={() => setCurrentView('landing')} />;
+  if (currentView === 'landing') return (
+    <LandingView 
+      onEnter={() => setCurrentView('app')} 
+      onManual={() => setCurrentView('manual')} 
+      onGuide={() => setCurrentView('guia')} 
+    />
+  );
 
   if (!userName) return (
-    <div className="h-[100dvh] w-screen bg-black flex items-center justify-center p-6 font-mono">
-      <div className="w-full max-w-sm space-y-6 bg-gray-950 border border-orange-500/20 p-8 rounded shadow-2xl relative overflow-hidden">
+    <div className="h-[100dvh] w-screen bg-black flex items-center justify-center p-6 font-mono relative overflow-hidden">
+      <div className="scanline"></div>
+      <div className="w-full max-w-sm space-y-6 bg-gray-950 border border-orange-500/20 p-8 rounded shadow-2xl relative z-10">
         <div className="absolute top-0 left-0 w-full h-1 bg-orange-600"></div>
         <h1 className="text-orange-500 font-black tracking-widest text-lg uppercase text-center flex items-center justify-center gap-2">
            <RadioIcon size={20} /> IDENTIFICACIÓN
@@ -315,8 +507,9 @@ function App() {
   );
 
   if (!activeChannel) return (
-    <div className="h-[100dvh] w-screen bg-black flex items-center justify-center p-6 font-mono text-center">
-       <div className="w-full max-w-md space-y-6">
+    <div className="h-[100dvh] w-screen bg-black flex items-center justify-center p-6 font-mono text-center relative">
+       <div className="scanline"></div>
+       <div className="w-full max-w-md space-y-6 z-10">
           <h2 className="text-orange-500 font-bold mb-4 uppercase tracking-widest text-sm flex items-center justify-center gap-2">
             <RadioIcon size={16} /> Seleccionar Frecuencia
           </h2>
@@ -348,7 +541,6 @@ function App() {
             <span className="text-xs font-bold text-orange-500 font-mono uppercase tracking-widest leading-none">{activeChannel.name}</span>
          </div>
 
-         {/* Panel Lateral Flotante (Miembros) */}
          <div className="hidden lg:flex flex-col absolute bottom-6 right-6 w-80 bg-black/90 backdrop-blur rounded border border-white/10 shadow-2xl h-[400px] overflow-hidden z-[500]">
             <div className="flex border-b border-white/10 bg-white/5">
               <button onClick={() => setActiveTab('team')} className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest transition-all ${activeTab === 'team' ? 'text-orange-500 border-b-2 border-orange-500 bg-orange-500/5' : 'text-gray-500 hover:text-gray-300'}`}>Unidades</button>
