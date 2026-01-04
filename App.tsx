@@ -10,12 +10,12 @@ import { TeamMember, ConnectionState, RadioHistory, Channel } from './types';
 import { RadioService } from './services/radioService';
 import { supabase, getDeviceId } from './services/supabase';
 import { 
-  ChevronLeft, X, Printer, Clock, MapPin, Hash, Volume2, Shield, Zap, AlertTriangle, RefreshCw
+  ChevronLeft, X, Printer, Clock, MapPin, Hash, Volume2, Shield, Zap, AlertTriangle, RefreshCw, Power
 } from 'lucide-react';
 
 const DEVICE_ID = getDeviceId();
 
-// --- COMPONENTE: GUÍA RÁPIDA (HTML ÍNTEGRO) ---
+// --- COMPONENTE: GUÍA RÁPIDA (CONTENIDO ÍNTEGRO B/W) ---
 const GuideView = ({ onBack }: { onBack: () => void }) => (
   <div className="bg-white min-h-screen p-8 text-black font-mono overflow-y-auto">
     <div className="max-w-4xl mx-auto border-4 border-black p-6">
@@ -40,8 +40,8 @@ const GuideView = ({ onBack }: { onBack: () => void }) => (
           { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3" stroke-linecap="square"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>, title: "06. RESILIENCIA DE SEÑAL", desc: "Si no hay red, la app guarda sus mensajes y alertas en una cola local (Outbox).", tip: "Al recuperar señal, el sistema reintenta el envío automáticamente." },
           { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3" stroke-linecap="square"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, title: "07. HISTORIAL Y AUDITORÍA", desc: "Toque el panel \"LOG AUDIO\" para revisar transmisiones pasadas.", tip: "Puede reproducir el audio o descargarlo en formato .WAV como evidencia." }
         ].map((item, idx) => (
-          <div key={idx} className="flex gap-6 border-b border-black py-4 last:border-0">
-            <div className="w-12 h-12 border-2 border-black flex items-center justify-center flex-shrink-0">{item.icon}</div>
+          <div key={idx} className="instruction-row flex gap-6 border-b border-black py-4 last:border-0">
+            <div className="icon-box w-12 h-12 border-2 border-black flex items-center justify-center flex-shrink-0">{item.icon}</div>
             <div>
               <h3 className="font-bold text-lg uppercase">{item.title}</h3>
               <p className="text-sm">{item.desc}</p>
@@ -54,15 +54,15 @@ const GuideView = ({ onBack }: { onBack: () => void }) => (
       <div className="mt-8 pt-4 border-t-4 border-black text-center font-bold text-sm uppercase">
         EN CASO DE FALLA TOTAL: UTILICE FRECUENCIAS ANALÓGICAS VÍA RADIO VHF/UHF
         <div className="no-print mt-6 space-x-4">
-            <button onClick={() => window.print()} className="bg-black text-white px-6 py-2 uppercase">Imprimir PDF</button>
-            <button onClick={onBack} className="border-2 border-black px-6 py-2 uppercase">Volver</button>
+            <button onClick={() => window.print()} className="bg-black text-white px-6 py-2">IMPRIMIR PDF</button>
+            <button onClick={onBack} className="border-2 border-black px-6 py-2">VOLVER</button>
         </div>
       </div>
     </div>
   </div>
 );
 
-// --- COMPONENTE: MANUAL TÁCTICO (HTML ÍNTEGRO) ---
+// --- COMPONENTE: MANUAL TÁCTICO (CONTENIDO ÍNTEGRO) ---
 const ManualView = ({ onBack }: { onBack: () => void }) => (
   <div className="bg-[#0e0a07] min-h-screen p-6 md:p-12 text-gray-200 font-sans relative overflow-y-auto tactical-bg">
     <div className="scanline"></div>
@@ -84,22 +84,23 @@ const ManualView = ({ onBack }: { onBack: () => void }) => (
       <div className="grid md:grid-cols-2 gap-8 mb-16">
         <section className="space-y-4">
             <div className="flex items-center gap-3">
-                <span className="bg-orange-500 text-white w-7 h-7 flex items-center justify-center font-black text-xs">01</span>
-                <h2 className="text-2xl font-black uppercase text-white">Identificación</h2>
+                <span className="bg-orange-500 text-white w-7 h-7 flex items-center justify-center font-black text-xs" style={{ clipPath: 'polygon(20% 0%, 100% 0, 100% 80%, 80% 100%, 0 100%, 0% 20%)' }}>01</span>
+                <h2 className="text-2xl font-black uppercase text-white tracking-tighter">Identificación</h2>
             </div>
-            <div className="bg-white/5 border border-white/10 p-6">
+            <div className="tactical-card bg-white/5 border border-white/10 p-6">
                 <p className="text-xs text-gray-400 mb-4">Al iniciar, ingrese su <span className="text-white font-bold">Callsign (Indicativo)</span>. Este nombre será su identificador único en el mapa y en el registro de audio.</p>
                 <div className="bg-black/40 p-3 border border-white/5 font-mono text-[10px] text-orange-500 uppercase">
                     RECOMENDACIÓN: Use nombres cortos y claros.<br />Ej: "MOVIL-1", "BASE-TUC", "BRIGADA-B".
                 </div>
             </div>
         </section>
+
         <section className="space-y-4">
             <div className="flex items-center gap-3">
-                <span className="bg-orange-500 text-white w-7 h-7 flex items-center justify-center font-black text-xs">02</span>
-                <h2 className="text-2xl font-black uppercase text-white">Frecuencias</h2>
+                <span className="bg-orange-500 text-white w-7 h-7 flex items-center justify-center font-black text-xs" style={{ clipPath: 'polygon(20% 0%, 100% 0, 100% 80%, 80% 100%, 0 100%, 0% 20%)' }}>02</span>
+                <h2 className="text-2xl font-black uppercase text-white tracking-tighter">Frecuencias</h2>
             </div>
-            <div className="bg-white/5 border border-white/10 p-6">
+            <div className="tactical-card bg-white/5 border border-white/10 p-6">
                 <p className="text-xs text-gray-400 mb-4">Seleccione su canal de operación en el <span className="text-white font-bold">Selector de Frecuencias</span>.</p>
                 <ul className="text-[10px] space-y-2 font-mono uppercase">
                     <li className="flex items-center gap-2"><span className="w-2 h-2 bg-emerald-500 rounded-full"></span> Canales Públicos: Acceso libre.</li>
@@ -111,19 +112,19 @@ const ManualView = ({ onBack }: { onBack: () => void }) => (
 
       <section className="mb-16 space-y-6">
         <div className="flex items-center gap-3">
-            <span className="bg-orange-500 text-white w-7 h-7 flex items-center justify-center font-black text-xs">03</span>
+            <span className="bg-orange-500 text-white w-7 h-7 flex items-center justify-center font-black text-xs" style={{ clipPath: 'polygon(20% 0%, 100% 0, 100% 80%, 80% 100%, 0 100%, 0% 20%)' }}>03</span>
             <h2 className="text-3xl font-black uppercase text-white tracking-tighter">Comunicaciones de Voz (PTT)</h2>
         </div>
         <div className="grid md:grid-cols-3 gap-6">
-            <div className="bg-white/5 border border-white/10 p-6 border-l-4 border-l-orange-500">
+            <div className="tactical-card bg-white/5 border border-white/10 p-6 border-l-4 border-l-orange-500">
                 <h4 className="font-black text-orange-500 uppercase text-[11px] mb-3">TX: Transmitir</h4>
                 <p className="text-[11px] text-gray-400">Presione y <span className="text-white font-bold">mantenga</span> el botón central. Espere el sonido de entrada y hable a 15cm del micrófono.</p>
             </div>
-            <div className="bg-white/5 border border-white/10 p-6 border-l-4 border-l-emerald-500">
+            <div className="tactical-card bg-white/5 border border-white/10 p-6 border-l-4 border-l-emerald-500">
                 <h4 className="font-black text-emerald-500 uppercase text-[11px] mb-3">RX: Recibir</h4>
                 <p className="text-[11px] text-gray-400">El audio se reproduce en tiempo real. Un aro naranja en pantalla indica quién está modulando.</p>
             </div>
-            <div className="bg-white/5 border border-white/10 p-6 border-l-4 border-l-gray-500">
+            <div className="tactical-card bg-white/5 border border-white/10 p-6 border-l-4 border-l-gray-500">
                 <h4 className="font-black text-gray-400 uppercase text-[11px] mb-3">Simplex</h4>
                 <p className="text-[11px] text-gray-500">El sistema es de una vía. No puede transmitir mientras otra unidad está hablando.</p>
             </div>
@@ -242,6 +243,7 @@ function App() {
   const [audioLevel, setAudioLevel] = useState(0);
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
   const [mobileTab, setMobileTab] = useState<'map' | 'team' | 'history'>('map');
+  const [isConnecting, setIsConnecting] = useState(false);
 
   const radioRef = useRef<RadioService | null>(null);
   const effectiveLocation = manualLocation || userLocation;
@@ -264,43 +266,32 @@ function App() {
     }));
   }, [teamMembersRaw, effectiveLocation]);
 
-  // --- SINCRONIZACIÓN EN TIEMPO REAL REFORZADA ---
-  
-  // 1. LATIDO DE PRESENCIA INMEDIATO (EVITA EL EFECTO FANTASMA)
-  useEffect(() => {
-    if (!activeChannel || !userName) return;
-
-    const announcePresence = async () => {
-      // Usar última ubicación conocida o centro por defecto si no hay GPS aún
-      const lat = effectiveLocation?.lat || -26.8241;
-      const lng = effectiveLocation?.lng || -65.2226;
-      
-      await supabase.from('locations').upsert({
-        id: DEVICE_ID, 
-        name: userName, 
-        lat, 
-        lng, 
-        accuracy: 0, 
-        role: 'Móvil', 
-        status: 'online', 
-        last_seen: new Date().toISOString(), 
-        channel_id: activeChannel.id
-      });
-      console.log("PRESENCE_HEARTBEAT_SENT");
-    };
-
-    announcePresence();
-  }, [activeChannel, userName]);
-
+  // --- SINCRONIZACIÓN DE PRESENCIA (SOLUCIONA EL ERROR DEL FANTASMA) ---
   const fetchAllData = useCallback(async () => {
     if (!activeChannel || !userName) return;
     
-    // Carga inicial de usuarios (últimas 48h)
+    // 1. Registro de entrada forzado (Heartbeat)
+    const initialLat = effectiveLocation?.lat || -26.8241;
+    const initialLng = effectiveLocation?.lng || -65.2226;
+    
+    await supabase.from('locations').upsert({
+      id: DEVICE_ID,
+      name: userName,
+      lat: initialLat,
+      lng: initialLng,
+      accuracy: 0,
+      role: 'Móvil',
+      status: 'online',
+      last_seen: new Date().toISOString(),
+      channel_id: activeChannel.id
+    });
+
+    // 2. Carga inicial de usuarios (últimas 24h)
     const { data: members } = await supabase
       .from('locations')
       .select('*')
       .eq('channel_id', activeChannel.id)
-      .gt('last_seen', new Date(Date.now() - 172800000).toISOString());
+      .gt('last_seen', new Date(Date.now() - 86400000).toISOString());
     
     if (members) {
       setTeamMembersRaw(members
@@ -309,6 +300,7 @@ function App() {
       );
     }
 
+    // 3. Carga inicial de historial
     const { data: history } = await supabase
       .from('radio_history')
       .select('*')
@@ -316,30 +308,27 @@ function App() {
       .order('created_at', { ascending: false })
       .limit(30);
     if (history) setRadioHistory(history);
-  }, [activeChannel, userName]);
+  }, [activeChannel, userName, effectiveLocation]);
 
   useEffect(() => {
     if (!activeChannel || !userName) return;
 
-    fetchAllData();
+    setIsConnecting(true);
+    fetchAllData().then(() => setIsConnecting(false));
 
-    // SUSCRIPCIÓN MAESTRA SIN FILTROS DE TIEMPO (Captura todo movimiento en el canal)
-    const channel = supabase.channel(`sync-master-v11-${activeChannel.id}`)
+    // SUSCRIPCIÓN MAESTRA SIN FILTROS DE TIEMPO
+    const channel = supabase.channel(`sync-service-v12-${activeChannel.id}`)
       .on('postgres_changes', { event: '*', table: 'locations', schema: 'public' }, (payload: any) => {
         const target = payload.new || payload.old;
-        if (!target) return;
+        if (!target || String(target.id).trim() === String(DEVICE_ID).trim()) return;
         
-        // Ignorarse a sí mismo
-        if (String(target.id).trim() === String(DEVICE_ID).trim()) return;
-        
-        // Validar canal del dispositivo remoto
+        // Solo actualizar si pertenece a este canal
         if (payload.eventType !== 'DELETE' && target.channel_id && String(target.channel_id).trim() !== String(activeChannel.id).trim()) return;
 
         setTeamMembersRaw(prev => {
           if (payload.eventType === 'DELETE') {
             return prev.filter(m => String(m.id).trim() !== String(target.id).trim());
           }
-          
           const formatted = { 
             ...target, 
             lat: target.lat ? Number(target.lat) : undefined, 
@@ -347,9 +336,7 @@ function App() {
           } as TeamMember;
 
           const idx = prev.findIndex(m => String(m.id).trim() === String(target.id).trim());
-          if (idx === -1) {
-            return formatted.lat ? [...prev, formatted] : prev;
-          }
+          if (idx === -1) return formatted.lat ? [...prev, formatted] : prev;
           
           const next = [...prev];
           next[idx] = { 
@@ -422,6 +409,14 @@ function App() {
           <h2 className="text-orange-500 font-bold uppercase text-center mb-8 tracking-widest">Seleccionar Canal</h2>
           <ChannelSelector onSelect={ch => setActiveChannel(ch)} />
        </div>
+    </div>
+  );
+
+  if (isConnecting) return (
+    <div className="h-screen bg-black flex flex-col items-center justify-center font-mono">
+       <div className="scanline"></div>
+       <RefreshCw size={48} className="text-orange-500 animate-spin mb-4" />
+       <p className="text-orange-500 font-black tracking-[0.2em] uppercase animate-pulse">Sincronizando con la Red...</p>
     </div>
   );
 
