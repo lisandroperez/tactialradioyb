@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+
+import React, { useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { TeamMember } from '../types';
@@ -41,10 +42,6 @@ const MapController = ({ center }: { center: { lat: number; lng: number } | null
   return null;
 };
 
-/**
- * Este componente SOLO se monta cuando queremos capturar un click.
- * Al desmontarse, Leaflet limpia el evento 'click'.
- */
 const MapClickCapture = ({ onMapClick }: { onMapClick: (lat: number, lng: number) => void }) => {
   useMapEvents({
     click: (e) => {
@@ -54,9 +51,9 @@ const MapClickCapture = ({ onMapClick }: { onMapClick: (lat: number, lng: number
   return null;
 };
 
-const createTacticalIcon = (color: string, isUser: boolean = false, isManual: boolean = false) => {
+// Función de ayuda movida fuera para no recrearla
+const getTacticalIcon = (color: string, isUser: boolean = false, isManual: boolean = false) => {
   const pulseClass = (isUser && !isManual) ? 'animate-pulse' : '';
-  
   return L.divIcon({
     className: 'custom-div-icon',
     html: `<div class="${pulseClass}" style="background-color: ${color}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid ${isManual ? '#f97316' : 'white'}; box-shadow: 0 0 15px ${color};"></div>`,
@@ -66,8 +63,17 @@ const createTacticalIcon = (color: string, isUser: boolean = false, isManual: bo
 };
 
 export const MapDisplay: React.FC<MapDisplayProps> = ({ userLocation, teamMembers, accuracy, isManualMode = false, onMapClick }) => {
-  const userIcon = createTacticalIcon(isManualMode ? '#f97316' : '#10b981', true, isManualMode); 
-  const teamIcon = createTacticalIcon('#f97316'); 
+  
+  // CRUCIAL: Memoizamos los iconos para que Leaflet no detecte cambios de objeto y parpadee al re-renderizar
+  const userIcon = useMemo(() => 
+    getTacticalIcon(isManualMode ? '#f97316' : '#10b981', true, isManualMode),
+    [isManualMode]
+  );
+
+  const teamIcon = useMemo(() => 
+    getTacticalIcon('#f97316'), 
+    []
+  ); 
   
   const getAccuracyColor = (acc: number) => acc > 200 ? '#ef4444' : '#10b981';
 
@@ -89,7 +95,6 @@ export const MapDisplay: React.FC<MapDisplayProps> = ({ userLocation, teamMember
         
         <MapController center={isManualMode ? null : userLocation} />
         
-        {/* Solo activamos el capturador de clicks si estamos en modo manual */}
         {isManualMode && onMapClick && (
           <MapClickCapture onMapClick={onMapClick} />
         )}
