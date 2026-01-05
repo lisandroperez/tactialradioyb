@@ -9,7 +9,7 @@ import { ChannelSelector } from './components/ChannelSelector';
 import { TeamMember, ConnectionState, RadioHistory, Channel } from './types';
 import { RadioService } from './services/radioService';
 import { supabase, getDeviceId } from './services/supabase';
-import { User, ShieldCheck, List, X, Hash, Settings2, UserCog, WifiOff } from 'lucide-react';
+import { User, ShieldCheck, List, X, Hash, Settings2, UserCog } from 'lucide-react';
 
 const DEVICE_ID = getDeviceId();
 
@@ -129,20 +129,40 @@ function App() {
 
   useEffect(() => {
     if (!activeChannel || !isNameSet || !navigator.geolocation || manualLocation) return;
+    
+    const options = { 
+      enableHighAccuracy: true, 
+      timeout: 30000, // Aumentado para evitar Error 3 recurrente
+      maximumAge: 10000 // Acepta caché de 10s para reducir jitter
+    };
+
     const watchId = navigator.geolocation.watchPosition((pos) => {
       const { latitude, longitude, accuracy } = pos.coords;
-      setUserLocation({ lat: latitude, lng: longitude });
+      
+      // Filtro de "micro-movimientos" para evitar parpadeo innecesario
+      setUserLocation(prev => {
+        if (!prev) return { lat: latitude, lng: longitude };
+        const dist = Math.sqrt(Math.pow(latitude - prev.lat, 2) + Math.pow(longitude - prev.lng, 2));
+        if (dist < 0.00001 && Math.abs(accuracy - locationAccuracy) < 2) return prev;
+        return { lat: latitude, lng: longitude };
+      });
+
       setLocationAccuracy(accuracy);
       setSystemLog(accuracy > 200 ? `GPS_LOW_ACC (±${accuracy.toFixed(0)}m)` : `GPS_LOCKED (±${accuracy.toFixed(0)}m)`);
       reportPresence();
-    }, (err) => setSystemLog(`GPS_ERROR_${err.code}`), { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 });
+    }, (err) => {
+      setSystemLog(`GPS_ERR_${err.code}`);
+      // No tratamos el síntoma del error 3 sino que dejamos que siga intentando
+    }, options);
+    
     return () => navigator.geolocation.clearWatch(watchId);
-  }, [activeChannel, isNameSet, manualLocation, reportPresence]);
+  }, [activeChannel, isNameSet, manualLocation, reportPresence, locationAccuracy]);
 
   const handleConnect = useCallback(async () => {
     if (!activeChannel) return;
     setConnectionState(ConnectionState.CONNECTING);
     setSystemLog("LINKING_RADIO...");
+    
     try {
       const service = new RadioService({
         userId: DEVICE_ID, userName: userName, channelId: activeChannel.id,
@@ -153,21 +173,29 @@ function App() {
         onConnectionChange: (status) => {
           if (status === 'CONNECTED') setConnectionState(ConnectionState.CONNECTED);
           if (status === 'RECONNECTING') setConnectionState(ConnectionState.CONNECTING);
+          if (status === 'DISCONNECTED') setConnectionState(ConnectionState.DISCONNECTED);
         }
       });
-      // iOS Essential: El unlock ocurre bajo el evento de click
+      
       await service.unlockAudio();
       radioRef.current = service;
+      // Forzamos estado conectado si el servicio inicializó bien
+      setConnectionState(ConnectionState.CONNECTED);
     } catch (e) {
+      console.error(e);
       setConnectionState(ConnectionState.ERROR);
       setSystemLog("ENLACE_FALLIDO");
+      setTimeout(() => setConnectionState(ConnectionState.DISCONNECTED), 2000);
     }
   }, [userName, activeChannel]);
 
   const handleDisconnect = useCallback(() => {
-    if (radioRef.current) radioRef.current.disconnect();
-    radioRef.current = null;
+    // Primero cambiamos estado visual para evitar que el cartel se trabe
     setConnectionState(ConnectionState.DISCONNECTED);
+    if (radioRef.current) {
+      radioRef.current.disconnect();
+      radioRef.current = null;
+    }
     setSystemLog("SISTEMA_STANDBY");
   }, []);
 
