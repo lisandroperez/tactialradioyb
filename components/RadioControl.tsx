@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { Mic, Radio, Power, AlertTriangle, Wifi, Globe, LogOut, MapPin, Target } from 'lucide-react';
+import { Mic, Radio, Power, AlertTriangle, Wifi, Globe, LogOut, MapPin, Target, Smartphone, Download, Info } from 'lucide-react';
 import { ConnectionState } from '../types';
 
 interface RadioControlProps {
@@ -16,13 +17,18 @@ interface RadioControlProps {
   audioLevel: number; 
   isManualMode: boolean;
   onToggleManual: () => void;
+  isInstallable?: boolean;
+  onInstallApp?: () => void;
 }
 
 export const RadioControl: React.FC<RadioControlProps> = ({
-  connectionState, isTalking, activeChannelName, onTalkStart, onTalkEnd, lastTranscript, onConnect, onDisconnect, onEmergencyClick, onQSY, audioLevel, isManualMode, onToggleManual
+  connectionState, isTalking, activeChannelName, onTalkStart, onTalkEnd, lastTranscript, onConnect, onDisconnect, onEmergencyClick, onQSY, audioLevel, isManualMode, onToggleManual, isInstallable, onInstallApp
 }) => {
   const isConnected = connectionState === ConnectionState.CONNECTED;
   const triggerHaptic = () => { if (navigator.vibrate) navigator.vibrate(50); };
+
+  // Detectar si es iOS para mostrar mensaje informativo
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
 
   return (
     <div className="flex flex-col h-full bg-gray-950 text-white p-3 md:p-6 select-none relative overflow-hidden">
@@ -47,6 +53,26 @@ export const RadioControl: React.FC<RadioControlProps> = ({
             </div>
             
             <div className="flex gap-2">
+              {/* Botón de Instalación Reforzado */}
+              {isInstallable && (
+                <button 
+                  onClick={onInstallApp} 
+                  className="px-3 h-10 rounded-lg bg-orange-600 text-white flex items-center gap-2 hover:bg-orange-500 transition-all animate-pulse shadow-[0_0_15px_rgba(234,88,12,0.6)] border border-orange-400/50"
+                >
+                  <Download size={16} />
+                  <span className="text-[9px] font-black uppercase tracking-tighter hidden sm:inline">INSTALAR_APP</span>
+                </button>
+              )}
+
+              {isIOS && !isInstallable && (
+                <button 
+                  onClick={() => alert('Para instalar en iPhone:\n\n1. Toca el icono "Compartir" (el cuadrado con flecha)\n2. Desliza hacia abajo\n3. Toca "Añadir a pantalla de inicio"')}
+                  className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 text-gray-500 flex items-center justify-center"
+                >
+                  <Smartphone size={18} />
+                </button>
+              )}
+
               <button 
                 onClick={onToggleManual} 
                 className={`w-10 h-10 rounded-lg flex items-center justify-center border transition-all active:scale-90 ${isManualMode ? 'bg-orange-600 border-white text-white animate-pulse' : 'bg-gray-800 border-white/5 text-gray-400 hover:text-orange-500'}`}
