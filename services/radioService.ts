@@ -27,10 +27,9 @@ export class RadioService {
   private sampleRate: number = 24000;
   
   private currentTransmissionBuffer: Float32Array[] = [];
-  private noiseThreshold: number = 0.045; 
-  private holdTime: number = 300; 
+  private noiseThreshold: number = 0.04; 
+  private holdTime: number = 400; 
   private lastActiveTime: number = 0;
-  private reconnectInterval: any = null;
 
   constructor(options: RadioOptions) {
     this.options = options;
@@ -38,8 +37,6 @@ export class RadioService {
   }
 
   private connect() {
-    if (this.channel) supabase.removeChannel(this.channel);
-
     this.channel = supabase.channel(`radio-ch-${this.options.channelId}`, {
       config: { broadcast: { ack: false, self: false } }
     });
@@ -52,44 +49,12 @@ export class RadioService {
       })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log("RADIO_LINK_ESTABLISHED");
           if (this.options.onConnectionChange) this.options.onConnectionChange('CONNECTED');
-          clearInterval(this.reconnectInterval);
-          this.reconnectInterval = null;
-        } else if (status === 'CHANNEL_ERROR' || status === 'CLOSED') {
-          console.warn("RADIO_LINK_LOST");
-          if (this.options.onConnectionChange) this.options.onConnectionChange('RECONNECTING');
-          this.attemptReconnect();
         }
       });
   }
 
-  private attemptReconnect() {
-    if (this.reconnectInterval) return;
-    this.reconnectInterval = setInterval(() => {
-      console.log("RETRYING_RADIO_LINK...");
-      this.connect();
-    }, 5000);
-  }
-
-  /**
-   * Desbloquea el audio para iOS. 
-   * DEBE llamarse desde un evento de click del usuario.
-   */
   public async unlockAudio() {
-    await this.initAudioContexts();
-    // Enviar un buffer vacío para "despertar" el hardware de audio en iOS
-    if (this.outputAudioContext) {
-      const silentBuffer = this.outputAudioContext.createBuffer(1, 1, this.sampleRate);
-      const source = this.outputAudioContext.createBufferSource();
-      source.buffer = silentBuffer;
-      source.connect(this.outputAudioContext.destination);
-      source.start(0);
-    }
-    this.initMicrophone();
-  }
-
-  private async initAudioContexts() {
     if (!this.inputAudioContext) {
       this.inputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: this.sampleRate });
     }
@@ -99,19 +64,14 @@ export class RadioService {
     
     if (this.inputAudioContext.state === 'suspended') await this.inputAudioContext.resume();
     if (this.outputAudioContext.state === 'suspended') await this.outputAudioContext.resume();
-  }
 
-  private async initMicrophone() {
-    if (this.stream) return; // Ya inicializado
-
-    try {
-      await this.initAudioContexts();
+    // Iniciar Micrófono
+    if (!this.stream) {
       this.stream = await navigator.mediaDevices.getUserMedia({ 
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } 
       });
-      
-      this.source = this.inputAudioContext!.createMediaStreamSource(this.stream);
-      this.processor = this.inputAudioContext!.createScriptProcessor(2048, 1, 1);
+      this.source = this.inputAudioContext.createMediaStreamSource(this.stream);
+      this.processor = this.inputAudioContext.createScriptProcessor(2048, 1, 1);
 
       this.processor.onaudioprocess = (e) => {
         if (!this.isTransmitting) return;
@@ -126,13 +86,9 @@ export class RadioService {
         }
 
         const now = Date.now();
-        if (maxVal >= this.noiseThreshold) {
-          this.lastActiveTime = now;
-        }
+        if (maxVal >= this.noiseThreshold) this.lastActiveTime = now;
 
-        if (maxVal < this.noiseThreshold && (now - this.lastActiveTime) > this.holdTime) {
-          return;
-        }
+        if (maxVal < this.noiseThreshold && (now - this.lastActiveTime) > this.holdTime) return;
 
         if (this.channel) {
           const pcm = createPcmBlob(inputData);
@@ -149,14 +105,11 @@ export class RadioService {
       };
 
       this.source.connect(this.processor);
-      this.processor.connect(this.inputAudioContext!.destination);
-    } catch (err) {
-      console.error("MIC_INIT_ERROR:", err);
+      this.processor.connect(this.inputAudioContext.destination);
     }
   }
 
   private async handleIncomingAudio(payload: { data: string; senderName: string }) {
-    await this.initAudioContexts();
     if (!this.outputAudioContext) return;
 
     this.options.onIncomingStreamStart(payload.senderName);
@@ -170,9 +123,7 @@ export class RadioService {
       source.connect(this.outputAudioContext.destination);
       
       const currentTime = this.outputAudioContext.currentTime;
-      if (this.nextStartTime < currentTime) {
-        this.nextStartTime = currentTime + 0.05; 
-      }
+      if (this.nextStartTime < currentTime) this.nextStartTime = currentTime + 0.05;
       
       source.start(this.nextStartTime);
       this.nextStartTime += buffer.duration;
@@ -184,14 +135,13 @@ export class RadioService {
         }
       };
     } catch (e) {
-      console.error("RX_ERROR:", e);
+      console.error("RX_ERR", e);
     }
   }
 
   public startTransmission() {
     this.isTransmitting = true;
     this.currentTransmissionBuffer = [];
-    this.lastActiveTime = Date.now();
   }
 
   public async stopTransmission() {
@@ -222,14 +172,10 @@ export class RadioService {
     this.currentTransmissionBuffer = [];
   }
 
-  public async disconnect() {
-    this.isTransmitting = false;
-    clearInterval(this.reconnectInterval);
+  public disconnect() {
     if (this.source) this.source.disconnect();
     if (this.processor) this.processor.disconnect();
     if (this.stream) this.stream.getTracks().forEach(t => t.stop());
-    if (this.inputAudioContext) await this.inputAudioContext.close();
-    if (this.outputAudioContext) await this.outputAudioContext.close();
     if (this.channel) supabase.removeChannel(this.channel);
   }
 }
