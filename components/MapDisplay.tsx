@@ -51,12 +51,12 @@ const MapClickCapture = ({ onMapClick }: { onMapClick: (lat: number, lng: number
   return null;
 };
 
-// Función de ayuda movida fuera para no recrearla
-const getTacticalIcon = (color: string, isUser: boolean = false, isManual: boolean = false) => {
-  const pulseClass = (isUser && !isManual) ? 'animate-pulse' : '';
+const getTacticalIcon = (color: string, isTalking: boolean = false, isOffline: boolean = false) => {
+  const pulseClass = isTalking ? 'animate-pulse' : '';
+  const opacity = isOffline ? 'opacity-40' : 'opacity-100';
   return L.divIcon({
     className: 'custom-div-icon',
-    html: `<div class="${pulseClass}" style="background-color: ${color}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid ${isManual ? '#f97316' : 'white'}; box-shadow: 0 0 15px ${color};"></div>`,
+    html: `<div class="${pulseClass} ${opacity}" style="background-color: ${color}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 15px ${color};"></div>`,
     iconSize: [14, 14],
     iconAnchor: [7, 7]
   });
@@ -64,17 +64,11 @@ const getTacticalIcon = (color: string, isUser: boolean = false, isManual: boole
 
 export const MapDisplay: React.FC<MapDisplayProps> = ({ userLocation, teamMembers, accuracy, isManualMode = false, onMapClick }) => {
   
-  // CRUCIAL: Memoizamos los iconos para que Leaflet no detecte cambios de objeto y parpadee al re-renderizar
   const userIcon = useMemo(() => 
-    getTacticalIcon(isManualMode ? '#f97316' : '#10b981', true, isManualMode),
+    getTacticalIcon(isManualMode ? '#f97316' : '#10b981', false, false),
     [isManualMode]
   );
 
-  const teamIcon = useMemo(() => 
-    getTacticalIcon('#f97316'), 
-    []
-  ); 
-  
   const getAccuracyColor = (acc: number) => acc > 200 ? '#ef4444' : '#10b981';
 
   return (
@@ -88,7 +82,7 @@ export const MapDisplay: React.FC<MapDisplayProps> = ({ userLocation, teamMember
         zoomControl={false}
       >
         <TileLayer
-          attribution='&copy; OpenStreetMap contributors'
+          attribution='&copy; OpenStreetMap'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           className="map-tiles-grayscale"
         />
@@ -129,30 +123,19 @@ export const MapDisplay: React.FC<MapDisplayProps> = ({ userLocation, teamMember
           <React.Fragment key={member.id}>
             <Marker 
               position={{ lat: member.lat, lng: member.lng }} 
-              icon={teamIcon}
+              icon={getTacticalIcon(
+                member.status === 'talking' ? '#ef4444' : '#f97316', 
+                member.status === 'talking',
+                member.status === 'offline'
+              )}
             >
               <Popup>
                  <div className="font-bold text-gray-900 uppercase text-xs">{member.name}</div>
-                 <div className="text-[10px] text-gray-500 font-mono mt-1">DIST: {member.distance}</div>
-                 <div className="text-[10px] text-gray-400 font-mono">
-                    PREC: {member.accuracy === 0 ? 'FIJA (Manual)' : `±${member.accuracy}m`}
-                 </div>
+                 <div className="text-[10px] text-gray-500 font-mono mt-1">STATUS: {member.status.toUpperCase()}</div>
+                 <div className="text-[10px] text-gray-400 font-mono">DIST: {member.distance}</div>
                  <div className="text-[9px] text-orange-500 mt-0.5 font-bold">{member.role}</div>
               </Popup>
             </Marker>
-            {member.accuracy && member.accuracy > 0 && (
-              <Circle 
-                center={{ lat: member.lat, lng: member.lng }}
-                radius={member.accuracy}
-                pathOptions={{ 
-                  color: member.accuracy > 200 ? '#ef4444' : '#f97316', 
-                  fillColor: member.accuracy > 200 ? '#ef4444' : '#f97316', 
-                  fillOpacity: 0.05, 
-                  weight: 0.5,
-                  dashArray: member.accuracy > 200 ? '3, 3' : '' 
-                }}
-              />
-            )}
           </React.Fragment>
         ))}
       </MapContainer>
